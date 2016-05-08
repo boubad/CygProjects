@@ -14,6 +14,8 @@
 //////////////////////////////////////////
 #include <sqlitestathelper.h>
 #include <storeindivprovider.h>
+#include <statinfo.h>
+///////////////////////////////////
 #include <memory>
 //////////////////////////////////
 #include "infotestdata.h"
@@ -29,6 +31,7 @@ CPPUNIT_TEST_SUITE(TestSQLiteProvider);
 	CPPUNIT_TEST(testValues);
 	CPPUNIT_TEST(testIndivProvider);
 	CPPUNIT_TEST(testSerialIndivProvider);
+	CPPUNIT_TEST(testStatInfo);
 CPPUNIT_TEST_SUITE_END();
 public:
 	TestSQLiteProvider();
@@ -42,6 +45,7 @@ protected:
 	void testValues(void);
 	void testIndivProvider(void);
 	void testSerialIndivProvider(void);
+	void testStatInfo(void);
 private:
 	size_t m_nbcols;
 	size_t m_nbrows;
@@ -387,4 +391,15 @@ void TestSQLiteProvider::testSerialIndivProvider(void) {
 		CPPUNIT_ASSERT(d1 == d2);
 	} while (true);
 } //testSerialIndivProvider
-
+void TestSQLiteProvider::testStatInfo(void){
+	IStoreHelper *pMan = m_man.get();
+	DBStatDataset &oSet = this->m_oset;
+	//
+	SerialStoreIndivProvider oProvider(pMan, oSet);
+	CPPUNIT_ASSERT(oProvider.is_valid());
+	//
+	statinfos_map oRes;
+	size_t n = info_global_compute_stats(&oProvider,oRes);
+	CPPUNIT_ASSERT(n == this->m_nbcols);
+	//
+}//testStatInfo

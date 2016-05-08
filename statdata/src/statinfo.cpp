@@ -45,6 +45,7 @@ extern size_t info_global_compute_stats(IIndivProvider *pProvider,
 						oInfo.count = 1;
 						oInfo.somme1 = x;
 						oInfo.somme2 = x2;
+						oStats[key] = oInfo;
 					} else {
 						StatInfo &oInfo = (*it).second;
 						oInfo.count++;
