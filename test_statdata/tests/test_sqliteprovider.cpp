@@ -15,6 +15,7 @@
 #include <sqlitestathelper.h>
 #include <storeindivprovider.h>
 #include <statinfo.h>
+#include <numericindivprovider.h>
 ///////////////////////////////////
 #include <memory>
 //////////////////////////////////
@@ -32,7 +33,8 @@ CPPUNIT_TEST_SUITE(TestSQLiteProvider);
 	CPPUNIT_TEST(testIndivProvider);
 	CPPUNIT_TEST(testSerialIndivProvider);
 	CPPUNIT_TEST(testStatInfo);
-CPPUNIT_TEST_SUITE_END();
+	CPPUNIT_TEST(testNumIndivProvider);CPPUNIT_TEST_SUITE_END()
+	;
 public:
 	TestSQLiteProvider();
 	~TestSQLiteProvider();
@@ -46,6 +48,7 @@ protected:
 	void testIndivProvider(void);
 	void testSerialIndivProvider(void);
 	void testStatInfo(void);
+	void testNumIndivProvider(void);
 private:
 	size_t m_nbcols;
 	size_t m_nbrows;
@@ -391,7 +394,7 @@ void TestSQLiteProvider::testSerialIndivProvider(void) {
 		CPPUNIT_ASSERT(d1 == d2);
 	} while (true);
 } //testSerialIndivProvider
-void TestSQLiteProvider::testStatInfo(void){
+void TestSQLiteProvider::testStatInfo(void) {
 	IStoreHelper *pMan = m_man.get();
 	DBStatDataset &oSet = this->m_oset;
 	//
@@ -399,7 +402,49 @@ void TestSQLiteProvider::testStatInfo(void){
 	CPPUNIT_ASSERT(oProvider.is_valid());
 	//
 	statinfos_map oRes;
-	size_t n = info_global_compute_stats(&oProvider,oRes);
+	size_t n = info_global_compute_stats(&oProvider, oRes);
 	CPPUNIT_ASSERT(n == this->m_nbcols);
 	//
-}//testStatInfo
+} //testStatInfo
+void TestSQLiteProvider::testNumIndivProvider(void) {
+	IStoreHelper *pMan = m_man.get();
+	DBStatDataset &oSet = this->m_oset;
+	//
+	StoreIndivProvider oProviderBase(pMan, oSet);
+	CPPUNIT_ASSERT(oProviderBase.is_valid());
+	NumericIndivProvider oProvider(&oProviderBase);
+	CPPUNIT_ASSERT(oProvider.is_valid());
+	//
+	size_t nc = 0;
+	bool bRet = oProvider.indivs_count(nc);
+	CPPUNIT_ASSERT(bRet);
+	CPPUNIT_ASSERT(m_nbrows == nc);
+	//
+	variables_map vars;
+	bRet = oProvider.get_variables_map(vars);
+	CPPUNIT_ASSERT(bRet);
+	CPPUNIT_ASSERT(m_nbcols == vars.size());
+	ints_vector oIds;
+	bRet = oProvider.get_variables_ids(oIds);
+	CPPUNIT_ASSERT(bRet);
+	CPPUNIT_ASSERT(m_nbcols == oIds.size());
+	for (size_t i = 0; i < m_nbcols; ++i){
+		IntType key = oIds[i];
+		StatInfo oInfo;
+		bRet = oProvider.get_statinfo(key,oInfo);
+		CPPUNIT_ASSERT(bRet);
+	}// i
+	//
+	for (size_t i = 0; i < nc; ++i) {
+		Indiv oInd;
+		bRet = oProvider.find_indiv_at(i, oInd);
+		CPPUNIT_ASSERT(bRet);
+		IntType aIndex = oInd.id();
+		CPPUNIT_ASSERT(aIndex != 0);
+		doubles_vector vv1, vv2;
+		bRet = oProvider.find_indiv(aIndex,vv1);
+		CPPUNIT_ASSERT(aIndex != 0);
+		bRet = oProvider.find_indiv_at(i,aIndex,vv1);
+		CPPUNIT_ASSERT(aIndex != 0);
+	} // i
+} //testNumIndivProvider
