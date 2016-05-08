@@ -18,6 +18,7 @@ public:
 	Indiv & operator=(const Indiv &other);
 	virtual ~Indiv();
 public:
+	bool empty(void) const;
 	bool has_variable(const IntType key) const;
 	void set_variable(const IntType key, const DbValue &v);
 	const DbValueMap &data(void) const;
@@ -43,6 +44,18 @@ public:
 	}
 };
 // class IIndivProvider
+/////////////////////////////////////////////////
+class StatInfo;
+class INumIndivProvider : public IIndivProvider {
+public:
+	virtual bool  get_statinfo(const IntType key, StatInfo &oInfo) = 0;
+	virtual bool get_variables_ids(ints_vector &oVec) = 0;
+	virtual bool find_indiv_at(const size_t pos, IntType &aIndex,
+			doubles_vector &data) = 0;
+	virtual bool find_indiv(const IntType aIndex,doubles_vector &data) = 0;
+	//
+	virtual ~INumIndivProvider(){}
+};
 ////////////////////////////////////////////////
 class ISerialIndivProvider {
 public:

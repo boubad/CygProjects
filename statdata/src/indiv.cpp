@@ -32,6 +32,9 @@ Indiv & Indiv::operator=(const Indiv &other) {
 Indiv::~Indiv() {
 
 }
+bool Indiv::empty(void) const{
+	return (this->m_map.empty());
+}
 const DbValueMap &Indiv::data(void) const {
 	return (this->m_map);
 }

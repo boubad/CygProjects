@@ -14,6 +14,7 @@ namespace info {
 	enum class VariableMode { modeInvalid, modeNumeric, modeNominal, modeAll };
 	////////////////////////////////////////////////////
 	typedef boost::container::vector<IntType> ints_vector;
+	typedef boost::container::vector<double> doubles_vector;
 	typedef boost::container::flat_map<IntType, std::string> inttype_string_map;
 	typedef boost::container::vector<std::string> strings_vector;
 	///////////////////////////////////////////////////////////////
