@@ -11,12 +11,12 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 /////////////////////////////////////
 #include <boost/foreach.hpp>
-
 //////////////////////////////////////////
 #include <sqlitestathelper.h>
 #include <storeindivprovider.h>
 #include <statinfo.h>
 #include <numericindivprovider.h>
+#include <crititem.h>
 ///////////////////////////////////
 #include <memory>
 //////////////////////////////////
@@ -34,8 +34,9 @@ CPPUNIT_TEST_SUITE(TestSQLiteProvider);
 	CPPUNIT_TEST(testIndivProvider);
 	CPPUNIT_TEST(testSerialIndivProvider);
 	CPPUNIT_TEST(testStatInfo);
-	CPPUNIT_TEST(testNumIndivProvider);CPPUNIT_TEST_SUITE_END()
-	;
+	CPPUNIT_TEST(testNumIndivProvider);
+	CPPUNIT_TEST(testComputeDistances);
+	CPPUNIT_TEST_SUITE_END();
 public:
 	TestSQLiteProvider();
 	~TestSQLiteProvider();
@@ -50,6 +51,7 @@ protected:
 	void testSerialIndivProvider(void);
 	void testStatInfo(void);
 	void testNumIndivProvider(void);
+	void testComputeDistances(void);
 private:
 	size_t m_nbcols;
 	size_t m_nbrows;
@@ -449,3 +451,39 @@ void TestSQLiteProvider::testNumIndivProvider(void) {
 		CPPUNIT_ASSERT(aIndex != 0);
 	} // i
 } //testNumIndivProvider
+void TestSQLiteProvider::testComputeDistances(void){
+	IStoreHelper *pMan = m_man.get();
+		DBStatDataset &oSet = this->m_oset;
+		//
+		StoreIndivProvider oProviderBase(pMan, oSet);
+		CPPUNIT_ASSERT(oProviderBase.is_valid());
+		NumericIndivProvider oProvider(&oProviderBase);
+		CPPUNIT_ASSERT(oProvider.is_valid());
+		//
+		IndivDistanceMap oDistances;
+		info_global_compute_distances(&oProvider,oDistances);
+		//
+		size_t nc = 0;
+		bool bRet = oProvider.indivs_count(nc);
+		CPPUNIT_ASSERT(bRet);
+		CPPUNIT_ASSERT(m_nbrows == nc);
+		//
+		for (size_t i = 0; i < nc; ++i) {
+			Indiv oInd1;
+			bRet = oProvider.find_indiv_at(i, oInd1);
+			CPPUNIT_ASSERT(bRet);
+			IntType aIndex1 = oInd1.id();
+			CPPUNIT_ASSERT(aIndex1 != 0);
+			for (size_t j = 0; j < i; ++j){
+				Indiv oInd2;
+				bRet = oProvider.find_indiv_at(j, oInd2);
+				CPPUNIT_ASSERT(bRet);
+				IntType aIndex2 = oInd2.id();
+				CPPUNIT_ASSERT(aIndex2 != 0);
+				double dRes = 0;
+				bRet = oDistances.get(aIndex1, aIndex2,dRes);
+				CPPUNIT_ASSERT(bRet);
+				CPPUNIT_ASSERT(dRes > 0);
+			}// j
+		} // i
+}//testComputeDistances
