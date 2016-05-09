@@ -51,7 +51,6 @@ private:
 #else
 	boost::mutex _mutex;
 #endif
-	//boost::mutex _mutex;
 public:
 	SerialStoreIndivProvider(IStoreHelper *pHelper, const DBStatDataset &oSet);
 	SerialStoreIndivProvider(IStoreHelper *pHelper, const std::string &setName);

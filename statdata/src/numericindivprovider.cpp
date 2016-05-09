@@ -12,28 +12,32 @@
 ////////////////////////
 namespace info {
 //////////////////////////////
-static void filter_indiv(const statinfos_map &filter, Indiv &oInd) {
+static void filter_indiv(statinfos_map &filter, Indiv &oInd) {
 	DbValueMap oRes;
-	const DbValueMap &src = oInd.data();
+	DbValueMap &src = const_cast<DbValueMap &>(oInd.data());
 	typedef std::pair<IntType, StatInfo> MyPair;
-	BOOST_FOREACH(const MyPair &oPair,filter) {
-		DbValue v;
-		const IntType key = oPair.first;
-		auto it = src.find(key);
-		if (it != src.end()) {
-			DbValue vx = (*it).second;
-			if (vx.empty()) {
-				const StatInfo &info = oPair.second;
-				v = DbValue(info.mean);
-			} else {
-				v = DbValue(vx.double_value());
-			}
+	BOOST_FOREACH( MyPair &oPair,filter){
+	DbValue v;
+	IntType key = oPair.first;
+	auto it = src.find(key);
+	if (it != src.end()) {
+		DbValue vx = (*it).second;
+		if (vx.empty()) {
+			StatInfo &info = oPair.second;
+			double vm, vv,vs;
+			info.get_mean_var_std(vm,vv, vs);
+			v = DbValue(vm);
 		} else {
-			const StatInfo &info = oPair.second;
-			v = DbValue(info.mean);
+			v = DbValue(vx.double_value());
 		}
-		oRes[key] = v;
-	} // oPair
+	} else {
+		StatInfo &info = oPair.second;
+		double vm, vv,vs;
+		info.get_mean_var_std(vm,vv, vs);
+		v = DbValue(vm);
+	}
+	oRes[key] = v;
+} // oPair
 	oInd.set_data(oRes);
 } //filter_indiv
 ////////////////////////////
@@ -46,9 +50,9 @@ NumericIndivProvider::NumericIndivProvider(IIndivProvider *pProvider) :
 	typedef std::pair<IntType, StatInfo> MyPair;
 	ints_vector &vv = this->m_ids;
 	vv.clear();
-	BOOST_FOREACH(const MyPair &oPair,this->m_stats) {
-		vv.push_back(oPair.first);
-	}
+	BOOST_FOREACH(const MyPair &oPair,this->m_stats){
+	vv.push_back(oPair.first);
+}
 }
 
 NumericIndivProvider::~NumericIndivProvider() {
@@ -131,12 +135,12 @@ bool NumericIndivProvider::get_variables_map(variables_map &oMap) {
 	}
 	const statinfos_map &filter = this->m_stats;
 	typedef std::pair<IntType, DBStatVariable> MyPair;
-	BOOST_FOREACH(const MyPair &oPair,vars) {
-		const IntType key = oPair.first;
-		if (filter.find(key) != filter.end()) {
-			oMap[key] = oPair.second;
-		} // ok
-	} // oPair
+	BOOST_FOREACH(const MyPair &oPair,vars){
+	const IntType key = oPair.first;
+	if (filter.find(key) != filter.end()) {
+		oMap[key] = oPair.second;
+	} // ok
+} // oPair
 	return (true);
 }
 bool NumericIndivProvider::find_indiv(const IntType aIndex, Indiv &oInd,
