@@ -11,6 +11,7 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 /////////////////////////////////////
 #include <boost/foreach.hpp>
+
 //////////////////////////////////////////
 #include <sqlitestathelper.h>
 #include <storeindivprovider.h>
