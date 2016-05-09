@@ -35,8 +35,8 @@ CPPUNIT_TEST_SUITE(TestSQLiteProvider);
 	CPPUNIT_TEST(testSerialIndivProvider);
 	CPPUNIT_TEST(testStatInfo);
 	CPPUNIT_TEST(testNumIndivProvider);
-	CPPUNIT_TEST(testComputeDistances);
-	CPPUNIT_TEST_SUITE_END();
+	CPPUNIT_TEST(testComputeDistances);CPPUNIT_TEST_SUITE_END()
+	;
 public:
 	TestSQLiteProvider();
 	~TestSQLiteProvider();
@@ -131,43 +131,43 @@ void TestSQLiteProvider::setUp(void) {
 	CPPUNIT_ASSERT(m_nbcols == oVars.size());
 	//
 	boost::container::flat_map<std::string, DBStatVariable *> pVars;
-	BOOST_FOREACH(const std::string &s, this->m_colnames) {
-		std::string sigle = s;
-		std::string rsigle;
-		DBStatVariable ovar(this->m_oset, sigle);
-		ovar.get_sigle(rsigle);
-		DBStatVariable *p = nullptr;
-		for (size_t i = 0; i < oVars.size(); ++i) {
-			DBStatVariable &vv = oVars[i];
-			std::string sx;
-			vv.get_sigle(sx);
-			if (sx == rsigle) {
-				p = &vv;
-				break;
-			}
-		} // i
-		CPPUNIT_ASSERT(p != nullptr);
-		pVars[sigle] = p;
-	}
+	BOOST_FOREACH(const std::string &s, this->m_colnames){
+	std::string sigle = s;
+	std::string rsigle;
+	DBStatVariable ovar(this->m_oset, sigle);
+	ovar.get_sigle(rsigle);
+	DBStatVariable *p = nullptr;
+	for (size_t i = 0; i < oVars.size(); ++i) {
+		DBStatVariable &vv = oVars[i];
+		std::string sx;
+		vv.get_sigle(sx);
+		if (sx == rsigle) {
+			p = &vv;
+			break;
+		}
+	} // i
+	CPPUNIT_ASSERT(p != nullptr);
+	pVars[sigle] = p;
+}
 	boost::container::flat_map<std::string, DBStatIndiv *> pInds;
-	BOOST_FOREACH(const std::string &s, this->m_rownames) {
-		std::string sigle = s;
-		std::string rsigle;
-		DBStatIndiv ovar(this->m_oset, sigle);
-		ovar.get_sigle(rsigle);
-		DBStatIndiv *p = nullptr;
-		for (size_t i = 0; i < oInds.size(); ++i) {
-			DBStatIndiv &vv = oInds[i];
-			std::string sx;
-			vv.get_sigle(sx);
-			if (sx == rsigle) {
-				p = &vv;
-				break;
-			}
-		} // i
-		CPPUNIT_ASSERT(p != nullptr);
-		pInds[sigle] = p;
-	}
+	BOOST_FOREACH(const std::string &s, this->m_rownames){
+	std::string sigle = s;
+	std::string rsigle;
+	DBStatIndiv ovar(this->m_oset, sigle);
+	ovar.get_sigle(rsigle);
+	DBStatIndiv *p = nullptr;
+	for (size_t i = 0; i < oInds.size(); ++i) {
+		DBStatIndiv &vv = oInds[i];
+		std::string sx;
+		vv.get_sigle(sx);
+		if (sx == rsigle) {
+			p = &vv;
+			break;
+		}
+	} // i
+	CPPUNIT_ASSERT(p != nullptr);
+	pInds[sigle] = p;
+}
 	values_vector oVals;
 	for (size_t i = 0; i < m_nbrows; ++i) {
 		std::string sigleind = m_rownames[i];
@@ -431,13 +431,13 @@ void TestSQLiteProvider::testNumIndivProvider(void) {
 	bRet = oProvider.get_variables_ids(oIds);
 	CPPUNIT_ASSERT(bRet);
 	CPPUNIT_ASSERT(m_nbcols == oIds.size());
-	for (size_t i = 0; i < m_nbcols; ++i){
+	for (size_t i = 0; i < m_nbcols; ++i) {
 		IntType key = oIds[i];
 		StatInfo oInfo;
-		bRet = oProvider.get_statinfo(key,oInfo);
+		bRet = oProvider.get_statinfo(key, oInfo);
 		CPPUNIT_ASSERT(bRet);
-	}// i
-	//
+	} // i
+	  //
 	for (size_t i = 0; i < nc; ++i) {
 		Indiv oInd;
 		bRet = oProvider.find_indiv_at(i, oInd);
@@ -445,45 +445,48 @@ void TestSQLiteProvider::testNumIndivProvider(void) {
 		IntType aIndex = oInd.id();
 		CPPUNIT_ASSERT(aIndex != 0);
 		doubles_vector vv1, vv2;
-		bRet = oProvider.find_indiv(aIndex,vv1);
+		bRet = oProvider.find_indiv(aIndex, vv1);
 		CPPUNIT_ASSERT(aIndex != 0);
-		bRet = oProvider.find_indiv_at(i,aIndex,vv1);
+		bRet = oProvider.find_indiv_at(i, aIndex, vv1);
 		CPPUNIT_ASSERT(aIndex != 0);
 	} // i
 } //testNumIndivProvider
-void TestSQLiteProvider::testComputeDistances(void){
+void TestSQLiteProvider::testComputeDistances(void) {
 	IStoreHelper *pMan = m_man.get();
-		DBStatDataset &oSet = this->m_oset;
-		//
-		StoreIndivProvider oProviderBase(pMan, oSet);
-		CPPUNIT_ASSERT(oProviderBase.is_valid());
-		NumericIndivProvider oProvider(&oProviderBase);
-		CPPUNIT_ASSERT(oProvider.is_valid());
-		//
-		IndivDistanceMap oDistances;
-		info_global_compute_distances(&oProvider,oDistances);
-		//
-		size_t nc = 0;
-		bool bRet = oProvider.indivs_count(nc);
+	DBStatDataset &oSet = this->m_oset;
+	//
+	StoreIndivProvider oProviderBase(pMan, oSet);
+	CPPUNIT_ASSERT(oProviderBase.is_valid());
+	NumericIndivProvider oProvider(&oProviderBase);
+	CPPUNIT_ASSERT(oProvider.is_valid());
+	//
+	size_t nc = 0;
+	bool bRet = oProvider.indivs_count(nc);
+	CPPUNIT_ASSERT(bRet);
+	CPPUNIT_ASSERT(m_nbrows == nc);
+	//
+	IndivDistanceMap oDistances;
+	info_global_compute_distances(&oProvider, oDistances);
+	//
+	const ints_set &oSetIndivs = oDistances.indexes();
+	CPPUNIT_ASSERT(oSetIndivs.size() == nc);
+	//
+	for (size_t i = 0; i < nc; ++i) {
+		Indiv oInd1;
+		bRet = oProvider.find_indiv_at(i, oInd1);
 		CPPUNIT_ASSERT(bRet);
-		CPPUNIT_ASSERT(m_nbrows == nc);
-		//
-		for (size_t i = 0; i < nc; ++i) {
-			Indiv oInd1;
-			bRet = oProvider.find_indiv_at(i, oInd1);
+		IntType aIndex1 = oInd1.id();
+		CPPUNIT_ASSERT(aIndex1 != 0);
+		for (size_t j = 0; j < i; ++j) {
+			Indiv oInd2;
+			bRet = oProvider.find_indiv_at(j, oInd2);
 			CPPUNIT_ASSERT(bRet);
-			IntType aIndex1 = oInd1.id();
-			CPPUNIT_ASSERT(aIndex1 != 0);
-			for (size_t j = 0; j < i; ++j){
-				Indiv oInd2;
-				bRet = oProvider.find_indiv_at(j, oInd2);
-				CPPUNIT_ASSERT(bRet);
-				IntType aIndex2 = oInd2.id();
-				CPPUNIT_ASSERT(aIndex2 != 0);
-				double dRes = 0;
-				bRet = oDistances.get(aIndex1, aIndex2,dRes);
-				CPPUNIT_ASSERT(bRet);
-				CPPUNIT_ASSERT(dRes > 0);
-			}// j
-		} // i
-}//testComputeDistances
+			IntType aIndex2 = oInd2.id();
+			CPPUNIT_ASSERT(aIndex2 != 0);
+			double dRes = 0;
+			bRet = oDistances.get(aIndex1, aIndex2, dRes);
+			CPPUNIT_ASSERT(bRet);
+			CPPUNIT_ASSERT(dRes > 0);
+		} // j
+	} // i
+} //testComputeDistances

@@ -50,6 +50,7 @@ void IndivDistanceMap::clear(void) {
 	boost::mutex::scoped_lock oLock(this->_mutex);
 #endif // __CYGWIN__
 	this->m_data.clear();
+	this->m_set.clear();
 } // clear
 void IndivDistanceMap::add(const IntType i1, const IntType i2, const double v) {
 	BOOST_ASSERT(v >= 0);
@@ -66,6 +67,7 @@ void IndivDistanceMap::add(const IntType i1, const IntType i2, const double v) {
 		boost::mutex::scoped_lock oLock(this->_mutex);
 #endif // __CYGWIN__
 		intdoubles_map_map &data = this->m_data;
+		ints_set &oSet = this->m_set;
 		auto it = data.find(aIndex1);
 		if (it == data.end()) {
 			intdoubles_map o;
@@ -75,8 +77,17 @@ void IndivDistanceMap::add(const IntType i1, const IntType i2, const double v) {
 			intdoubles_map &m = (*it).second;
 			m[aIndex2] = v;
 		}
+		if (oSet.find(aIndex1) == oSet.end()) {
+			oSet.insert(aIndex1);
+		}
+		if (oSet.find(aIndex2) == oSet.end()) {
+			oSet.insert(aIndex2);
+		}
 	} // sync
 } // add
+const ints_set & IndivDistanceMap::indexes(void) const {
+	return (this->m_set);
+} // indexes
 void IndivDistanceMap::add(const CritItem &item) {
 	IntType i1, i2;
 	double v;

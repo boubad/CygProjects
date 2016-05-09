@@ -12,6 +12,7 @@
 //////////////////////////////////
 #include <boost/noncopyable.hpp>
 #include <boost/container/flat_map.hpp>
+/////////////////////////////////////////
 #if defined(__CYGWIN__)
 #include <mutex>
 #else
@@ -54,6 +55,7 @@ public:
 	typedef boost::container::flat_map<IntType, double> intdoubles_map;
 	typedef boost::container::flat_map<IntType, intdoubles_map> intdoubles_map_map;
 private:
+	ints_set m_set;
 	intdoubles_map_map m_data;
 #if defined(__CYGWIN__)
 	std::mutex _mutex;
@@ -65,6 +67,7 @@ public:
 	~IndivDistanceMap();
 public:
 	void clear(void);
+	const ints_set & indexes(void) const;
 	void add(const IntType i1, const IntType i2, const double v);
 	void add(const CritItem &item);
 	bool get(const IntType i1, const IntType i2, double &v) const;
