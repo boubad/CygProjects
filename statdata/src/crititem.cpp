@@ -89,7 +89,7 @@ const ints_set & IndivDistanceMap::indexes(void) const {
 	return (this->m_set);
 } // indexes
 void IndivDistanceMap::add(const CritItem &item) {
-	IntType i1, i2;
+	size_t i1, i2;
 	double v;
 	item.get(i1, i2, v);
 	this->add(i1, i2, v);
@@ -115,7 +115,7 @@ bool IndivDistanceMap::get(const IntType i1, const IntType i2,
 	return (false);
 } // get
 bool IndivDistanceMap::get(CritItem &item) const {
-	IntType i1, i2;
+	size_t i1, i2;
 	double v;
 	item.get(i1, i2, v);
 	if (this->get(i1, i2, v)) {
