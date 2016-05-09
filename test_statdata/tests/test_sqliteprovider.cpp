@@ -4,7 +4,6 @@
  *  Created on: 7 mai 2016
  *      Author: boubad
  */
-
 #include <cppunit/TestCase.h>
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
