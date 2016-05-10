@@ -6,16 +6,7 @@
  */
 #include "../include/indivcluster.h"
 ////////////////////////////////
-#include <boost/assert.hpp>
-#include <boost/foreach.hpp>
-///////////////////////////////
 namespace info {
-/*
- * size_t	   m_index;
- IIndivProvider *m_provider;
- ints_deque m_individs;
- DbValueMap m_center;
- */
 ///////////////////////////////////
 IndivCluster::IndivCluster() :
 		m_mustdelete(false), m_index(0), m_provider(nullptr), m_pdist(nullptr) {

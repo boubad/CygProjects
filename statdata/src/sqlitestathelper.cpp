@@ -3,11 +3,6 @@
 #include "../include/stringconvert.h"
 #include "../include/sqlite_statement.h"
 /////////////////////////////////////
-#include <iostream>
-////////////////////////////////////
-#include <boost/assert.hpp>
-#include <boost/foreach.hpp>
-///////////////////////////////////
 namespace info {
 	//////////////////////////////////////
 	const std::string SQLiteStatHelper::DEFAULT_DATABASE_NAME("info_sets.sqlite");

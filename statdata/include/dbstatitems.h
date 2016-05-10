@@ -2,7 +2,6 @@
 #ifndef __DBSTATITEMS_H__
 #define __DBSTATITEMS_H__
 /////////////////////////////////////////
-#include "info_constants.h"
 #include "dbvalue.h"
 /////////////////////////////////////////
 namespace info {

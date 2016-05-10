@@ -10,15 +10,6 @@
 //////////////////////////////
 #include "info_constants.h"
 //////////////////////////////////
-#include <boost/noncopyable.hpp>
-#include <boost/container/flat_map.hpp>
-/////////////////////////////////////////
-#if defined(__CYGWIN__)
-#include <mutex>
-#else
-#include <boost/thread/mutex.hpp>
-#endif //__CYGWIN__
-/////////////////////////////////
 namespace info {
 //////////////////////////////
 class IIndivProvider;
@@ -57,11 +48,7 @@ public:
 private:
 	ints_set m_set;
 	intdoubles_map_map m_data;
-#if defined(__CYGWIN__)
-	std::mutex _mutex;
-#else
-	boost::mutex _mutex;
-#endif
+	info_mutex _mutex;
 public:
 	IndivDistanceMap();
 	~IndivDistanceMap();

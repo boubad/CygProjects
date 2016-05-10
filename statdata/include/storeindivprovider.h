@@ -5,14 +5,6 @@
 #include "istorehelper.h"
 #include "indiv.h"
 ///////////////////////////////////////////
-#include <boost/noncopyable.hpp>
-///////////////////////////////////////////
-#if defined(__CYGWIN__)
-#include <mutex>
-#else
-#include <boost/thread/mutex.hpp>
-#endif //__CYGWIN__
-///////////////////////////////////////////
 namespace info {
 ////////////////////////////////
 class StoreIndivProvider: public IIndivProvider {
@@ -46,11 +38,7 @@ class SerialStoreIndivProvider: public StoreIndivProvider,
 		private boost::noncopyable {
 private:
 	size_t m_current;
-#if defined(__CYGWIN__)
-	std::mutex _mutex;
-#else
-	boost::mutex _mutex;
-#endif
+	info_mutex _mutex;
 public:
 	SerialStoreIndivProvider(IStoreHelper *pHelper, const DBStatDataset &oSet);
 	SerialStoreIndivProvider(IStoreHelper *pHelper, const std::string &setName);

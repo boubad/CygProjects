@@ -66,6 +66,13 @@ public:
 	virtual ~ISerialIndivProvider() {
 	}
 };
+/////////////////////////////////////////////
+class IFilteredIndivProvider : public IIndivProvider, public ISerialIndivProvider {
+public:
+	virtual void get_filter(variables_vector &oVars) const = 0;
+	virtual void set_filter(const variables_vector &oVars) = 0;
+	~IFilteredIndivProvider(){}
+};
 ////////////////////////////////////////////////
 }// namespace info
 ///////////////////////////////////////////////

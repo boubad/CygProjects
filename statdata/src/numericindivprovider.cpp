@@ -7,9 +7,6 @@
 
 #include "../include/numericIndivprovider.h"
 ///////////////////////////////
-#include <boost/assert.hpp>
-#include <boost/foreach.hpp>
-////////////////////////
 namespace info {
 //////////////////////////////
 static void filter_indiv(statinfos_map &filter, Indiv &oInd) {

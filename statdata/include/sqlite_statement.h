@@ -8,12 +8,8 @@
 #ifndef SQLITE_STATEMENT_H_
 #define SQLITE_STATEMENT_H_
 //////////////////////////////
-#include <vector>
 #include "dbvalue.h"
 //////////////////////////////////
-#include <boost/noncopyable.hpp>
-#include <boost/container/vector.hpp>
-/////////////////////////////////
 typedef struct sqlite3_stmt sqlite3_stmt;
 ///////////////////////////////
 namespace info {
@@ -22,8 +18,7 @@ namespace info {
 	//////////////////////////////////
 	class SQLite_Statement : private boost::noncopyable {
 		friend class SQLite_Database;
-		typedef boost::container::vector<std::string> strings_vector;
-		typedef boost::container::vector<DbValue> values_vector;
+		typedef dbvalues_vector values_vector;
 	private:
 		bool m_first;
 		SQLite_Database *m_pBase;

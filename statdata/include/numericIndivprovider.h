@@ -11,8 +11,6 @@
 #include "indiv.h"
 #include "statinfo.h"
 ////////////////////////////
-#include <boost/noncopyable.hpp>
-//////////////////////////////////
 namespace info {
 ///////////////////////////
 class NumericIndivProvider: public INumIndivProvider, private boost::noncopyable {

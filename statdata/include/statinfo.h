@@ -8,18 +8,8 @@
 #ifndef STATINFO_H_
 #define STATINFO_H_
 //////////////////////////////////////
-#include "info_constants.h"
 #include "dbvalue.h"
 //////////////////////////////////////
-#include <boost/container/flat_set.hpp>
-#include <boost/noncopyable.hpp>
-/////////////////////////////////////
-#if defined(__CYGWIN__)
-#include <mutex>
-#else
-#include <boost/thread/mutex.hpp>
-#endif //__CYGWIN__
-////////////////////////////////////
 namespace info {
 class IIndivProvider;
 ////////////////////////////////////
@@ -61,11 +51,7 @@ typedef boost::container::flat_map<IntType, StatInfo>  statinfos_map;
 class StatInfoMap : private boost::noncopyable{
 private:
 	statinfos_map m_map;
-#if defined(__CYGWIN__)
-	std::mutex _mutex;
-#else
-	boost::mutex _mutex;
-#endif
+	info_mutex _mutex;
 public:
 	StatInfoMap();
 	~StatInfoMap();

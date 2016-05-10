@@ -11,8 +11,6 @@
 #include "../include/sqlite_statement.h"
 #include "../include/stringconvert.h"
 //////////////////////////////////
-#include <boost/assert.hpp>
-/////////////////////////////
 namespace info {
 	////////////////////////////////////////////
 	void SQLite_Statement::init(SQLite_Database &oBase, const char *pszSQL) {

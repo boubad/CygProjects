@@ -2,10 +2,7 @@
 #ifndef __SQLITE_DATABASE_H__
 #define __SQLITE_DATABASE_H__
 /////////////////////////////////
-#include <string>
-#include <stdexcept>
-//////////////////////////////////////
-#include <boost/noncopyable.hpp>
+#include "info_constants.h"
 ////////////////////////////////////
 typedef struct sqlite3 sqlite3;
 ////////////////////////////////////////

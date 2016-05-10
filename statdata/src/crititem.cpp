@@ -7,8 +7,6 @@
 #include "../include/crititem.h"
 #include "../include/indiv.h"
 ////////////////////////////////
-#include <boost/assert.hpp>
-///////////////////////////////
 namespace info {
 /////////////////////////////////////
 extern void info_global_compute_distances(IIndivProvider *pProvider,
@@ -18,14 +16,15 @@ extern void info_global_compute_distances(IIndivProvider *pProvider,
 	size_t nCount = 0;
 	bool bRet = pProvider->indivs_count(nCount);
 	BOOST_ASSERT(bRet);
+	int n = (int)nCount;
 	oDistances.clear();
 	VariableMode mode = VariableMode::modeNumeric;
 #pragma omp parallel for
-	for (size_t i = 0; i < nCount; ++i) {
+	for (int i = 0; i < n; ++i) {
 		Indiv oInd1;
 		if (pProvider->find_indiv_at(i, oInd1, mode)) {
 			const IntType aIndex1 = oInd1.id();
-			for (size_t j = 0; j < i; ++j) {
+			for (int j = 0; j < i; ++j) {
 				Indiv oInd2;
 				if (pProvider->find_indiv_at(j, oInd2, mode)) {
 					const IntType aIndex2 = oInd2.id();
@@ -44,11 +43,7 @@ IndivDistanceMap::~IndivDistanceMap() {
 
 }
 void IndivDistanceMap::clear(void) {
-#if defined(__CYGWIN__)
-	std::lock_guard<std::mutex> oLock(this->_mutex);
-#else
-	boost::mutex::scoped_lock oLock(this->_mutex);
-#endif // __CYGWIN__
+	info_lock  oLock(this->_mutex);
 	this->m_data.clear();
 	this->m_set.clear();
 } // clear
@@ -61,11 +56,7 @@ void IndivDistanceMap::add(const IntType i1, const IntType i2, const double v) {
 		aIndex2 = t;
 	}
 	{
-#if defined(__CYGWIN__)
-		std::lock_guard<std::mutex> oLock(this->_mutex);
-#else
-		boost::mutex::scoped_lock oLock(this->_mutex);
-#endif // __CYGWIN__
+		info_lock  oLock(this->_mutex);
 		intdoubles_map_map &data = this->m_data;
 		ints_set &oSet = this->m_set;
 		auto it = data.find(aIndex1);

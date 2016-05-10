@@ -1,8 +1,5 @@
 #include "../include/storeindivprovider.h"
 /////////////////////////////////
-#include <boost/assert.hpp>
-#include <boost/foreach.hpp>
-/////////////////////////////////
 namespace info {
 ////////////////////////////////////////
 SerialStoreIndivProvider::SerialStoreIndivProvider(IStoreHelper *pHelper,
@@ -21,21 +18,13 @@ SerialStoreIndivProvider::SerialStoreIndivProvider(IStoreHelper *pHelper,
 
 }
 bool SerialStoreIndivProvider::reset(void) {
-#if defined(__CYGWIN__)
-	std::lock_guard < std::mutex > oLock(this->_mutex);
-#else
-	boost::mutex::scoped_lock oLock(this->_mutex);
-#endif // __CYGWIN__
+	info_lock oLock(this->_mutex);
 	this->m_current = 0;
 	return (true);
 }
 bool SerialStoreIndivProvider::next(Indiv &oInd,
 		const VariableMode mode /*= VariableMode::modeAll*/) {
-#if defined(__CYGWIN__)
-	std::lock_guard < std::mutex > oLock(this->_mutex);
-#else
-	boost::mutex::scoped_lock oLock(this->_mutex);
-#endif // __CYGWIN__
+	info_lock oLock(this->_mutex);
 	size_t nCur = this->m_current;
 	ints_vector &v = this->m_ids;
 	if (nCur >= v.size()) {

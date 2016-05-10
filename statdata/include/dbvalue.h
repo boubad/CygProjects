@@ -1,10 +1,6 @@
 #ifndef DBVALUE_H
 #define DBVALUE_H
 ///////////////////////
-#include <string>
-//////////////////////
-#include <boost/any.hpp>
-//////////////////////////////
 #include "info_constants.h"
 ////////////////////////////
 namespace info
@@ -81,6 +77,7 @@ public:
 };
 //////////////////////////////////////////
 typedef boost::container::flat_map<IntType, DbValue> DbValueMap;
+typedef boost::container::vector<DbValue> dbvalues_vector;
 //////////////////////////////////////
 } /* namespace info */
 /////////////////////////////////////////

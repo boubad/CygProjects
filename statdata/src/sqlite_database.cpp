@@ -10,8 +10,6 @@
 #include "../include/sqlite_database.h"
 #include "../include/sqlite_statement.h"
 /////////////////////////////
-#include <algorithm>
-//////////////////////////////////
 namespace info {
 	///////////////////////////////////////////////
 	static const char *SQL_COMMIT_TRANSACTION = "COMMIT TRANSACTION";
