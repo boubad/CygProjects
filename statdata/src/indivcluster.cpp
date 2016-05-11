@@ -5,8 +5,98 @@
  *      Author: boubad
  */
 #include "../include/indivcluster.h"
+#include "../include/crititem.h"
 ////////////////////////////////
 namespace info {
+////////////////////////////////////
+extern size_t info_global_clusterize_kmeans(IIndivProvider *pProvider,
+		const size_t nbClusters, indivclusters_vector &oRes,
+		const size_t nbMaxIterations /*= 100*/) {
+	BOOST_ASSERT(pProvider != nullptr);
+	BOOST_ASSERT(pProvider->is_valid());
+	BOOST_ASSERT(nbClusters > 1);
+	BOOST_ASSERT(nbMaxIterations > 0);
+	//
+	size_t nbIndivs = 0;
+	if (!pProvider->indivs_count(nbIndivs)) {
+		return (0);
+	}
+	if (nbClusters > nbIndivs) {
+		return (false);
+	}
+	oRes.resize(nbClusters);
+	info_indivs_vector oInitial;
+	if (!info::info_global_get_random_indivs(nbClusters, pProvider, oInitial)) {
+		return (0);
+	}
+	for (size_t i = 0; i < nbClusters; ++i) {
+		IndivCluster c(pProvider, i + 1);
+		c.add(oInitial[i]);
+		c.update_center();
+		oRes[i] = c;
+	} // i
+	size_t iter = 0;
+	int ni = (int) nbIndivs;
+	boost::container::flat_map<IntType, size_t> oldMap;
+	while (iter < nbMaxIterations) {
+		//
+		for (size_t i = 0; i < nbClusters; ++i) {
+			IndivCluster &c = oRes[i];
+			c.clear_members();
+		} // i
+#pragma omp parallel for
+		for (int i = 0; i < ni; ++i) {
+			CritItem oCritRes;
+			Indiv oInd;
+			if (pProvider->find_indiv(i, oInd)) {
+				for (size_t j = 0; j < nbClusters; ++j) {
+					IndivCluster &c = oRes[j];
+					double d = c.distance(oInd);
+					CritItem cur(j, j + 1, d);
+					oCritRes += cur;
+				} // j
+				std::pair<size_t, size_t> oPair;
+				oCritRes.get(oPair);
+				size_t iRes = oPair.first;
+				BOOST_ASSERT(iRes > 0);
+				BOOST_ASSERT(iRes <= nbClusters);
+				IndivCluster &cc = oRes[iRes];
+				cc.add(oInd);
+			} // ind
+		} // i
+		  //
+		boost::container::flat_map<IntType, size_t> curMap;
+		for (size_t i = 0; i < nbClusters; ++i) {
+			IndivCluster &c = oRes[i];
+			c.update_center();
+			const ints_deque & mm = c.members();
+			size_t aIndex = c.index();
+			BOOST_FOREACH(const IntType &k,mm) {
+				curMap[k] = aIndex;
+			}		  // k
+		} // i
+		if (oldMap.empty()) {
+			oldMap = curMap;
+			continue;
+		}
+		++iter;
+		//
+		bool done = true;
+		for (auto it = oldMap.begin(); it != oldMap.end(); ++it) {
+			const IntType key = (*it).first;
+			const size_t val = (*it).second;
+			BOOST_ASSERT(curMap.find(key) != curMap.end());
+			if (curMap[key] != val) {
+				done = false;
+				break;
+			}
+		} // it
+		if (done) {
+			break;
+		}
+	} // iter
+	return (iter);
+}		//info_global_clusterize_kmeans
 ///////////////////////////////////
 IndivCluster::IndivCluster() :
 		m_mustdelete(false), m_index(0), m_provider(nullptr), m_pdist(nullptr) {
@@ -25,9 +115,9 @@ IndivCluster::IndivCluster(const IndivCluster &other) :
 		m_mustdelete(false), m_index(other.m_index), m_provider(
 				other.m_provider), m_pdist(nullptr), m_individs(
 				other.m_individs), m_center(other.m_center) {
-		if (!other.m_mustdelete){
-			this->m_pdist = other.m_pdist;
-		}
+	if (!other.m_mustdelete) {
+		this->m_pdist = other.m_pdist;
+	}
 }
 IndivCluster & IndivCluster::operator=(const IndivCluster &other) {
 	if (this != &other) {
@@ -46,11 +136,11 @@ IndivCluster & IndivCluster::operator=(const IndivCluster &other) {
 	}
 	return (*this);
 }
-void IndivCluster::swap(IndivCluster &other){
+void IndivCluster::swap(IndivCluster &other) {
 	IndivCluster t(*this);
 	*this = other;
 	other = t;
-}// swap
+} // swap
 IndivCluster::~IndivCluster() {
 	if (this->m_mustdelete) {
 		delete this->m_pdist;
@@ -65,7 +155,7 @@ bool IndivCluster::is_valid(void) const {
 	return ((this->m_provider != nullptr) && (this->m_provider->is_valid()));
 }
 bool IndivCluster::get_distance(const IntType aIndex1, const IntType &aIndex2,
-		double &dRes) {
+		double &dRes) const {
 	if (this->m_pdist != nullptr) {
 		if (this->m_pdist->get(aIndex1, aIndex2, dRes)) {
 			return (true);
@@ -85,9 +175,10 @@ bool IndivCluster::get_distance(const IntType aIndex1, const IntType &aIndex2,
 	}
 	dRes = oInd1.distance(oInd2);
 	if (this->m_pdist == nullptr) {
-		this->m_pdist = new IndivDistanceMap();
-		BOOST_ASSERT(this->m_pdist != nullptr);
-		this->m_mustdelete = true;
+		IndivCluster &o = const_cast<IndivCluster &>(*this);
+		o.m_pdist = new IndivDistanceMap();
+		BOOST_ASSERT(o.m_pdist != nullptr);
+		o.m_mustdelete = true;
 	}
 	this->m_pdist->add(aIndex1, aIndex2, dRes);
 	return (true);
@@ -114,12 +205,17 @@ const DbValueMap &IndivCluster::center(void) const {
 	return (this->m_center);
 }
 double IndivCluster::distance(const Indiv &oInd) const {
-	const DbValueMap &m1 = this->m_center;
+	DbValueMap curData;
+	{
+		IndivCluster &o = const_cast<IndivCluster &>(*this);
+		info_read_lock oLock(o._mutex);
+		curData = this->m_center;
+	}
 	const DbValueMap &m2 = oInd.data();
 	double dRet = 0;
 	size_t nc = 0;
 	typedef std::pair<IntType, DbValue> MyPair;
-	BOOST_FOREACH(const MyPair &oPair, m1) {
+	BOOST_FOREACH(const MyPair &oPair, curData) {
 		const IntType key = oPair.first;
 		auto jt = m2.find(key);
 		if (jt != m2.end()) {
@@ -136,6 +232,7 @@ double IndivCluster::distance(const Indiv &oInd) const {
 	return dRet;
 }
 void IndivCluster::add(const Indiv &oInd) {
+	info_write_lock oLock(this->_mutex);
 	const IntType aIndex = oInd.id();
 	ints_deque &vv = this->m_individs;
 	for (auto it = vv.begin(); it != vv.end(); ++it) {
@@ -194,11 +291,20 @@ double IndivCluster::distance(const Indiv &oInd, ClusterDistanceMode &mode) {
 	return (0);
 } // distance
 bool IndivCluster::min_distance(const IndivCluster &other, double &dRes,
-		ClusterAppendMode &mode) {
+		ClusterAppendMode &mode) const {
 	BOOST_ASSERT(this->is_valid());
-	ints_deque &vv1 = this->m_individs;
+	ints_deque vv1, vv2;
+	{
+		IndivCluster &o = const_cast<IndivCluster &>(*this);
+		info_read_lock oLock(o._mutex);
+		vv1 = this->m_individs;
+	}
+	{
+		IndivCluster &o = const_cast<IndivCluster &>(*this);
+		info_read_lock oLock(o._mutex);
+		vv2 = other.m_individs;
+	}
 	const size_t n1 = vv1.size();
-	const ints_deque &vv2 = other.m_individs;
 	const size_t n2 = vv2.size();
 	if ((n1 < 1) || (n2 < 1)) {
 		return (false);
@@ -269,6 +375,7 @@ bool IndivCluster::min_distance(const IndivCluster &other, double &dRes,
 } // min_distance
 void IndivCluster::add(const IndivCluster &other,
 		const ClusterAppendMode mode) {
+	info_write_lock oLock(this->_mutex);
 	ints_deque &dest = this->m_individs;
 	const size_t n1 = dest.size();
 	const ints_deque &src = other.m_individs;
@@ -278,7 +385,7 @@ void IndivCluster::add(const IndivCluster &other,
 	}
 	switch (mode) {
 	case ClusterAppendMode::modeTopBottom: {
-		for (size_t i = (size_t)(n2-1); i >= 0; i--) {
+		for (size_t i = (size_t) (n2 - 1); i >= 0; i--) {
 			dest.push_front(src[i]);
 			if (i == 0) {
 				break;
@@ -299,7 +406,7 @@ void IndivCluster::add(const IndivCluster &other,
 	}
 		break;
 	case ClusterAppendMode::modeBottomBottom: {
-		for (size_t i = (size_t)(n2 - 1); i >= 0; i--) {
+		for (size_t i = (size_t) (n2 - 1); i >= 0; i--) {
 			dest.push_back(src[i]);
 			if (i == 0) {
 				break;
@@ -312,6 +419,7 @@ void IndivCluster::add(const IndivCluster &other,
 	} //mode
 } //add
 void IndivCluster::clear_members(void) {
+	info_write_lock oLock(this->_mutex);
 	this->m_individs.clear();
 } //clear_members
 void IndivCluster::update_center(void) {
@@ -323,7 +431,11 @@ void IndivCluster::update_center(void) {
 	typedef std::pair<IntType, size_t> MyPair2;
 	boost::container::flat_map<IntType, size_t> counts;
 	boost::container::flat_map<IntType, double> sommes;
-	const ints_deque &vv = this->m_individs;
+	ints_deque vv;
+	{
+		info_read_lock oLock(this->_mutex);
+		vv = this->m_individs;
+	}
 	BOOST_FOREACH(IntType aIndex, vv) {
 		Indiv oInd;
 		if (pProvider->find_indiv(aIndex, oInd, VariableMode::modeNumeric)) {
@@ -348,7 +460,7 @@ void IndivCluster::update_center(void) {
 			} // p
 		} // indiv
 	} // aIndex
-	DbValueMap &oRes = this->m_center;
+	DbValueMap oRes;
 	oRes.clear();
 	BOOST_FOREACH(const MyPair2 &p,counts) {
 		const IntType key = p.first;
@@ -357,6 +469,10 @@ void IndivCluster::update_center(void) {
 		double x = (sommes[key]) / n;
 		oRes[key] = x;
 	} //p
+	{
+		info_write_lock oLock(this->_mutex);
+		this->m_center = oRes;
+	}
 } //update_center
 
 ///////////////////////////////////////

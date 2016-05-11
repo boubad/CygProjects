@@ -1,6 +1,39 @@
 #include "../include/indiv.h"
+///////////////////////////////
+#include <algorithm>
 ////////////////////////////////
 namespace info {
+////////////////////////////////////////
+extern bool info_global_get_random_indivs(const size_t n,
+		IIndivProvider *pProvider,
+		info_indivs_vector &oVec){
+	BOOST_ASSERT(n > 0);
+	BOOST_ASSERT(pProvider != nullptr);
+	BOOST_ASSERT(pProvider->is_valid());
+	oVec.clear();
+	size_t nCount = 0;
+	if (!pProvider->indivs_count(nCount)){
+		return (false);
+	}
+	if (n > nCount){
+		return (false);
+	}
+	boost::container::vector<size_t> indexes(nCount);
+	for (size_t i = 0; i < nCount; ++i){
+		indexes[i] = i;
+	}
+	std::sort(indexes.begin(),indexes.end());
+	int nt = (int)n;
+	oVec.resize(n);
+#pragma omp parallel for
+	for (int i = 0; i < nt; ++i){
+		size_t pos = indexes[i];
+		Indiv oInd;
+		pProvider->find_indiv_at(pos,oInd);
+		oVec[i] = oInd;
+	}// i
+	return (true);
+}//info_global_get_random_indivs
 ///////////////////////////////////////////
 Indiv::Indiv() {
 }

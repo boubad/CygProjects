@@ -30,6 +30,8 @@ public:
 };
 // class Indiv
 ////////////////////////////////////////////////
+typedef boost::container::vector<Indiv> info_indivs_vector;
+////////////////////////////////////////////////
 class IIndivProvider {
 public:
 	virtual bool is_valid(void) = 0;
@@ -44,6 +46,10 @@ public:
 	}
 };
 // class IIndivProvider
+///////////////////////////////////////////////////
+extern bool info_global_get_random_indivs(const size_t n,
+		IIndivProvider *pProvider,
+		info_indivs_vector &oVec);
 /////////////////////////////////////////////////
 class StatInfo;
 class INumIndivProvider : public IIndivProvider {
