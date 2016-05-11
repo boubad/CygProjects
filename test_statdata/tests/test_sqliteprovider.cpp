@@ -9,16 +9,14 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>
 /////////////////////////////////////
-#include <boost/foreach.hpp>
-//////////////////////////////////////////
 #include <sqlitestathelper.h>
 #include <storeindivprovider.h>
 #include <statinfo.h>
 #include <numericindivprovider.h>
 #include <crititem.h>
+/////////////////////////////////////
+#include <boost/foreach.hpp>
 ///////////////////////////////////
-#include <memory>
-//////////////////////////////////
 #include "infotestdata.h"
 ////////////////////////////////
 using namespace info;
@@ -130,43 +128,43 @@ void TestSQLiteProvider::setUp(void) {
 	CPPUNIT_ASSERT(m_nbcols == oVars.size());
 	//
 	boost::container::flat_map<std::string, DBStatVariable *> pVars;
-	BOOST_FOREACH(const std::string &s, this->m_colnames){
-	std::string sigle = s;
-	std::string rsigle;
-	DBStatVariable ovar(this->m_oset, sigle);
-	ovar.get_sigle(rsigle);
-	DBStatVariable *p = nullptr;
-	for (size_t i = 0; i < oVars.size(); ++i) {
-		DBStatVariable &vv = oVars[i];
-		std::string sx;
-		vv.get_sigle(sx);
-		if (sx == rsigle) {
-			p = &vv;
-			break;
-		}
-	} // i
-	CPPUNIT_ASSERT(p != nullptr);
-	pVars[sigle] = p;
-}
+	BOOST_FOREACH(const std::string &s, this->m_colnames) {
+		std::string sigle = s;
+		std::string rsigle;
+		DBStatVariable ovar(this->m_oset, sigle);
+		ovar.get_sigle(rsigle);
+		DBStatVariable *p = nullptr;
+		for (size_t i = 0; i < oVars.size(); ++i) {
+			DBStatVariable &vv = oVars[i];
+			std::string sx;
+			vv.get_sigle(sx);
+			if (sx == rsigle) {
+				p = &vv;
+				break;
+			}
+		} // i
+		CPPUNIT_ASSERT(p != nullptr);
+		pVars[sigle] = p;
+	}
 	boost::container::flat_map<std::string, DBStatIndiv *> pInds;
-	BOOST_FOREACH(const std::string &s, this->m_rownames){
-	std::string sigle = s;
-	std::string rsigle;
-	DBStatIndiv ovar(this->m_oset, sigle);
-	ovar.get_sigle(rsigle);
-	DBStatIndiv *p = nullptr;
-	for (size_t i = 0; i < oInds.size(); ++i) {
-		DBStatIndiv &vv = oInds[i];
-		std::string sx;
-		vv.get_sigle(sx);
-		if (sx == rsigle) {
-			p = &vv;
-			break;
-		}
-	} // i
-	CPPUNIT_ASSERT(p != nullptr);
-	pInds[sigle] = p;
-}
+	BOOST_FOREACH(const std::string &s, this->m_rownames) {
+		std::string sigle = s;
+		std::string rsigle;
+		DBStatIndiv ovar(this->m_oset, sigle);
+		ovar.get_sigle(rsigle);
+		DBStatIndiv *p = nullptr;
+		for (size_t i = 0; i < oInds.size(); ++i) {
+			DBStatIndiv &vv = oInds[i];
+			std::string sx;
+			vv.get_sigle(sx);
+			if (sx == rsigle) {
+				p = &vv;
+				break;
+			}
+		} // i
+		CPPUNIT_ASSERT(p != nullptr);
+		pInds[sigle] = p;
+	}
 	values_vector oVals;
 	for (size_t i = 0; i < m_nbrows; ++i) {
 		std::string sigleind = m_rownames[i];
