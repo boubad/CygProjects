@@ -33,7 +33,10 @@
 								<option id="gnu.cpp.compiler.cygwin.lib.debug.option.debugging.level.720905749" name="Debug Level" superClass="gnu.cpp.compiler.cygwin.lib.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.dialect.std.1713377828" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" value="gnu.cpp.compiler.dialect.c++1y" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.other.other.1761185121" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0  -fopenmp -fcilkplus" valueType="string"/>
-								<option id="gnu.cpp.compiler.option.preprocessor.def.963281751" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols"/>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.963281751" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="_BSD_SOURCE"/>
+									<listOptionValue builtIn="false" value="USE_DLIB"/>
+								</option>
 								<option id="gnu.cpp.compiler.option.include.paths.1971505349" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin.1298812007" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin"/>
 							</tool>
@@ -87,7 +90,10 @@
 								<option id="gnu.cpp.compiler.cygwin.lib.release.option.debugging.level.318827445" name="Debug Level" superClass="gnu.cpp.compiler.cygwin.lib.release.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.dialect.std.470560538" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" value="gnu.cpp.compiler.dialect.c++1y" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.other.other.100683144" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0  -fopenmp -fcilkplus" valueType="string"/>
-								<option id="gnu.cpp.compiler.option.preprocessor.def.229295413" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols"/>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.229295413" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="_BSD_SOURCE"/>
+									<listOptionValue builtIn="false" value="USE_DLIB"/>
+								</option>
 								<option id="gnu.cpp.compiler.option.include.paths.1115183809" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin.1248466003" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin"/>
 							</tool>

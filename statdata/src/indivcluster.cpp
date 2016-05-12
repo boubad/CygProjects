@@ -17,8 +17,8 @@ namespace info {
 		assert(nbClusters > 1);
 		assert(nbMaxIterations > 0);
 		//
-		//typedef std::map<IntType, size_t> sizet_map;
-		//typedef std::pair<IntType, size_t> int_sizet_pair;
+		typedef std::map<IntType, size_t> sizet_map;
+		typedef std::pair<IntType, size_t> int_sizet_pair;
 		//
 		size_t nbIndivs = 0;
 		if (!pProvider->indivs_count(nbIndivs)) {
@@ -494,6 +494,77 @@ namespace info {
 			oRes[key] = x;
 		});
 	} //update_center
+	bool IndivCluster::inter_inertia(const IndivCluster &other, double dRes) const {
+		const DbValueMap &m1 = this->m_center;
+		const DbValueMap &m2 = other.m_center;
+		size_t nc = 0;
+		dRes = 0;
+		std::for_each(m1.begin(), m1.end(), [m2, &nc, &dRes](const std::pair<IntType, DbValue> &oPair) {
+			const IntType key = oPair.first;
+			const DbValue &v1 = oPair.second;
+			if (!v1.empty()) {
+				auto jt = m2.find(key);
+				if (jt != m2.end()) {
+					const DbValue &v2 = (*jt).second;
+					if (!v2.empty()) {
+						double t = v1.double_value() - v2.double_value();
+						dRes += t * t;
+						++nc;
+					}// ok
+				}// found
+			}// v1
+		});
+		if (nc > 1) {
+			dRes /= nc;
+		}
+		return (nc > 0);
+	}// inter_inertia
+	bool IndivCluster::intra_inertia(double &dRes) const {
+		IIndivProvider *pProvider = this->m_provider;
+		if (pProvider == nullptr) {
+			return (false);
+		}
+		dRes = 0;
+		size_t nbinds = 0;
+		typedef std::pair<IntType, DbValue> MyPair;
+		const ints_deque &vv = this->m_individs;
+		const DbValueMap &oCenter = this->m_center;
+		std::for_each(vv.begin(), vv.end(), [&](const IntType &aIndex) {
+			Indiv oInd;
+			if (pProvider->find_indiv(aIndex, oInd)) {
+				const DbValueMap &oMap = oInd.data();
+				double somme = 0;
+				size_t nc = 0;
+				std::for_each(oMap.begin(), oMap.end(), [&](const MyPair &p) {
+					const DbValue &v = p.second;
+					if (!v.empty()) {
+						double x = v.double_value();
+						const IntType key = p.first;
+						auto it = oCenter.find(key);
+						if (it != oCenter.end()) {
+							const DbValue &v2 = (*it).second;
+							if (!v2.empty()) {
+								double t = v.double_value() - v2.double_value();
+								somme += t * t;
+								++nc;
+							}
+						}//it
 
+					}// not empty
+					if (nc > 0) {
+						if (nc > 1) {
+							somme /= nc;
+						}
+						dRes += somme;
+						++nbinds;
+					}
+				});
+			}// ind
+		});
+		if (nbinds > 1) {
+			dRes /= nbinds;
+		}
+		return (nbinds > 0);
+	}// intra_inertia
 	///////////////////////////////////////
 } // namespace info

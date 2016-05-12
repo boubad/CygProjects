@@ -1,0 +1,6 @@
+ 8803 INFO  [0] test.main: ************ Starting Test Run 1 of 1. ************
+ 8804 INFO  [0] test.main: Running sqlitestatmanager
+ 8804 INFO  [0] test.sqlitestathelper: ENTERING sqlitestatmanage tests...
+ 8821 INFO  [0] test.main: Testing Finished
+ 8822 INFO  [0] test.main: Total number of individual testing statements executed: 3
+ 8822 INFO  [0] test.main: All tests completed successfully

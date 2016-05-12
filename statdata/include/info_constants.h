@@ -24,7 +24,7 @@
 #include "boost_inc.h"
 /////////////////////////////////////
 #if defined(USE_DLIB)
-#include <dlib/threads.h>
+#include "dlib_inc.h"
 #endif // USE_DLIB
 ////////////////////////////////////
 namespace info {
