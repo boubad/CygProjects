@@ -38,7 +38,6 @@ class SerialStoreIndivProvider: public StoreIndivProvider,
 		private boost::noncopyable {
 private:
 	size_t m_current;
-	info_mutex _mutex;
 public:
 	SerialStoreIndivProvider(IStoreHelper *pHelper, const DBStatDataset &oSet);
 	SerialStoreIndivProvider(IStoreHelper *pHelper, const std::string &setName);

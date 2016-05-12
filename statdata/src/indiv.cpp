@@ -1,15 +1,15 @@
 #include "../include/indiv.h"
 ///////////////////////////////
-#include <algorithm>
-////////////////////////////////
 namespace info {
 ////////////////////////////////////////
 extern bool info_global_get_random_indivs(const size_t n,
 		IIndivProvider *pProvider,
 		info_indivs_vector &oVec){
-	BOOST_ASSERT(n > 0);
-	BOOST_ASSERT(pProvider != nullptr);
-	BOOST_ASSERT(pProvider->is_valid());
+	assert(n > 0);
+	assert(pProvider != nullptr);
+	assert(pProvider->is_valid());
+	//
+	std::srand(unsigned(std::time(0)));
 	oVec.clear();
 	size_t nCount = 0;
 	if (!pProvider->indivs_count(nCount)){
@@ -18,15 +18,13 @@ extern bool info_global_get_random_indivs(const size_t n,
 	if (n > nCount){
 		return (false);
 	}
-	boost::container::vector<size_t> indexes(nCount);
+	std::vector<size_t> indexes(nCount);
 	for (size_t i = 0; i < nCount; ++i){
 		indexes[i] = i;
 	}
-	std::sort(indexes.begin(),indexes.end());
-	int nt = (int)n;
+	std::random_shuffle(indexes.begin(), indexes.end());
 	oVec.resize(n);
-#pragma omp parallel for
-	for (int i = 0; i < nt; ++i){
+	for (size_t i = 0; i < n; ++i){
 		size_t pos = indexes[i];
 		Indiv oInd;
 		pProvider->find_indiv_at(pos,oInd);
@@ -92,22 +90,25 @@ void Indiv::set_data(const DbValueMap &oMap) {
 	this->m_map = oMap;
 }
 double Indiv::distance(const Indiv &other) const {
-	DbValueMap m1, m2;
-	double dRet = 0;
-	this->get_data(m1);
-	other.get_data(m2);
+	const DbValueMap &m1 = this->data();
+	const DbValueMap &m2 = other.data();
 	size_t nc = 0;
-	BOOST_FOREACH(auto oPair, m1) {
+	double dRet = 0;
+	std::for_each(m1.begin(), m1.end(), [m2, &nc, &dRet](const std::pair<IntType, DbValue> &oPair) {
 		const IntType key = oPair.first;
-		auto jt = m2.find(key);
-		if (jt != m2.end()) {
-			const DbValue &v1 = oPair.second;
-			const DbValue &v2 = (*jt).second;
-			double t = v1.double_value() - v2.double_value();
-			dRet += t * t;
-			++nc;
-		} // found
-	} // oPair
+		const DbValue &v1 = oPair.second;
+		if (!v1.empty()) {
+			auto jt = m2.find(key);
+			if (jt != m2.end()) {
+				const DbValue &v2 = (*jt).second;
+				if (!v2.empty()) {
+					double t = v1.double_value() - v2.double_value();
+					dRet += t * t;
+					++nc;
+				}// ok
+			}// found
+		}// v1
+	});
 	if (nc > 1) {
 		dRet /= nc;
 	}

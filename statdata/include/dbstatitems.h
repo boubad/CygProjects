@@ -216,11 +216,11 @@ namespace info {
 		virtual void clear(void);
 	}; // class DBStatValue
 	////////////////////////////////////////////////////
-	typedef boost::container::vector<DBStatDataset> datasets_vector;
-	typedef boost::container::vector<DBStatVariable> variables_vector;
-	typedef boost::container::vector<DBStatIndiv> indivs_vector;
-	typedef boost::container::vector<DBStatValue> values_vector;
-	typedef boost::container::flat_map<IntType, DBStatVariable> variables_map;
+	typedef std::vector<DBStatDataset> datasets_vector;
+	typedef std::vector<DBStatVariable> variables_vector;
+	typedef std::vector<DBStatIndiv> indivs_vector;
+	typedef std::vector<DBStatValue> values_vector;
+	typedef std::map<IntType, DBStatVariable> variables_map;
 	////////////////////////////////////////////////////
 }// namespace info
 //////////////////////////////////////////

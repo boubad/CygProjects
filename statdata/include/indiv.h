@@ -30,7 +30,7 @@ public:
 };
 // class Indiv
 ////////////////////////////////////////////////
-typedef boost::container::vector<Indiv> info_indivs_vector;
+typedef std::vector<Indiv> info_indivs_vector;
 ////////////////////////////////////////////////
 class IIndivProvider {
 public:

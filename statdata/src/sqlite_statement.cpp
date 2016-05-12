@@ -14,8 +14,8 @@
 namespace info {
 	////////////////////////////////////////////
 	void SQLite_Statement::init(SQLite_Database &oBase, const char *pszSQL) {
-		BOOST_ASSERT(oBase.is_open());
-		BOOST_ASSERT(pszSQL != nullptr);
+		assert(oBase.is_open());
+		assert(pszSQL != nullptr);
 		//
 		this->m_pBase = &oBase;
 		this->m_pstmt = nullptr;

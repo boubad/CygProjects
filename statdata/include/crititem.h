@@ -38,17 +38,16 @@ public:
 	void swap(CritItem &other);
 };
 // class CritItem
-typedef boost::container::vector<CritItem> crititems_vector;
+typedef std::vector<CritItem> crititems_vector;
 extern size_t info_global_generate_crititems(const size_t n,crititems_vector &oRes);
 ///////////////////////////////////
 class IndivDistanceMap : private boost::noncopyable {
 public:
-	typedef boost::container::flat_map<IntType, double> intdoubles_map;
-	typedef boost::container::flat_map<IntType, intdoubles_map> intdoubles_map_map;
+	typedef std::map<IntType, double> intdoubles_map;
+	typedef std::map<IntType, intdoubles_map> intdoubles_map_map;
 private:
 	ints_set m_set;
 	intdoubles_map_map m_data;
-	info_mutex _mutex;
 public:
 	IndivDistanceMap();
 	~IndivDistanceMap();
@@ -60,6 +59,8 @@ public:
 	bool get(const IntType i1, const IntType i2, double &v) const;
 	bool get(CritItem &item) const;
 }; // class IndivDistanceMap
+///////////////////////////////////////////
+typedef IndivDistanceMap	InfoCritItems;
 ///////////////////////////////////////
 extern void info_global_compute_distances(IIndivProvider *pProvider,IndivDistanceMap &oDistances);
 //////////////////////////////////////

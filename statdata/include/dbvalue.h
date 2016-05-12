@@ -76,8 +76,8 @@ public:
     bool string_value(std::wstring &s) const;
 };
 //////////////////////////////////////////
-typedef boost::container::flat_map<IntType, DbValue> DbValueMap;
-typedef boost::container::vector<DbValue> dbvalues_vector;
+typedef std::map<IntType, DbValue> DbValueMap;
+typedef std::vector<DbValue> dbvalues_vector;
 //////////////////////////////////////
 } /* namespace info */
 /////////////////////////////////////////

@@ -39,19 +39,18 @@ public:
 	//
 	IntType key(void) const;
 	void reset(void);
-	void get_count(size_t &nCount);
-	void get_mean_var_std(double &vm, double &vv, double &vs);
-	void get_min_max(double &vmin, double &vmax);
+	void get_count(size_t &nCount) const;
+	void get_mean_var_std(double &vm, double &vv, double &vs) const;
+	void get_min_max(double &vmin, double &vmax) const;
 };
 // class StatInfo
 ////////////////////////////////////////
-typedef boost::container::flat_set<StatInfo> statinfos_set;
-typedef boost::container::flat_map<IntType, StatInfo>  statinfos_map;
+typedef std::set<StatInfo> statinfos_set;
+typedef std::map<IntType, StatInfo>  statinfos_map;
 //////////////////////////////////////////////////
 class StatInfoMap : private boost::noncopyable{
 private:
 	statinfos_map m_map;
-	info_mutex _mutex;
 public:
 	StatInfoMap();
 	~StatInfoMap();

@@ -12,8 +12,6 @@ namespace info {
 		size_t m_current;
 		variables_map	m_vars;
 		ints_set	m_filter;
-	private:
-		info_read_write_mutex _mutex;
 	protected:
 		bool find_indiv_filtered(const IntType aIndex, Indiv &oInd, const VariableMode mode = VariableMode::modeAll);
 		bool find_indiv_at_filtered(const size_t pos, Indiv &oInd, const VariableMode mode = VariableMode::modeAll);

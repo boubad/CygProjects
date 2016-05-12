@@ -32,8 +32,6 @@ private:
 	IndivDistanceMap *m_pdist;
 	ints_deque m_individs;
 	DbValueMap m_center;
-private:
-	info_read_write_mutex _mutex;
 public:
 	IndivCluster();
 	IndivCluster(IndivDistanceMap *pDist, const size_t aIndex);
@@ -49,6 +47,7 @@ public:
 	const ints_deque & members(void) const;
 	const DbValueMap &center(void) const;
 public:
+	void get_map(ints_size_t_map &oMap) const;
 	bool is_valid(void) const;
 	bool is_empty(void) const;
 	double distance(const Indiv &oInd) const;
@@ -67,11 +66,12 @@ protected:
 };
 // class IndivCluster
 ////////////////////////////////
-typedef boost::container::vector<IndivCluster> indivclusters_vector;
+typedef std::vector<IndivCluster> indivclusters_vector;
 /////////////////////////////
 extern size_t info_global_clusterize_kmeans(IIndivProvider *pProvider,
 		const size_t nbClusters,indivclusters_vector &Res,
 		const size_t nbMaxIterations = 100);
+extern void info_global_add_clusterize_result(const indivclusters_vector &oClusters, InfoCritItems &oInfos);
 /////////////////////////////
 }// namespace info
 /////////////////////////////////

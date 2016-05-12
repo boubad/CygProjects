@@ -127,7 +127,7 @@ void TestSQLiteProvider::setUp(void) {
 	CPPUNIT_ASSERT(bRet);
 	CPPUNIT_ASSERT(m_nbcols == oVars.size());
 	//
-	boost::container::flat_map<std::string, DBStatVariable *> pVars;
+	std::map<std::string, DBStatVariable *> pVars;
 	BOOST_FOREACH(const std::string &s, this->m_colnames) {
 		std::string sigle = s;
 		std::string rsigle;
@@ -146,7 +146,7 @@ void TestSQLiteProvider::setUp(void) {
 		CPPUNIT_ASSERT(p != nullptr);
 		pVars[sigle] = p;
 	}
-	boost::container::flat_map<std::string, DBStatIndiv *> pInds;
+	std::map<std::string, DBStatIndiv *> pInds;
 	BOOST_FOREACH(const std::string &s, this->m_rownames) {
 		std::string sigle = s;
 		std::string rsigle;
