@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(LoadTestConfigFile) {
 
 BOOST_AUTO_TEST_CASE(Name) {
 	int n = 5;
-	BOOST_REQUIRE(n == 4);
+	BOOST_CHECK(n == 4);
 }
 
 BOOST_AUTO_TEST_SUITE_END();
