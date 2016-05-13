@@ -47,6 +47,8 @@ public:
 	const ints_deque & members(void) const;
 	const DbValueMap &center(void) const;
 public:
+	bool intra_inertia(double &dRes) const;
+	bool inter_inertia(const IndivCluster &other, double dRes) const;
 	void get_map(ints_size_t_map &oMap) const;
 	bool is_valid(void) const;
 	bool is_empty(void) const;

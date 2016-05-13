@@ -33,7 +33,7 @@
 								<option id="gnu.cpp.compiler.option.include.paths.1860854613" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/statdata/include}&quot;"/>
 								</option>
-								<option id="gnu.cpp.compiler.option.preprocessor.def.89293435" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols"/>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.89293435" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def"/>
 								<option id="gnu.cpp.compiler.option.other.other.1103765315" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -fopenmp  -fcilkplus" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin.1852125170" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin"/>
 							</tool>
@@ -55,6 +55,7 @@
 								</option>
 								<option id="gnu.cpp.link.option.paths.1914002835" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/statdata/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;C:\cygwin64\usr\local\lib&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;C:\cygwin\usr\local\lib&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1162385413" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
@@ -109,7 +110,7 @@
 								<option id="gnu.cpp.compiler.option.include.paths.202922746" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/statdata/include}&quot;"/>
 								</option>
-								<option id="gnu.cpp.compiler.option.preprocessor.def.1879683011" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols"/>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.1879683011" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def"/>
 								<option id="gnu.cpp.compiler.option.preprocessor.undef.1193878449" name="Undefined symbols (-U)" superClass="gnu.cpp.compiler.option.preprocessor.undef" valueType="undefDefinedSymbols">
 									<listOptionValue builtIn="false" value="NDEBUG"/>
 								</option>
@@ -131,6 +132,7 @@
 								</option>
 								<option id="gnu.cpp.link.option.paths.1951753834" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/statdata/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;C:\cygwin64\usr\local\lib&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;C:\cygwin\usr\local\lib&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.462046693" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">

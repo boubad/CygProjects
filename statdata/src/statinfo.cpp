@@ -169,7 +169,6 @@ namespace info {
 		nCount = this->count;
 	}
 	void StatInfo::get_mean_var_std(double &vm, double &vv, double &vs) const {
-		//const size_t n = this->count;
 		vm = this->mean;
 		vv = this->variance;
 		vs = this->deviation;
