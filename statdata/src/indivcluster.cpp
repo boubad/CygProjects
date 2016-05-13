@@ -17,6 +17,12 @@ namespace info {
 		assert(nbClusters > 1);
 		assert(nbMaxIterations > 0);
 		//
+<<<<<<< HEAD
+=======
+		typedef std::map<IntType, size_t> sizet_map;
+		typedef std::pair<IntType, size_t> int_sizet_pair;
+		//
+>>>>>>> f762617c2acb7e1b8ebc12b50998bc0e04dc5c8e
 		size_t nbIndivs = 0;
 		if (!pProvider->indivs_count(nbIndivs)) {
 			return (0);
@@ -535,6 +541,10 @@ namespace info {
 				std::for_each(oMap.begin(), oMap.end(), [&](const MyPair &p) {
 					const DbValue &v = p.second;
 					if (!v.empty()) {
+<<<<<<< HEAD
+=======
+						double x = v.double_value();
+>>>>>>> f762617c2acb7e1b8ebc12b50998bc0e04dc5c8e
 						const IntType key = p.first;
 						auto it = oCenter.find(key);
 						if (it != oCenter.end()) {
