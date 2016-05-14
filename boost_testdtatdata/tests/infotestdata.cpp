@@ -96,6 +96,13 @@ namespace info {
 	void InfoTestData::get_mortal_name(std::string &name) {
 		name = st_mortal_name;
 	}
+	void InfoTestData::get_mortal_name(std::string &name, size_t &nRows, size_t &nCols) {
+		name = st_mortal_name;
+		nRows = st_mortal_rows;
+		assert(nRows > 1);
+		nCols = st_mortal_cols;
+		assert(nCols > 1);
+	}
 	void InfoTestData::get_conso_name(std::string &name) {
 		name = st_conso_name;
 	}
