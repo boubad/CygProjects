@@ -24,7 +24,7 @@
 #include "boost_inc.h"
 /////////////////////////////////////
 #if defined(USE_DLIB)
-#include "dlib_inc.h"
+#include <dlib/threads.h>
 #endif // USE_DLIB
 ////////////////////////////////////
 namespace info {
@@ -37,6 +37,7 @@ namespace info {
 	typedef std::deque<IntType> ints_deque;
 	typedef std::set<IntType> ints_set;
 	typedef std::vector<double> doubles_vector;
+	typedef std::map<IntType, double> ints_double_map;
 	typedef std::map<IntType, std::string> inttype_string_map;
 	typedef std::vector<std::string> strings_vector;
 	typedef std::map<IntType, size_t> ints_size_t_map;

@@ -17,12 +17,9 @@ namespace info {
 		assert(nbClusters > 1);
 		assert(nbMaxIterations > 0);
 		//
-<<<<<<< HEAD
-=======
 		typedef std::map<IntType, size_t> sizet_map;
 		typedef std::pair<IntType, size_t> int_sizet_pair;
 		//
->>>>>>> f762617c2acb7e1b8ebc12b50998bc0e04dc5c8e
 		size_t nbIndivs = 0;
 		if (!pProvider->indivs_count(nbIndivs)) {
 			return (0);
@@ -141,7 +138,7 @@ namespace info {
 	IndivCluster::IndivCluster(const IndivCluster &other) :
 		m_mustdelete(false), m_index(other.m_index), m_provider(
 			other.m_provider), m_pdist(nullptr), m_individs(
-				other.m_individs), m_center(other.m_center) {
+				other.m_individs), m_center(other.m_center), cache_dist(other.cache_dist), m_sommes(other.m_sommes), m_counts(other.m_counts) {
 		if (!other.m_mustdelete) {
 			this->m_pdist = other.m_pdist;
 		}
@@ -160,6 +157,9 @@ namespace info {
 			}
 			this->m_individs = other.m_individs;
 			this->m_center = other.m_center;
+			this->cache_dist = other.cache_dist;
+			this->m_sommes = other.m_sommes;
+			this->m_counts = other.m_counts;
 		}
 		return (*this);
 	}
@@ -208,15 +208,22 @@ namespace info {
 			return (false);
 		}
 		dRes = oInd1.distance(oInd2);
+		IndivCluster &o = const_cast<IndivCluster &>(*this);
 		if (this->m_pdist == nullptr) {
-			IndivCluster &o = const_cast<IndivCluster &>(*this);
 			o.m_pdist = new IndivDistanceMap();
 			assert(o.m_pdist != nullptr);
 			o.m_mustdelete = true;
 		}
-		this->m_pdist->add(aIndex1, aIndex2, dRes);
+		o.m_pdist->add(aIndex1, aIndex2, dRes);
 		return (true);
 	} //get_distanc
+	IndivDistanceMap *IndivCluster::distance_map(void) const {
+		return (this->m_pdist);
+	}
+	void IndivCluster::distance_map(IndivDistanceMap *pMap) {
+		this->m_pdist = pMap;
+		this->m_mustdelete = false;
+	}
 	bool IndivCluster::is_empty(void) const {
 		return (this->m_individs.empty());
 	}
@@ -239,6 +246,12 @@ namespace info {
 		return (this->m_center);
 	}
 	double IndivCluster::distance(const Indiv &oInd) const {
+		const IntType aIndex = oInd.id();
+		auto it = this->cache_dist.find(aIndex);
+		if (it != this->cache_dist.end()) {
+			double dRet = (*it).second;
+			return dRet;
+		}
 		const DbValueMap & curData = this->m_center;
 		const DbValueMap &m2 = oInd.data();
 		double dRet = 0;
@@ -262,6 +275,9 @@ namespace info {
 		if (nc > 1) {
 			dRet /= nc;
 		}
+		IndivCluster &o = const_cast<IndivCluster &>(*this);
+		ints_double_map &mm = o.cache_dist;
+		mm[aIndex] = dRet;
 		return dRet;
 	}
 	void IndivCluster::add(const Indiv &oInd) {
@@ -272,7 +288,34 @@ namespace info {
 				return;
 			}
 		} // it
+		if (!this->cache_dist.empty()) {
+			this->cache_dist.clear();
+		}
 		vv.push_back(aIndex);
+		const DbValueMap &oMap = oInd.data();
+		ints_double_map &sommes = this->m_sommes;
+		ints_size_t_map &counts = this->m_counts;
+		std::for_each(oMap.begin(), oMap.end(), [&](const std::pair<IntType, DbValue> &oPair) {
+			const DbValue &vv = oPair.second;
+			if (!vv.empty()) {
+				const double v = vv.double_value();
+				const IntType key = oPair.first;
+				size_t nCount = 1;
+				auto it = counts.find(key);
+				if (it == counts.end()) {
+					counts[key] = nCount;
+					sommes[key] = v;
+				}
+				else {
+					nCount = (*it).second;
+					++nCount;
+					counts[key] = nCount;
+					double ss = sommes[key];
+					ss += v;
+					sommes[key] = ss;
+				}
+			}// not empy
+		});
 	} // add
 	double IndivCluster::distance(const IntType aIndex, ClusterDistanceMode &mode) {
 		assert(this->is_valid());
@@ -325,7 +368,6 @@ namespace info {
 	} // distance
 	bool IndivCluster::min_distance(const IndivCluster &other, double &dRes,
 		ClusterAppendMode &mode) const {
-		assert(this->is_valid());
 		const ints_deque &vv1 = this->m_individs;
 		const ints_deque &vv2 = other.m_individs;
 		const size_t n1 = vv1.size();
@@ -446,58 +488,56 @@ namespace info {
 		default:
 			break;
 		} //mode
+		if (!this->cache_dist.empty()) {
+			this->cache_dist.clear();
+		}
+		ints_double_map &sommes1 = this->m_sommes;
+		const ints_double_map &sommes2 = other.m_sommes;
+		ints_size_t_map &counts1 = this->m_counts;
+		const ints_size_t_map &counts2 = other.m_counts;
+		std::for_each(counts2.begin(), counts2.end(), [&](const std::pair<IntType, size_t> &p) {
+			const IntType key = p.first;
+			size_t n = p.second;
+			auto jt = sommes2.find(key);
+			assert(jt != sommes2.end());
+			double v = (*jt).second;
+			auto it = counts1.find(key);
+			if (it == counts1.end()) {
+				counts1[key] = n;
+				sommes1[key] = v;
+			}
+			else {
+				size_t n1 = (*it).second;
+				n1 += n;
+				counts1[key] = n1;
+				double ss = sommes1[key];
+				ss += v;
+				sommes1[key] = ss;
+			}
+		});
 	} //add
 	void IndivCluster::clear_members(void) {
 		this->m_individs.clear();
+		this->cache_dist.clear();
+		this->m_sommes.clear();
+		this->m_counts.clear();
 	} //clear_members
 	void IndivCluster::update_center(void) {
-		IIndivProvider *pProvider = this->m_provider;
-		if (pProvider == nullptr) {
-			return;
-		}
-		typedef std::pair<IntType, DbValue> MyPair;
-		typedef std::pair<IntType, size_t> MyPair2;
-		std::map<IntType, size_t> counts;
-		std::map<IntType, double> sommes;
-		ints_deque &vv = this->m_individs;
-		std::for_each(vv.begin(), vv.end(), [&](const IntType &aIndex) {
-			Indiv oInd;
-			if (pProvider->find_indiv(aIndex, oInd)) {
-				const DbValueMap &oMap = oInd.data();
-				std::for_each(oMap.begin(), oMap.end(), [&](const MyPair &p) {
-					const DbValue &v = p.second;
-					if (!v.empty()) {
-						double x = v.double_value();
-						const IntType key = p.first;
-						auto it = counts.find(key);
-						if (it == counts.end()) {
-							counts[key] = 1;
-							sommes[key] = x;
-						}
-						else {
-							size_t nx = counts[key];
-							++nx;
-							counts[key] = nx;
-							double s = sommes[key];
-							s += x;
-							sommes[key] = s;
-						}
-					}// not empty
-				});
-			} // ind
-		});
 		DbValueMap &oRes = this->m_center;
 		oRes.clear();
-		std::for_each(counts.begin(), counts.end(), [&](MyPair2 p) {
-			IntType key = p.first;
-			size_t n = p.second;
+		ints_double_map &sommes = this->m_sommes;
+		ints_size_t_map &counts = this->m_counts;
+		std::for_each(counts.begin(), counts.end(), [&](const std::pair<IntType, size_t> &p) {
+			const IntType key = p.first;
+			const size_t n = p.second;
 			auto jt = sommes.find(key);
 			std::pair<IntType, double> p2 = *jt;
-			double x = (p2.second) / n;
+			const double x = (p2.second) / n;
 			oRes[key] = x;
 		});
+		this->cache_dist.clear();
 	} //update_center
-	bool IndivCluster::inter_inertia(const IndivCluster &other, double dRes) const {
+	bool IndivCluster::inter_inertia(const IndivCluster &other, double &dRes) const {
 		const DbValueMap &m1 = this->m_center;
 		const DbValueMap &m2 = other.m_center;
 		size_t nc = 0;
@@ -541,10 +581,7 @@ namespace info {
 				std::for_each(oMap.begin(), oMap.end(), [&](const MyPair &p) {
 					const DbValue &v = p.second;
 					if (!v.empty()) {
-<<<<<<< HEAD
-=======
 						double x = v.double_value();
->>>>>>> f762617c2acb7e1b8ebc12b50998bc0e04dc5c8e
 						const IntType key = p.first;
 						auto it = oCenter.find(key);
 						if (it != oCenter.end()) {
@@ -562,9 +599,9 @@ namespace info {
 							somme /= nc;
 						}
 						dRes += somme;
-						++nbinds;
 					}
 				});
+				++nbinds;
 			}// ind
 		});
 		if (nbinds > 1) {

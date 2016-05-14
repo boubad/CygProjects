@@ -25,10 +25,7 @@ extern bool info_global_get_random_indivs(const size_t n,
 	std::random_shuffle(indexes.begin(), indexes.end());
 	oVec.resize(n);
 	for (size_t i = 0; i < n; ++i){
-		size_t pos = indexes[i];
-		Indiv oInd;
-		pProvider->find_indiv_at(pos,oInd);
-		oVec[i] = oInd;
+		pProvider->find_indiv_at(indexes[i],oVec[i]);
 	}// i
 	return (true);
 }//info_global_get_random_indivs

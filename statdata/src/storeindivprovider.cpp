@@ -90,7 +90,7 @@ namespace info {
 				std::for_each(vv.begin(), vv.end(), [&oRes](const IntType &aId) {
 					oRes.push_back(aId);
 				});
-				offset += vv.size();
+				offset += (int)vv.size();
 			} // while
 		} // nc
 		variables_map &vv = this->m_vars;
@@ -108,7 +108,7 @@ namespace info {
 				std::for_each(v.begin(), v.end(), [&](const DBStatVariable &aId) {
 					vv[aId.id()] = aId;
 				});
-				offset += v.size();
+				offset += (int)v.size();
 			} // while
 		} // nc
 	} // init

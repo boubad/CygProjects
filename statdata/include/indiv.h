@@ -63,7 +63,7 @@ public:
 	virtual ~INumIndivProvider(){}
 };
 ////////////////////////////////////////////////
-class ISerialIndivProvider {
+class ISerialIndivProvider  {
 public:
 	virtual bool reset(void) = 0;
 	virtual bool next(Indiv &oInd, const VariableMode mode =
@@ -73,7 +73,7 @@ public:
 	}
 };
 /////////////////////////////////////////////
-class IFilteredIndivProvider : public IIndivProvider, public ISerialIndivProvider {
+class IFilteredIndivProvider : public IIndivProvider, public ISerialIndivProvider  {
 public:
 	virtual void get_filter(variables_vector &oVars) const = 0;
 	virtual void set_filter(const variables_vector &oVars) = 0;

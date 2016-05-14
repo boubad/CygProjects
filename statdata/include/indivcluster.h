@@ -32,6 +32,9 @@ private:
 	IndivDistanceMap *m_pdist;
 	ints_deque m_individs;
 	DbValueMap m_center;
+	ints_double_map cache_dist;
+	ints_double_map m_sommes;
+	ints_size_t_map m_counts;
 public:
 	IndivCluster();
 	IndivCluster(IndivDistanceMap *pDist, const size_t aIndex);
@@ -40,6 +43,8 @@ public:
 	IndivCluster & operator=(const IndivCluster &other);
 	~IndivCluster();
 public:
+	IndivDistanceMap *distance_map(void) const;
+	void distance_map(IndivDistanceMap *pMap);
 	IIndivProvider *provider(void) const;
 	void provider(IIndivProvider *pProvider);
 	void index(const size_t n);
@@ -48,7 +53,7 @@ public:
 	const DbValueMap &center(void) const;
 public:
 	bool intra_inertia(double &dRes) const;
-	bool inter_inertia(const IndivCluster &other, double dRes) const;
+	bool inter_inertia(const IndivCluster &other, double &dRes) const;
 	void get_map(ints_size_t_map &oMap) const;
 	bool is_valid(void) const;
 	bool is_empty(void) const;

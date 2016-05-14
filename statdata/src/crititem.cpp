@@ -80,7 +80,7 @@ namespace info {
 		size_t i1, i2;
 		double v;
 		item.get(i1, i2, v);
-		this->add(i1, i2, v);
+		this->add((IntType)i1, (IntType)i2, v);
 	}
 	bool IndivDistanceMap::get(const IntType i1, const IntType i2,
 		double &v) const {
@@ -106,7 +106,7 @@ namespace info {
 		size_t i1, i2;
 		double v;
 		item.get(i1, i2, v);
-		if (this->get(i1, i2, v)) {
+		if (this->get((IntType)i1, (IntType)i2, v)) {
 			item.value(v);
 			return (true);
 		}
@@ -132,7 +132,7 @@ namespace info {
 		m_first(i1), m_second(i2), m_crit(v) {
 		assert(this->m_crit >= 0);
 		if (this->m_first > this->m_second) {
-			const IntType t = this->m_first;
+			const IntType t =(IntType) this->m_first;
 			this->m_first = this->m_second;
 			this->m_second = t;
 		}

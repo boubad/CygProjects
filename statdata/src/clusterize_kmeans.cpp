@@ -2,17 +2,6 @@
 ////////////////////////////////////////
 namespace info {
 	//////////////////////////////////
-	/*
-	IIndivProvider *m_provider;
-		size_t m_nbclusters;
-		size_t m_nbmaxiterations;
-		size_t  m_nbruns;
-		double m_criteria;
-		InfoCritItems m_crititems;
-		indivclusters_vector m_clusters;
-		ints_size_t_map m_map;
-	*/
-	///////////////////////////////////////////
 	void ClusterizeKMeansCollector::process(IIndivProvider *pProvider,
 		const size_t nbClusters /*= 5*/, const size_t nbMaxIterations /*= 100 */, const size_t nbRuns /*= 100*/)
 	{
@@ -28,30 +17,26 @@ namespace info {
 		this->m_nbruns = nbRuns;
 		this->m_criteria = 0;
 		this->m_crititems.clear();
-		this->m_clusters.clear();
-		this->m_map.clear();
 		//
 		int nn = (int)nbRuns;
 		InfoCritItems &oInfos = this->m_crititems;
-//#pragma omp parallel for
+#pragma omp parallel for
 		for (int iRun = 0; iRun < nn; ++iRun) {
 			ClusterizeKMeans oCur(pProvider, nbClusters);
 			(void)oCur.compute(nbMaxIterations);
 			double crit = 0;
 			if (oCur.criteria(crit)) {
 				if (crit > 0) {
-//#pragma omp critical
+#pragma omp critical
 					{
 						oCur.add_results(oInfos);
-						if (this->m_map.empty()) {
+						if (this->is_empty()) {
 							this->m_criteria = crit;
-							this->m_clusters = oCur.clusters();
-							this->m_map = oCur.get_map();
+							this->m_object = oCur;
 						}
 						else if ((this->m_criteria > 0) && (crit < this->m_criteria)) {
 							this->m_criteria = crit;
-							this->m_clusters = oCur.clusters();
-							this->m_map = oCur.get_map();
+							this->m_object = oCur;
 						}
 					}// critical section
 				}// can reduce
@@ -68,8 +53,9 @@ namespace info {
 	double ClusterizeKMeansCollector::get_criteria(void) const {
 		return (this->m_criteria);
 	}
+	
 	size_t ClusterizeKMeansCollector::get_clusters_count(void) const {
-		return (this->m_clusters.size());
+		return (this->m_object.clusters().size());
 	}
 	size_t ClusterizeKMeansCollector::get_nbmaxiters(void) const {
 		return (this->m_nbmaxiterations);
@@ -81,10 +67,11 @@ namespace info {
 		return (this->m_crititems);
 	}
 	const indivclusters_vector &ClusterizeKMeansCollector::get_clusters(void) const {
-		return (this->m_clusters);
+		return (this->m_object.clusters());
 	}
-	const ints_size_t_map & ClusterizeKMeansCollector::get_map(void) const {
-		return (this->m_map);
+	const ints_size_t_map  ClusterizeKMeansCollector::get_map(void) const {
+		ints_size_t_map  oMap = this->m_object.get_map();
+		return oMap;;
 	}
 
 	///////////////////////////////////////////
@@ -106,7 +93,17 @@ namespace info {
 		return (*this);
 	}
 	ClusterizeKMeans::~ClusterizeKMeans() {
-
+		
+	}
+	void ClusterizeKMeans::clear(void) {
+		this->m_nbclusters = 0;
+		this->m_provider = nullptr;
+		this->m_clusters.clear();
+		this->m_map.clear();
+		this->m_center.clear();
+	}
+	bool ClusterizeKMeans::is_empty(void) const {
+		return (this->m_map.empty());
 	}
 	bool ClusterizeKMeans::is_valid(void) const {
 		return (this->m_provider != nullptr) && (this->m_provider->is_valid()) && (this->m_nbclusters > 0);
@@ -232,7 +229,7 @@ namespace info {
 			for (size_t i = 0; i < initialNbClusters; ++i) {
 				Indiv oInd;
 				size_t pos = indexes[i];
-				if (!pProvider->find_indiv(pos, oInd)) {
+				if (!pProvider->find_indiv_at(pos, oInd)) {
 					return (false);
 				}
 				IndivCluster c(pProvider, i);
@@ -243,6 +240,7 @@ namespace info {
 		}
 		size_t iter = 0;
 		while (iter < nbMaxIterations) {
+			size_t nc = clusters.size();
 			//
 			std::for_each(clusters.begin(), clusters.end(), [&](IndivCluster &c) {
 				c.clear_members();
@@ -251,7 +249,7 @@ namespace info {
 				CritItem oCritRes;
 				Indiv oInd;
 				if (pProvider->find_indiv_at(i, oInd)) {
-					for (size_t j = 0; j < initialNbClusters; ++j) {
+					for (size_t j = 0; j < nc; ++j) {
 						IndivCluster &c = clusters[j];
 						double d = c.distance(oInd);
 						CritItem cur(j, j + 1, d);
@@ -293,23 +291,20 @@ namespace info {
 				break;
 			}
 		} // iter
-		bool xDone = false;
-		while (!xDone) {
-			xDone = true;
-			for (auto it = clusters.begin(); it != clusters.end(); ++it) {
-				IndivCluster &c = *it;
-				if (c.is_empty()) {
-					clusters.erase(it);
-					xDone = true;
-					break;
-				}
-			}// it
-		}// xDone
-		oMap.clear();
-		std::for_each(clusters.begin(), clusters.end(), [&](IndivCluster &c) {
-			c.update_center();
-			c.get_map(oMap);
+		indivclusters_vector temp;
+		std::for_each(clusters.begin(), clusters.end(), [&](IndivCluster c) {
+			if (!c.is_empty()) {
+				temp.push_back(c);
+			}
 		});
+		if (temp.size() < clusters.size()) {
+			clusters = temp;
+			oMap.clear();
+			std::for_each(clusters.begin(), clusters.end(), [&](IndivCluster &c) {
+				c.update_center();
+				c.get_map(oMap);
+			});
+		}
 		this->update_center();
 		return (true);
 	}// compute
