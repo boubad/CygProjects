@@ -19,6 +19,7 @@ public:
 	virtual ~IndivProviderFixture();
 public:
 	void write_point(const info::DbValueMap &oMap,std::string &s);
+	void write_indis_map(const info::ints_size_t_map &oMap, std::string &s);
 };// class  DatabaseFixture
   //
 ///////////////////////////////////

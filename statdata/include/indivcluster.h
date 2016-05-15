@@ -25,6 +25,8 @@ enum class ClusterDistanceMode
 };
 ////////////////////////////
 class IndivCluster {
+public:
+	typedef std::vector<DbValueMap> valuemaps_vector;
 private:
 	bool m_mustdelete;
 	size_t m_index;
@@ -39,6 +41,7 @@ public:
 	IndivCluster();
 	IndivCluster(IndivDistanceMap *pDist, const size_t aIndex);
 	IndivCluster(IIndivProvider *pProvider, const size_t aIndex);
+	IndivCluster(IIndivProvider *pProvider, const size_t aIndex, const DbValueMap &oCenter);
 	IndivCluster(const IndivCluster &other);
 	IndivCluster & operator=(const IndivCluster &other);
 	~IndivCluster();

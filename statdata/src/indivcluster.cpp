@@ -135,6 +135,10 @@ namespace info {
 		m_mustdelete(false), m_index(aIndex), m_provider(pProvider), m_pdist(
 			nullptr) {
 	}
+	IndivCluster::IndivCluster(IIndivProvider *pProvider, const size_t aIndex, const DbValueMap &oCenter):
+		m_mustdelete(false), m_index(aIndex), m_provider(pProvider), m_pdist(nullptr) {
+		this->m_center = oCenter;
+	}
 	IndivCluster::IndivCluster(const IndivCluster &other) :
 		m_mustdelete(false), m_index(other.m_index), m_provider(
 			other.m_provider), m_pdist(nullptr), m_individs(

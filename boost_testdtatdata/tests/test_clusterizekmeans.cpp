@@ -12,7 +12,7 @@ using namespace info;
 BOOST_FIXTURE_TEST_SUITE(ClusterizeKMeansTestSuite, DistanceFixture)
 ;
 BOOST_AUTO_TEST_CASE(testInfoGlobalClusterize) {
-	BOOST_TEST_MESSAGE("InfoGlobalClusterizeKMeans");
+	//BOOST_TEST_MESSAGE("InfoGlobalClusterizeKMeans");
 	IIndivProvider *pProvider = m_provider.get();
 	BOOST_REQUIRE(pProvider != nullptr);
 	size_t nbClusters = 5;
@@ -21,16 +21,16 @@ BOOST_AUTO_TEST_CASE(testInfoGlobalClusterize) {
 	size_t  nbIters = info_global_clusterize_kmeans(pProvider, nbClusters, oClusters, nbMaxIters);
 	BOOST_REQUIRE(nbIters > 0);
 	BOOST_CHECK(nbIters < nbMaxIters);
-	BOOST_TEST_MESSAGE("NbIterations: " << nbIters);
+	//BOOST_TEST_MESSAGE("NbIterations: " << nbIters);
 	BOOST_FOREACH(const IndivCluster &oCluster, oClusters)
 	{
 		std::string ss;
 		this->write_point(oCluster.center(), ss);
-		BOOST_TEST_MESSAGE("Cluster: " << oCluster.index() << "\t" << ss);
+		//BOOST_TEST_MESSAGE("Cluster: " << oCluster.index() << "\t" << ss);
 	}// oCluster
 } //testInfoGlobalClusterize
 BOOST_AUTO_TEST_CASE(testClusterizeKMeans) {
-	BOOST_TEST_MESSAGE("ClusterizeKMeans");
+	//BOOST_TEST_MESSAGE("ClusterizeKMeans");
 	IIndivProvider *pProvider = m_provider.get();
 	BOOST_REQUIRE(pProvider != nullptr);
 	size_t nbClusters = 5;
@@ -49,17 +49,17 @@ BOOST_AUTO_TEST_CASE(testClusterizeKMeans) {
 	bRet = oMeans.criteria(fCrit);
 	BOOST_CHECK(bRet);
 	BOOST_CHECK(fCrit > 0);
-	BOOST_TEST_MESSAGE("Criteria: " << fCrit << "\tIntra: " << fIntra << "\tInter: " << fInter);
+	//BOOST_TEST_MESSAGE("Criteria: " << fCrit << "\tIntra: " << fIntra << "\tInter: " << fInter);
 	const indivclusters_vector & oClusters = oMeans.clusters();
 	BOOST_FOREACH(const IndivCluster &oCluster, oClusters)
 	{
 		std::string ss;
 		this->write_point(oCluster.center(), ss);
-		BOOST_TEST_MESSAGE("Cluster: " << oCluster.index() << "\t" << ss);
+		//BOOST_TEST_MESSAGE("Cluster: " << oCluster.index() << "\t" << ss);
 	}// oCluster
 } //testClusterizeKMeans
 BOOST_AUTO_TEST_CASE(testClusterizeKMeansCollector) {
-	BOOST_TEST_MESSAGE("ClusterizeKMeansCollector");
+	//BOOST_TEST_MESSAGE("ClusterizeKMeansCollector");
 	IIndivProvider *pProvider = m_provider.get();
 	BOOST_REQUIRE(pProvider != nullptr);
 	size_t nbClusters = 5;
@@ -78,13 +78,13 @@ BOOST_AUTO_TEST_CASE(testClusterizeKMeansCollector) {
 	bRet = oMeans.criteria(fCrit);
 	BOOST_CHECK(bRet);
 	BOOST_CHECK(fCrit > 0);
-	BOOST_TEST_MESSAGE("Criteria: " << fCrit << "\tIntra: " << fIntra << "\tInter: " << fInter);
+	//BOOST_TEST_MESSAGE("Criteria: " << fCrit << "\tIntra: " << fIntra << "\tInter: " << fInter);
 	const indivclusters_vector & oClusters = oMeans.clusters();
 	BOOST_FOREACH(const IndivCluster &oCluster, oClusters)
 	{
 		std::string ss;
 		this->write_point(oCluster.center(), ss);
-		BOOST_TEST_MESSAGE("Cluster: " << oCluster.index() << "\t" << ss);
+	//	BOOST_TEST_MESSAGE("Cluster: " << oCluster.index() << "\t" << ss);
 	}// oCluster
 } //testClusterizeKMeansCollector
 BOOST_AUTO_TEST_SUITE_END();

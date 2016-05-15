@@ -199,6 +199,103 @@ namespace info {
 			oRes[key] = x;
 		});
 	}// update_center
+	bool ClusterizeKMeans::compute(valuemaps_vector &oSeeds, const size_t nbMaxIterations /*= 100*/) {
+		assert(nbMaxIterations > 0);
+		if (!this->is_valid()) {
+			return (false);
+		}
+		const size_t initialNbClusters = oSeeds.size();
+		assert(initialNbClusters > 0);
+		IIndivProvider *pProvider = this->m_provider;
+		assert(pProvider != nullptr);
+		indivclusters_vector &clusters = this->m_clusters;
+		clusters.clear();
+		ints_size_t_map &oMap = this->m_map;
+		oMap.clear();
+		size_t nbIndivs = 0;
+		if (!pProvider->indivs_count(nbIndivs)) {
+			return (false);
+		}
+		if (initialNbClusters > nbIndivs) {
+			return (false);
+		}
+		{
+			for (size_t i = 0; i < initialNbClusters; ++i) {
+				const DbValueMap &oCenter = oSeeds[i];
+				IndivCluster c(pProvider, i,oCenter);
+				clusters.push_back(c);
+			} // i
+		}
+		size_t iter = 0;
+		while (iter < nbMaxIterations) {
+			size_t nc = clusters.size();
+			//
+			std::for_each(clusters.begin(), clusters.end(), [&](IndivCluster &c) {
+				c.clear_members();
+			});
+			for (size_t i = 0; i < nbIndivs; ++i) {
+				CritItem oCritRes;
+				Indiv oInd;
+				if (pProvider->find_indiv_at(i, oInd)) {
+					for (size_t j = 0; j < nc; ++j) {
+						IndivCluster &c = clusters[j];
+						double d = c.distance(oInd);
+						CritItem cur(j, j + 1, d);
+						oCritRes += cur;
+					} // j
+					std::pair<size_t, size_t> oPair;
+					oCritRes.get(oPair);
+					size_t iRes = oPair.first;
+					if ((iRes >= 0) && (iRes < initialNbClusters)) {
+						(clusters[iRes]).add(oInd);
+					}
+				} // ind
+			} // i
+			ints_size_t_map curMap;
+			std::for_each(clusters.begin(), clusters.end(), [&](IndivCluster &c) {
+				c.update_center();
+				c.get_map(curMap);
+			});
+			if (oMap.empty()) {
+				oMap = curMap;
+				continue;
+			}
+			//
+			bool done = true;
+			for (auto it = oMap.begin(); it != oMap.end(); ++it) {
+				const IntType key = (*it).first;
+				const size_t val = (*it).second;
+				if (curMap.find(key) == curMap.end()) {
+					return (false);
+				}
+				if (curMap[key] != val) {
+					done = false;
+					break;
+				}
+			} // it
+			++iter;
+			oMap = curMap;
+			if (done) {
+				break;
+			}
+		} // iter
+		indivclusters_vector temp;
+		std::for_each(clusters.begin(), clusters.end(), [&](IndivCluster c) {
+			if (!c.is_empty()) {
+				temp.push_back(c);
+			}
+		});
+		if (temp.size() < clusters.size()) {
+			clusters = temp;
+			oMap.clear();
+			std::for_each(clusters.begin(), clusters.end(), [&](IndivCluster &c) {
+				c.update_center();
+				c.get_map(oMap);
+			});
+		}
+		this->update_center();
+		return (true);
+	}// compute
 	bool ClusterizeKMeans::compute(const size_t nbMaxIterations /* = 100 */) {
 		assert(nbMaxIterations > 0);
 		if (!this->is_valid()) {

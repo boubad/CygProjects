@@ -7,6 +7,31 @@
 ////////////////////////////////
 namespace info
 {
+	////////////////////////////////////////////
+	extern bool info_global_compute_distances(const DbValueMap &m1, const DbValueMap &m2,double &dRes) {
+		dRes = 0;
+		size_t nc = 0;
+		auto iend = m2.end();
+		std::for_each(m1.begin(), m1.end(), [&](const std::pair<IntType, DbValue> &p) {
+			const DbValue &v1 = p.second;
+			if (!v1.empty()) {
+				const IntType key = p.first;
+				auto it = m2.find(key);
+				if (it != iend) {
+					const DbValue &v2 = (*it).second;
+					if (!v2.empty()) {
+						const double t = v1.double_value() - v2.double_value();
+						dRes += t * t;
+						++nc;
+					}// not empty
+				}// found
+			}// v1
+		});
+		if (nc > 1) {
+			dRes /= nc;
+		}
+		return (nc > 0);
+	}//info_global_compute_distances
 ///////////////////////////////////////////////
 DbValue::DbValue() {}
 DbValue::DbValue(bool bval) :

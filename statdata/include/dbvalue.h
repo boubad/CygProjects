@@ -78,6 +78,7 @@ public:
 //////////////////////////////////////////
 typedef std::map<IntType, DbValue> DbValueMap;
 typedef std::vector<DbValue> dbvalues_vector;
+extern bool info_global_compute_distances(const DbValueMap &m1, const DbValueMap &m2, double &dRes);
 //////////////////////////////////////
 } /* namespace info */
 /////////////////////////////////////////

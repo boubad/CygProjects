@@ -7,6 +7,8 @@
 namespace info {
 	///////////////////////////////////////
 	class ClusterizeKMeans {
+	public:
+		typedef std::vector<DbValueMap> valuemaps_vector;
 	private:
 		size_t m_nbclusters;
 		IIndivProvider *m_provider;
@@ -29,6 +31,7 @@ namespace info {
 		const indivclusters_vector & clusters(void) const;
 		const ints_size_t_map get_map(void) const;
 		const DbValueMap & center(void) const;
+		bool compute(valuemaps_vector &oSeeds, const size_t nbMaxIterations = 100);
 		bool compute(const size_t nbMaxIterations = 100);
 		bool intra_inertia(double &dRes) const;
 		bool inter_inertia(double &dRes) const;
