@@ -51,6 +51,8 @@ extern bool info_global_get_random_indivs(const size_t n,
 		IIndivProvider *pProvider,
 		info_indivs_vector &oVec);
 /////////////////////////////////////////////////
+enum class TransformationType  : short {noTransform,normalized,recoded}; // enum TranformationType
+/////////////////////////////////////////////////
 class StatInfo;
 class INumIndivProvider : public IIndivProvider {
 public:
@@ -60,6 +62,8 @@ public:
 			doubles_vector &data) = 0;
 	virtual bool find_indiv(const IntType aIndex,doubles_vector &data) = 0;
 	//
+	virtual TransformationType transformation(void) const = 0;
+	virtual void transormation(TransformationType t) = 0;
 	virtual ~INumIndivProvider(){}
 };
 ////////////////////////////////////////////////

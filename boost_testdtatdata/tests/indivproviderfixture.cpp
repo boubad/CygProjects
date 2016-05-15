@@ -6,6 +6,8 @@
  */
 #include "indivproviderfixture.h"
 #include <storeindivprovider.h>
+#include <indiv.h>
+#include <numericIndivprovider.h>
  //////////////////////////
 using namespace info;
 ////////////////////////
@@ -13,9 +15,15 @@ IndivProviderFixture::IndivProviderFixture() {
 	IStoreHelper *p = this->m_man.get();
 	assert(p != nullptr);
 	this->m_provider.reset(new StoreIndivProvider(p, this->m_oset));
-	assert(this->m_provider.get() != nullptr);
+	IIndivProvider *pProvider = this->m_provider.get();
+	assert(pProvider != nullptr);
+	NumericIndivProvider *pp = new NumericIndivProvider(pProvider,TransformationType::normalized);
+	assert(pp != nullptr);
+	this->m_pnumprovider.reset(pp);
+	assert(this->m_pnumprovider.get() != nullptr);
 }
 IndivProviderFixture::~IndivProviderFixture() {
+	this->m_pnumprovider.reset();
 	this->m_provider.reset();
 }
 void IndivProviderFixture::write_point(const DbValueMap &oMap, std::string &s) {

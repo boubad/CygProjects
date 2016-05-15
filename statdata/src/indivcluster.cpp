@@ -17,9 +17,6 @@ namespace info {
 		assert(nbClusters > 1);
 		assert(nbMaxIterations > 0);
 		//
-		typedef std::map<IntType, size_t> sizet_map;
-		typedef std::pair<IntType, size_t> int_sizet_pair;
-		//
 		size_t nbIndivs = 0;
 		if (!pProvider->indivs_count(nbIndivs)) {
 			return (0);
@@ -585,7 +582,6 @@ namespace info {
 				std::for_each(oMap.begin(), oMap.end(), [&](const MyPair &p) {
 					const DbValue &v = p.second;
 					if (!v.empty()) {
-						double x = v.double_value();
 						const IntType key = p.first;
 						auto it = oCenter.find(key);
 						if (it != oCenter.end()) {

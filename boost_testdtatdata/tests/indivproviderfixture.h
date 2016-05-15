@@ -14,6 +14,7 @@
 class IndivProviderFixture : public DatabaseFixture {
 protected:
 	std::unique_ptr<info::IIndivProvider> m_provider;
+	std::unique_ptr<info::INumIndivProvider> m_pnumprovider;
 public:
 	IndivProviderFixture ();
 	virtual ~IndivProviderFixture();

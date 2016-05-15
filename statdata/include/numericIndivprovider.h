@@ -16,10 +16,11 @@ namespace info {
 class NumericIndivProvider: public INumIndivProvider, private boost::noncopyable {
 private:
 	IIndivProvider *m_provider;
+	TransformationType m_transf;
 	statinfos_map m_stats;
 	ints_vector m_ids;
 public:
-	NumericIndivProvider(IIndivProvider *pProvider);
+	NumericIndivProvider(IIndivProvider *pProvider, TransformationType fTransf = TransformationType::noTransform);
 	virtual ~NumericIndivProvider();
 public:
 	virtual bool is_valid(void);
@@ -34,6 +35,8 @@ public:
 	virtual bool find_indiv_at(const size_t pos, IntType &aIndex,
 			doubles_vector &data);
 	virtual bool find_indiv(const IntType aIndex, doubles_vector &data);
+	virtual TransformationType transformation(void) const;
+	virtual void transormation(TransformationType t);
 };
 /////////////////////////////////
 } /* namespace info */
