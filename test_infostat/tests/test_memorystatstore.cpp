@@ -87,10 +87,10 @@ BOOST_AUTO_TEST_CASE(testValues) {
 	IStoreType::DatasetType &oSet = this->m_oset;
 	//
 	size_t count = 0;
-	int nTotal = (int)(m_nbcols * m_nbrows);
+	size_t nTotal = (size_t)(m_nbcols * m_nbrows);
 	bool bRet = pMan->find_dataset_values_count(oSet, count);
 	BOOST_CHECK(bRet);
-	BOOST_CHECK(nTotal == (size_t)count);
+	BOOST_CHECK(nTotal == count);
 	//
 	IStoreType::values_vector oVals;
 	bRet = pMan->find_dataset_values(oSet, oVals, 0, count);
