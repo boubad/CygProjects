@@ -97,6 +97,7 @@
 								<option id="gnu.cpp.compiler.option.dialect.std.821112470" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" value="gnu.cpp.compiler.dialect.c++1y" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1740654529" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_BSD_SOURCE"/>
+									<listOptionValue builtIn="false" value="NDEBUG"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.include.paths.547643438" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/infostat/include}&quot;"/>
@@ -117,6 +118,10 @@
 									<listOptionValue builtIn="false" value="boost_log_setup"/>
 									<listOptionValue builtIn="false" value="boost_log"/>
 									<listOptionValue builtIn="false" value="boost_unit_test_framework"/>
+								</option>
+								<option id="gnu.cpp.link.option.paths.339071689" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/infostat/Release}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/infosqlite/Release}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1444916951" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>

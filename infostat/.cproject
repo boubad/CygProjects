@@ -87,6 +87,7 @@
 								<option id="gnu.cpp.compiler.cygwin.lib.release.option.debugging.level.2142134064" name="Debug Level" superClass="gnu.cpp.compiler.cygwin.lib.release.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.837806155" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_BSD_SOURCE"/>
+									<listOptionValue builtIn="false" value="NDEBUG"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.dialect.std.1083940413" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" value="gnu.cpp.compiler.dialect.c++1y" valueType="enumerated"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin.1560450544" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin"/>
