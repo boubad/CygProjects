@@ -4,8 +4,11 @@
 #include <infovalue.h>
 #include <stringconvert.h>
 ////////////////////////////////////////
-//#include <iostream>
+#if defined(__CYGWIN__)
+#include <iostream>
+#else
 #include <boost/log/trivial.hpp>
+#endif
 /////////////////////////////////////
 namespace info {
 	using namespace info_sqlite;
@@ -194,11 +197,19 @@ namespace info {
 	static const char *SQL_FIND_DATASET_VARIABLES_TYPES =
 		"SELECT variableid,vartype FROM dbvariable WHERE datasetid = ?";
 	///////////////////////////////////////
-	static void log_error(const std::exception & /*err*/) {
-		//BOOST_LOG_TRIVIAL(error) << err.what();
+	static void log_error(const std::exception & err) {
+#if defined(__CYGWIN__)
+		std::cerr << "Error: " << err.what() << std::endl;
+#else
+		BOOST_LOG_TRIVIAL(error) << err.what();
+#endif// __CYGWIN__
 	}
-	static void log_error(sqlite_error &/*err*/) {
-		//BOOST_LOG_TRIVIAL(error) << "SQLite error: " << err.code() << " , " << err.what();
+	static void log_error(sqlite_error &err) {
+#if defined(__CYGWIN__)
+		std::cerr << "SQLite Error: " << err.code() << ", " << err.what() << std::endl;
+#else
+		BOOST_LOG_TRIVIAL(error) << "SQLite error: " << err.code() << " , " << err.what();
+#endif // __CYGWIN
 	}
 	static void convert_value(const std::string &stype, const boost::any &vsrc, boost::any &vRes) {
 		InfoValue v0(vsrc);
@@ -1536,7 +1547,7 @@ namespace info {
 	SQLiteStatHelper::SQLiteStatHelper(const STRINGTYPE &sDatabaseName /*= DEFAULT_DATABASE_NAME*/) {
 		try {
 			this->m_intransaction = false;
-			this->m_base = std::make_unique<SQLite_Database>(sDatabaseName);
+			this->m_base.reset(new SQLite_Database(sDatabaseName));
 			assert(this->m_base.get() != nullptr);
 			if (this->m_base->is_open()) {
 				this->check_schema();
@@ -1549,7 +1560,11 @@ namespace info {
 			log_error(ex);
 		}
 		catch (...) {
-			//BOOST_LOG_TRIVIAL(error) << "Unknown exception in open..." << std::endl;
+#if defined(__CYGWIN__)
+			std::cerr <<  "Unknown exception in open..." << std::endl;
+#else
+		BOOST_LOG_TRIVIAL(error) << "Unknown exception in open..." << std::endl;
+#endif // __CGGWIN__
 		}
 	}
 	void SQLiteStatHelper::check_schema(void) {
