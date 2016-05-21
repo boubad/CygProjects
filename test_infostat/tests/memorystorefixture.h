@@ -8,18 +8,7 @@
 ////////////////////////////////
 template <typename U>
 void test_write_map(const std::map<U,info::InfoValue> &oMap,std::string &ss){
-	std::stringstream os;
-	for (auto it = oMap.begin(); it != oMap.end(); ++it){
-		if (it != oMap.begin()){
-			os << ", ";
-		}
-		std::string s;
-		U key = (*it).first;
-		const info::InfoValue &v = (*it).second;
-		v.get_value(s);
-		os << "(" << key << "," << s << ")";
-	}// it
-	ss = os.str();
+	info::info_global_write_map(oMap,ss);
 }// test_write_map
 /////////////////////////////
 class MemoryStoreFixture {

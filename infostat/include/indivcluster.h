@@ -26,8 +26,8 @@ private:
 	indivptrs_vector m_indivs;
 	DataMap m_center;
 public:
-	IndivCluster(std::atomic_bool *pCancel = nullptr) :
-			InterruptObject(pCancel), m_index(0) {
+	IndivCluster(const IndexType aIndex = 0,std::atomic_bool *pCancel = nullptr) :
+			InterruptObject(pCancel), m_index(aIndex) {
 	}
 	IndivCluster(const IndexType aIndex, const DataMap &oMap,
 			std::atomic_bool *pCancel = nullptr) :
@@ -82,6 +82,9 @@ public:
 	bool is_empty(void) const {
 		return (this->m_indivs.empty());
 	}
+	bool empty(void) const {
+		return (this->m_indivs.empty());
+	}
 	bool add(const IndivTypePtr &oInd) {
 		if (this->check_interrupt()) {
 			return (false);
@@ -114,7 +117,7 @@ public:
 		this->add(oInd);
 		return (true);
 	}
-	void get_indivs_map(ints_sizet_map &oMap, const size_t val) const {
+	void get_indivs_map(ints_sizet_map &oMap, const size_t val = 0) const {
 		const indivptrs_vector &v = this->m_indivs;
 		oMap.clear();
 		for (auto kt = v.begin(); kt != v.end(); ++kt) {
@@ -125,7 +128,8 @@ public:
 			const IndivType *p = oInd.get();
 			if (p != nullptr) {
 				U key = p->id();
-				oMap[key] = val;
+				size_t xval = (val == 0) ? (size_t) this->m_index : val;
+				oMap[key] = xval;
 			}
 		} // kt
 	} //get_indivs_map
@@ -170,9 +174,6 @@ public:
 		return (nc > 0);
 	} // inertia
 	void update_center(void) {
-		if (this->check_interrupt()) {
-			return;
-		}
 		IndivSummator<U> summator(this->get_cancelleable_flag());
 		const indivptrs_vector &v = this->m_indivs;
 		std::for_each(v.begin(), v.end(), [&](const IndivTypePtr &oInd) {
@@ -202,10 +203,66 @@ public:
 		return info_global_compute_distance(this->m_center, other.m_center, res,
 				this->get_cancelleable_flag());
 	} // distance
-}
-;
+	template<typename XU, typename W>
+	bool distance(const std::map<XU, InfoValue> &oPoint, W &res) const {
+		return info_global_compute_distance(this->m_center, oPoint, res,
+				this->get_cancelleable_flag());
+	} // distance
+public:
+	std::ostream & write_to(std::ostream &os) const {
+		double d = 0;
+		this->inertia(d);
+		os << "{" << this->m_index << ", " << d << "," << std::endl << "[";
+		const indivptrs_vector &v = this->m_indivs;
+		for (auto it = v.begin(); it != v.end(); ++it) {
+			if (it != v.begin()) {
+				os << ", ";
+			}
+			const IndivTypePtr &oInd = *it;
+			const IndivType *p = oInd.get();
+			assert(p != nullptr);
+			os << p->id();
+		} // it
+		os << "]," << std::endl;
+		std::string s;
+		info_global_write_map(this->m_center,s);
+		os << s;
+		os << std::endl << "}";
+		return os;
+	} // write_to
+	std::wostream & write_to(std::wostream &os) const {
+		double d = 0;
+		this->inertia(d);
+		os << L"{" << this->m_index << L", " << d << L"," << std::endl << L"[";
+		const indivptrs_vector &v = this->m_indivs;
+		for (auto it = v.begin(); it != v.end(); ++it) {
+			if (it != v.begin()) {
+				os << L", ";
+			}
+			const IndivTypePtr &oInd = *it;
+			const IndivType *p = oInd.get();
+			assert(p != nullptr);
+			os << p->id();
+		} // it
+		os << L"]," << std::endl;
+		std::wstring s;
+		info_global_write_map(this->m_center,s);
+		os << s;
+		os << std::endl << L"}";
+		return os;
+	} // write_to
+};
 // clas IndivCluster<U>
 ///////////////////////////////
 }// namespace info
+/////////////////////////////////////
+template <typename U>
+inline std::ostream & operator<<(std::ostream &os, const info::IndivCluster<U> &d){
+	return d.write_to(os);
+}
+template <typename U>
+inline std::wostream & operator<<(std::wostream &os, const info::IndivCluster<U> &d){
+	return d.write_to(os);
+}
 /////////////////////////////////
 #endif // !__INDIVCLUSTER_H__

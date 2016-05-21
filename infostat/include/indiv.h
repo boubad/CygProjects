@@ -2,49 +2,10 @@
 #ifndef __INDIV_H__
 #define __INDIV_H__
 ////////////////////////////////
-#include <map>
-#include <memory>
-#include <algorithm>
-/////////////////////////////////
-#include "infovalue.h"
+#include "info_global.h"
 #include "interruptable_object.h"
 ////////////////////////////////////
 namespace info {
-//////////////////////////////////
-template<typename U1, typename U2, typename W>
-bool info_global_compute_distance(const std::map<U1, InfoValue> &oMap1,
-		const std::map<U2, InfoValue> &oMap2, W &res,
-		std::atomic_bool *pCancel = nullptr) {
-	size_t nc = 0;
-	double dRes = 0;
-	for (auto kt = oMap1.begin(); kt != oMap1.end(); ++kt) {
-		if ((pCancel != nullptr) && pCancel->load()) {
-			return (false);
-		}
-		const std::pair<U1, InfoValue> &p = *kt;
-		const InfoValue &vv1 = p.second;
-		if ((!vv1.empty()) && vv1.is_numerical()) {
-			const U2 key = (U2) p.first;
-			auto it = oMap2.find(key);
-			if (it != oMap2.end()) {
-				const InfoValue &vv2 = (*it).second;
-				if ((!vv2.empty()) && vv2.is_numerical()) {
-					double v1, v2;
-					vv1.get_value(v1);
-					vv2.get_value(v2);
-					const double tt = v1 - v2;
-					dRes += tt * tt;
-					++nc;
-				} // vv2
-			} // it
-		} // vv1
-	} // kt
-	if (nc > 1) {
-		dRes /= nc;
-	}
-	res = (W) dRes;
-	return (nc > 0);
-} //info_global_compute_distance
 //////////////////////////////////
 template<typename U>
 class IndivSummator: public InterruptObject {
@@ -123,22 +84,23 @@ public:
 // class IndivSummaror<U>
 /////////////////////////////
 template<typename U = unsigned long>
-class Indiv : public InterruptObject {
+class Indiv: public InterruptObject {
 public:
 	using IndexType = U;
 	using IndivType = Indiv<U>;
 	using DataMap = std::map<U, InfoValue>;
+	using iterator = typename DataMap::const_iterator;
 private:
 	U m_index;
 	DataMap m_center;
 public:
-	Indiv(const U aIndex = 0,std::atomic_bool *pCancel = nullptr) : InterruptObject(pCancel),
-			m_index(0) {
+	Indiv(const U aIndex = 0, std::atomic_bool *pCancel = nullptr) :
+			InterruptObject(pCancel), m_index(0) {
 	}
 	template<typename XU>
 	Indiv(const XU aIndex, const std::map<XU, InfoValue> &oMap,
-			std::atomic_bool *pCancel = nullptr) : InterruptObject(pCancel),
-			m_index((U) aIndex) {
+			std::atomic_bool *pCancel = nullptr) :
+			InterruptObject(pCancel), m_index((U) aIndex) {
 		DataMap &m = this->m_center;
 		std::for_each(oMap.begin(), oMap.end(),
 				[&m](const std::pair<XU, InfoValue> &p) {
@@ -149,8 +111,9 @@ public:
 					}
 				});
 	}
-	Indiv(IndivType &other) : InterruptObject(other),
-			m_index(other.m_index), m_center(other.m_center) {
+	Indiv(IndivType &other) :
+			InterruptObject(other), m_index(other.m_index), m_center(
+					other.m_center) {
 	}
 	IndivType & operator=(const IndivType &other) {
 		if (this != &other) {
@@ -163,6 +126,12 @@ public:
 	virtual ~Indiv() {
 	}
 public:
+	iterator begin(void) const {
+		return (this->m_center.begin());
+	}
+	iterator end(void) const {
+		return (this->m_center.end());
+	}
 	U id(void) const {
 		return (this->m_index);
 	}
@@ -173,6 +142,9 @@ public:
 		return (this->m_center);
 	}
 	bool empty(void) const {
+		return (this->m_center.empty());
+	}
+	bool is_empty(void) const {
 		return (this->m_center.empty());
 	}
 	bool has_numeric_fields(void) const {
@@ -203,6 +175,26 @@ public:
 		return (info_global_compute_distance(this->m_center, other.m_center,
 				res, this->get_cancelleable_flag()));
 	}	// distance
+	template<typename XU, typename W>
+	bool distance(const std::map<XU, InfoValue> &oPoint, W &res) const {
+		return (info_global_compute_distance(this->m_center, oPoint, res,
+				this->get_cancelleable_flag()));
+	}	// distance
+public:
+	std::ostream & write_to(std::ostream &os) const {
+		os << "{" << this->m_index << " ,[";
+		std::string s;
+		info_global_write_map(this->m_center, s);
+		os << s << "]}";
+		return os;
+	}	// write_to
+	std::wostream & write_to(std::wostream &os) const {
+		os << L"{" << this->m_index << L" ,[";
+		std::wstring s;
+		info_global_write_map(this->m_center, s);
+		os << s << L"]}";
+		return os;
+	}	// write_to
 };
 // class Indiv<U,T>
 //////////////////////////////////////
@@ -225,5 +217,14 @@ public:
 // class IIndivSource<U,T>
 ////////////////////////////////
 }// namespace info
+/////////////////////////////////////
+template <typename U>
+inline std::ostream & operator<<(std::ostream &os, const info::Indiv<U> &d){
+	return d.write_to(os);
+}
+template <typename U>
+inline std::wostream & operator<<(std::wostream &os, const info::Indiv<U> &d){
+	return d.write_to(os);
+}
 ///////////////////////////////
 #endif // !__INDIV_H__

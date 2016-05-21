@@ -6,7 +6,7 @@
  */
 #include <boost/test/unit_test.hpp>
 /////////////////////////////
-#include <treeitem.h>
+#include <treecollection.h>
 #include "storeindivprovider_fixture.h"
 #include "infotestdata.h"
 //////////////////////////////////
@@ -24,22 +24,12 @@ BOOST_AUTO_TEST_CASE(testTreeItemMean) {
 	LinkMode mode = LinkMode::linkMean;
 	//
 	IndivsTreeType oTree;
-	oTree.process(pMan, nbClusters, mode);
-	double fIntra = 0, fInter = 0, ff = 0;
-	bool bRet = oTree.get_criterias(fIntra, fInter, ff);
-	BOOST_CHECK(bRet);
-	BOOST_TEST_MESSAGE("TREE LINK MEAN");
-	BOOST_TEST_MESSAGE(
-			"fIntra: " << fIntra << " ,fInter:" << fInter << " ,ff:" << ff);
-	//
-	IndivsTreeType::datamaps_vector oVec;
-	oTree.get_centers(oVec);
-	std::for_each(oVec.begin(), oVec.end(),
-			[&](const IndivsTreeType::DataMap &oMap) {
-				std::string s;
-				test_write_map(oMap,s);
-				BOOST_TEST_MESSAGE(s);
-			});
+	oTree.link_mode(mode);
+	oTree.process(pMan, nbClusters);
+	std::stringstream os;
+	os << oTree;
+	std::string ss = os.str();
+	BOOST_TEST_MESSAGE("TREE LINK MEAN\n" << ss);
 } //testTreeItemMean
 BOOST_AUTO_TEST_CASE(testTreeItemMin) {
 	using IndivsTreeType = IndivsTree<>;
@@ -49,22 +39,12 @@ BOOST_AUTO_TEST_CASE(testTreeItemMin) {
 	LinkMode mode = LinkMode::linkMin;
 	//
 	IndivsTreeType oTree;
-	oTree.process(pMan, nbClusters, mode);
-	double fIntra = 0, fInter = 0, ff = 0;
-	bool bRet = oTree.get_criterias(fIntra, fInter, ff);
-	BOOST_CHECK(bRet);
-	BOOST_TEST_MESSAGE("TREE LINK MIN");
-	BOOST_TEST_MESSAGE(
-			"fIntra: " << fIntra << " ,fInter:" << fInter << " ,ff:" << ff);
-	//
-	IndivsTreeType::datamaps_vector oVec;
-	oTree.get_centers(oVec);
-	std::for_each(oVec.begin(), oVec.end(),
-			[&](const IndivsTreeType::DataMap &oMap) {
-				std::string s;
-				test_write_map(oMap,s);
-				BOOST_TEST_MESSAGE(s);
-			});
+	oTree.link_mode(mode);
+	oTree.process(pMan, nbClusters);
+	std::stringstream os;
+	os << oTree;
+	std::string ss = os.str();
+	BOOST_TEST_MESSAGE("TREE LINK MIN\n" << ss);
 } //testTreeItemMin
 BOOST_AUTO_TEST_CASE(testTreeItemMax) {
 	using IndivsTreeType = IndivsTree<>;
@@ -74,22 +54,12 @@ BOOST_AUTO_TEST_CASE(testTreeItemMax) {
 	LinkMode mode = LinkMode::linkMax;
 	//
 	IndivsTreeType oTree;
-	oTree.process(pMan, nbClusters, mode);
-	double fIntra = 0, fInter = 0, ff = 0;
-	bool bRet = oTree.get_criterias(fIntra, fInter, ff);
-	BOOST_CHECK(bRet);
-	BOOST_TEST_MESSAGE("TREE LINK MAX");
-	BOOST_TEST_MESSAGE(
-			"fIntra: " << fIntra << " ,fInter:" << fInter << " ,ff:" << ff);
-	//
-	IndivsTreeType::datamaps_vector oVec;
-	oTree.get_centers(oVec);
-	std::for_each(oVec.begin(), oVec.end(),
-			[&](const IndivsTreeType::DataMap &oMap) {
-				std::string s;
-				test_write_map(oMap,s);
-				BOOST_TEST_MESSAGE(s);
-			});
+	oTree.link_mode(mode);
+	oTree.process(pMan, nbClusters);
+	std::stringstream os;
+	os << oTree;
+	std::string ss = os.str();
+	BOOST_TEST_MESSAGE("TREE LINK MAX\n" << ss);
 } //testTreeItemMax
 BOOST_AUTO_TEST_SUITE_END();
 
