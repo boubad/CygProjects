@@ -31,16 +31,15 @@ BOOST_AUTO_TEST_CASE(testClusterizeMean) {
 	double fIntra = 0, fInter = 0, ff = 0;
 	bool bRet = oMan.get_criterias(fIntra, fInter, ff);
 	BOOST_CHECK(bRet);
-	BOOST_TEST_MESSAGE("CLUSTERIZE KMEANS LINKMEAN");
-	BOOST_TEST_MESSAGE(
-			"fIntra: " << fIntra << " ,fInter:" << fInter << " ,ff:" << ff);
+	//BOOST_TEST_MESSAGE("CLUSTERIZE KMEANS LINKMEAN");
+	//BOOST_TEST_MESSAGE("fIntra: " << fIntra << " ,fInter:" << fInter << " ,ff:" << ff);
 	//
 	const ClusterizeKMeansType::clusters_vector &oVec = oMan.clusters();
 	std::for_each(oVec.begin(), oVec.end(),
 			[&](const ClusterizeKMeansType::IndivClusterType &c) {
 				std::string s;
 				test_write_map(c.center(),s);
-				BOOST_TEST_MESSAGE(s);
+				//BOOST_TEST_MESSAGE(s);
 			});
 } //testClusterizeMean
 BOOST_AUTO_TEST_CASE(testClusterizeRandom) {
@@ -58,16 +57,15 @@ BOOST_AUTO_TEST_CASE(testClusterizeRandom) {
 	double fIntra = 0, fInter = 0, ff = 0;
 	bool bRet = oMan.get_criterias(fIntra, fInter, ff);
 	BOOST_CHECK(bRet);
-	BOOST_TEST_MESSAGE("CLUSTERIZE KMEANS RANDOM");
-	BOOST_TEST_MESSAGE(
-			"fIntra: " << fIntra << " ,fInter:" << fInter << " ,ff:" << ff);
+	//BOOST_TEST_MESSAGE("CLUSTERIZE KMEANS RANDOM");
+	//BOOST_TEST_MESSAGE("fIntra: " << fIntra << " ,fInter:" << fInter << " ,ff:" << ff);
 	//
 	const ClusterizeKMeansType::clusters_vector &oVec = oMan.clusters();
 	std::for_each(oVec.begin(), oVec.end(),
 			[&](const ClusterizeKMeansType::IndivClusterType &c) {
 				std::string s;
 				test_write_map(c.center(),s);
-				BOOST_TEST_MESSAGE(s);
+				//BOOST_TEST_MESSAGE(s);
 			});
 } //testClusterizeMean
 BOOST_AUTO_TEST_SUITE_END();
