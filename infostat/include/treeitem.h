@@ -4,29 +4,23 @@
 /////////////////////////////////////
 #include "indivcluster.h"
 //////////////////////////////
-#include <cassert>
-#include <vector>
-#include <atomic>
-///////////////////////////////////
-#include <boost/noncopyable.hpp>
-//////////////////////////////////////////
 namespace info {
 ////////////////////////////////////
 enum class LinkMode {
 	linkInvalid, linkMean, linkMin, linkMax
 };
 ///////////////////////////////////
-template<typename U>
+template<typename U,typename STRINGTYPE>
 class TreeItem: public InterruptObject, private boost::noncopyable {
 public:
 	using IndexType = U;
-	using IndivType = Indiv<U>;
+	using IndivType = Indiv<U,STRINGTYPE>;
 	using IndivTypePtr = std::shared_ptr<IndivType>;
 	using DataMap = std::map<U, InfoValue>;
-	using TreeItemType = TreeItem<U>;
+	using TreeItemType = TreeItem<U,STRINGTYPE>;
 	using ints_sizet_map = std::map<U, size_t>;
 	using ints_vector = std::vector<U>;
-	using IndivClusterType = IndivCluster<U>;
+	using IndivClusterType = IndivCluster<U,STRINGTYPE>;
 private:
 	TreeItemType *m_pleft;
 	TreeItemType *m_pright;
@@ -227,254 +221,6 @@ public:
 	} // distance
 };
 // class TreeItem<U>
-/////////////////////////////////////
-template<typename U = unsigned long>
-class IndivsTree: public InterruptObject, private boost::noncopyable {
-public:
-	using IndexType = U;
-	using IndivType = Indiv<U>;
-	using IndivTypePtr = std::shared_ptr<IndivType>;
-	using DataMap = std::map<U, InfoValue>;
-	using TreeItemType = TreeItem<U>;
-	using PTreeItemType = TreeItemType *;
-	using ints_sizet_map = std::map<U, size_t>;
-	using IndivClusterType = IndivCluster<U>;
-	using treeitems_vector = std::vector<PTreeItemType>;
-	using SourceType = IIndivSource<U>;
-	using clusters_vector = std::vector<IndivClusterType>;
-	using ints_vector = std::vector<U>;
-	using sizet_intsvector_map = std::map<size_t, ints_vector>;
-	using datamaps_vector = std::vector<DataMap>;
-private:
-	LinkMode m_mode;
-	size_t m_nbclusters;
-	DataMap m_center;
-	treeitems_vector m_items;
-private:
-	void clear(void) {
-		treeitems_vector &v = this->m_items;
-		for (auto it = v.begin(); it != v.end(); ++it) {
-			PTreeItemType p = *it;
-			delete p;
-		}
-		v.clear();
-		this->m_center.clear();
-	}
-	bool aggreg_one_step(void) {
-		if (this->check_interrupt()) {
-			return (false);
-		}
-		treeitems_vector & items = this->m_items;
-		const size_t n = items.size();
-		if (n <= this->m_nbclusters) {
-			return (false);
-		}
-		PTreeItemType pRes1 = nullptr;
-		PTreeItemType pRes2 = nullptr;
-		double distMin = 0;
-		const LinkMode mode = this->m_mode;
-		for (size_t i = 0; i < n; ++i) {
-			if (this->check_interrupt()) {
-				return (false);
-			}
-			PTreeItemType p1 = items[i];
-			for (size_t j = 0; j < i; ++j) {
-				PTreeItemType p2 = items[j];
-				double d = 0;
-				if (p1->distance(*p2, d, mode)) {
-					if (pRes1 == nullptr) {
-						distMin = d;
-						pRes1 = p2;
-						pRes2 = p1;
-					} else if (d < distMin) {
-						distMin = d;
-						pRes1 = p2;
-						pRes2 = p1;
-					}
-				}	  // dist
-			}	  // j
-		}	  // i
-		if (this->check_interrupt()) {
-			return (false);
-		}
-		if ((pRes1 == nullptr) || (pRes2 == nullptr)) {
-			return (false);
-		}
-		std::atomic_bool *pCancel = this->get_cancelleable_flag();
-		auto it1 = std::find(items.begin(), items.end(), pRes1);
-		assert(it1 != items.end());
-		items.erase(it1);
-		auto it2 = std::find(items.begin(), items.end(), pRes2);
-		assert(it2 != items.end());
-		items.erase(it2);
-		PTreeItemType pNew = new TreeItemType(pRes1, pRes2, pCancel);
-		assert(pNew != nullptr);
-		items.push_back(pNew);
-		assert(items.size() == (size_t )(n - 1));
-		return (true);
-	}	  // aggreg_one
-public:
-	IndivsTree(std::atomic_bool *pCancel = nullptr) :
-			InterruptObject(pCancel), m_mode(LinkMode::linkInvalid), m_nbclusters(
-					0) {
-	}
-	virtual ~IndivsTree() {
-		this->clear();
-	}
-public:
-	const DataMap & center(void) const {
-		return (this->m_center);
-	}
-	const treeitems_vector & items(void) const {
-		return (this->m_items);
-	}
-	void get_clusters(clusters_vector &oVec) const {
-		if (this->check_interrupt()) {
-			return;
-		}
-		oVec.clear();
-		const treeitems_vector &v = this->m_items;
-		const size_t n = v.size();
-		if (n > 0) {
-			oVec.resize(n);
-			std::atomic_bool *pCancel = this->get_cancelleable_flag();
-			for (size_t i = 0; i < n; ++i) {
-				if (this->check_interrupt()) {
-					return;
-				}
-				IndivClusterType &c = oVec[i];
-				c.id((U) (i + 1));
-				c.set_cancelleable_flag(pCancel);
-				const PTreeItemType p = v[i];
-				p->get_cluster(c);
-				c.update_center();
-			}	  // i
-		}	  // n
-	}	  // get_clusters
-	void get_centers(datamaps_vector &oVec) const {
-		if (this->check_interrupt()) {
-			return;
-		}
-		oVec.clear();
-		const treeitems_vector &v = this->m_items;
-		const size_t n = v.size();
-		for (size_t i = 0; i < n; ++i) {
-			if (this->check_interrupt()) {
-				return;
-			}
-			const PTreeItemType p = v[i];
-			DataMap oMap = p->center();
-			oVec.push_back(oMap);
-		}	  // i
-	}	  // get_centers
-	void get_indivs_map(ints_sizet_map &oMap) const {
-		if (this->check_interrupt()) {
-			return;
-		}
-		oMap.clear();
-		const treeitems_vector &v = this->m_items;
-		const size_t n = v.size();
-		for (size_t i = 0; i < n; ++i) {
-			if (this->check_interrupt()) {
-				return;
-			}
-			const PTreeItemType p = v[i];
-			p->get_map(oMap, (size_t) (i + 1));
-		}	  // i
-	}	  // get_map
-	void get_clusters_ids(sizet_intsvector_map &oMap) const {
-		if (this->check_interrupt()) {
-			return;
-		}
-		oMap.clear();
-		const treeitems_vector &v = this->m_items;
-		const size_t n = v.size();
-		for (size_t i = 0; i < n; ++i) {
-			if (this->check_interrupt()) {
-				return;
-			}
-			const PTreeItemType p = v[i];
-			ints_vector oo;
-			p->get_ids(oo);
-			size_t key = (size_t) (i + 1);
-			oMap[key] = oo;
-		}	  // i
-	}	  // get_clusters_ids
-	bool get_criterias(double &fIntra, double &fInter, double &ff) const {
-		if (this->check_interrupt()) {
-			return (false);
-		}
-		const treeitems_vector &v = this->m_items;
-		fIntra = 0;
-		fInter = 0;
-		ff = 0;
-		const size_t n = v.size();
-		if (n < 1) {
-			return (false);
-		}
-		std::atomic_bool *pCancel = this->get_cancelleable_flag();
-		const DataMap &oCenter = this->m_center;
-		for (size_t i = 0; i < n; ++i) {
-			if (this->check_interrupt()) {
-				return (false);
-			}
-			IndivClusterType c(pCancel);
-			const PTreeItemType p = v[i];
-			p->get_cluster(c);
-			c.update_center();
-			double d = 0;
-			if (info_global_compute_distance(oCenter, c.center(), d, pCancel)) {
-				fInter += d;
-			}
-			d = 0;
-			if (c.inertia(d)) {
-				fIntra += d;
-			}
-		} // i
-		fInter /= n;
-		fIntra /= n;
-		if (fInter > 0) {
-			ff = fIntra / fInter;
-			return (true);
-		}
-		return (false);
-	}	  // get_criterias
-	void process(SourceType *pProvider, const size_t nbClusters = 5,
-			LinkMode mode = LinkMode::linkMean, std::atomic_bool *pxCancel =
-					nullptr) {
-		assert(pProvider != nullptr);
-		assert(nbClusters > 0);
-		assert(mode != LinkMode::linkInvalid);
-		this->set_cancelleable_flag(pxCancel);
-		this->clear();
-		this->m_mode = mode;
-		this->m_nbclusters = nbClusters;
-		size_t nbIndivs = pProvider->count();
-		treeitems_vector & items = this->m_items;
-		std::atomic_bool *pCancel = this->get_cancelleable_flag();
-		IndivSummator<U> summator(pCancel);
-		for (size_t i = 0; i < nbIndivs; ++i) {
-			IndivTypePtr oInd = pProvider->get(i);
-			const IndivType *pInd = oInd.get();
-			if ((pInd != nullptr) && pInd->has_numeric_fields()) {
-				PTreeItemType p = new TreeItemType(oInd, pCancel);
-				assert(p != nullptr);
-				items.push_back(p);
-				summator.add(pInd->center());
-			}	  // ok
-		}	  // i
-		summator.get_result(this->m_center);
-		do {
-			if (this->check_interrupt()) {
-				return;
-			}
-			if (!this->aggreg_one_step()) {
-				break;
-			}
-		} while (true);
-	}	  // process
-};
-// class IndivsTree
 /////////////////////////////////////////
 }// namespace info
 ////////////////////////////////////////
