@@ -31,6 +31,22 @@ BOOST_AUTO_TEST_CASE(testTreeItemMean) {
 	std::string ss = os.str();
 	BOOST_TEST_MESSAGE("TREE LINK MEAN\n" << ss);
 } //testTreeItemMean
+BOOST_AUTO_TEST_CASE(testTreeItemMeanRecode) {
+	using IndivsTreeType = IndivsTree<>;
+	StoreIndivSourceType *pMan = m_source.get();
+	BOOST_CHECK(pMan != nullptr);
+	pMan->transformation(TransformationType::recode);
+	size_t nbClusters = 6;
+	LinkMode mode = LinkMode::linkMean;
+	//
+	IndivsTreeType oTree;
+	oTree.link_mode(mode);
+	oTree.process(pMan, nbClusters);
+	std::stringstream os;
+	os << oTree;
+	std::string ss = os.str();
+	BOOST_TEST_MESSAGE("TREE LINK MEAN RECODE\n" << ss);
+} //testTreeItemMean
 BOOST_AUTO_TEST_CASE(testTreeItemMin) {
 	using IndivsTreeType = IndivsTree<>;
 	IndivSourceType *pMan = get_source();

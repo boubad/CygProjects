@@ -13,6 +13,10 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <list>
+#include <deque>
+#include <queue>
+#include <stack>
 #include <memory>
 #include <algorithm>
 #include <iostream>
@@ -22,6 +26,9 @@
 #include <cstdlib>
 #include <ctime>
 #include <cmath>
+#include <mutex>
+#include <thread>
+#include <condition_variable>
 /////////////////////////////////
 #include "infovalue.h"
 //////////////////////////////
