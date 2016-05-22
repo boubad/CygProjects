@@ -7,7 +7,7 @@
 //////////////////////////////////////
 class StoreIndivSorceFixture : public MemoryStoreFixture {
 protected:
-	using StoreIndivSourceType = info::StoreIndivSource<>;
+	using StoreIndivSourceType = info::TranformedStoreIndivSource<>;
 	using IndivType = info::Indiv<>;
 	using IndexType = IndivType::IndexType;
 	using DataMap = IndivType::DataMap;

@@ -20,7 +20,7 @@ BOOST_AUTO_TEST_CASE(testTreeItemMean) {
 	using IndivsTreeType = IndivsTree<>;
 	IndivSourceType *pMan = get_source();
 	BOOST_CHECK(pMan != nullptr);
-	size_t nbClusters = 5;
+	size_t nbClusters = 6;
 	LinkMode mode = LinkMode::linkMean;
 	//
 	IndivsTreeType oTree;
@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(testTreeItemMin) {
 	using IndivsTreeType = IndivsTree<>;
 	IndivSourceType *pMan = get_source();
 	BOOST_CHECK(pMan != nullptr);
-	size_t nbClusters = 5;
+	size_t nbClusters = 6;
 	LinkMode mode = LinkMode::linkMin;
 	//
 	IndivsTreeType oTree;
@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(testTreeItemMax) {
 	using IndivsTreeType = IndivsTree<>;
 	IndivSourceType *pMan = get_source();
 	BOOST_CHECK(pMan != nullptr);
-	size_t nbClusters = 5;
+	size_t nbClusters = 6;
 	LinkMode mode = LinkMode::linkMax;
 	//
 	IndivsTreeType oTree;

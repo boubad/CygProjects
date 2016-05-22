@@ -10,20 +10,18 @@
 ////////////////////////////////////
 #include "indivcluster.h"
 ////////////////////////////////////
-#include <boost/noncopyable.hpp>
-/////////////////////////////////
 namespace info {
 ///////////////////////////////
-template<typename U>
+template<typename U,typename STRINGTYPE>
 class ClustersCollection: public InterruptObject, private boost::noncopyable {
 public:
 	using IndexType = U;
-	using IndivType = Indiv<U>;
+	using IndivType = Indiv<U,STRINGTYPE>;
 	using IndivTypePtr = std::shared_ptr<IndivType>;
 	using indivptrs_vector = std::vector<IndivTypePtr>;
 	using DataMap = std::map<U, InfoValue>;
 	using ints_sizet_map = std::map<U, size_t>;
-	using IndivClusterType = IndivCluster<U>;
+	using IndivClusterType = IndivCluster<U,STRINGTYPE>;
 	using SourceType = IIndivSource<U>;
 	using clusters_vector = std::vector<IndivClusterType>;
 	using ints_vector = std::vector<U>;
@@ -293,14 +291,14 @@ protected:
 ///////////////////////////////
 }// namespace info
 /////////////////////////////////////
-template<typename U>
+template<typename U,typename STRINGTYPE>
 inline std::ostream & operator<<(std::ostream &os,
-		const info::ClustersCollection<U> &d) {
+		const info::ClustersCollection<U,STRINGTYPE> &d) {
 	return d.write_to(os);
 }
-template<typename U>
+template<typename U,typename STRINGTYPE>
 inline std::wostream & operator<<(std::wostream &os,
-		const info::ClustersCollection<U> &d) {
+		const info::ClustersCollection<U,STRINGTYPE> &d) {
 	return d.write_to(os);
 }
 /////////////////////////

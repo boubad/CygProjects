@@ -14,25 +14,25 @@
 /////////////////////////////////
 namespace info {
 ////////////////////////////////////////
-template<typename U = unsigned long>
-class ClusterizeKMeans: public ClustersCollection<U> {
+template<typename U = unsigned long,typename STRINGTYPE = std::string>
+class ClusterizeKMeans: public ClustersCollection<U,STRINGTYPE> {
 public:
 	using IndexType = U;
-	using IndivType = Indiv<U>;
+	using IndivType = Indiv<U,STRINGTYPE>;
 	using IndivTypePtr = std::shared_ptr<IndivType>;
 	using indivptrs_vector = std::vector<IndivTypePtr>;
 	using DataMap = std::map<U, InfoValue>;
-	using TreeItemType = TreeItem<U>;
+	using TreeItemType = TreeItem<U,STRINGTYPE>;
 	using PTreeItemType = TreeItemType *;
 	using ints_sizet_map = std::map<U, size_t>;
-	using IndivClusterType = IndivCluster<U>;
+	using IndivClusterType = IndivCluster<U,STRINGTYPE>;
 	using treeitems_vector = std::vector<PTreeItemType>;
 	using SourceType = IIndivSource<U>;
 	using clusters_vector = std::vector<IndivClusterType>;
 	using ints_vector = std::vector<U>;
 	using sizet_intsvector_map = std::map<size_t, ints_vector>;
 	using datamaps_vector = std::vector<DataMap>;
-	using ClustersCollectionType = ClustersCollection<U>;
+	using ClustersCollectionType = ClustersCollection<U,STRINGTYPE>;
 private:
 	size_t m_niter;
 	ints_sizet_map m_map;
@@ -56,7 +56,7 @@ public:
 		for (size_t i = 0; i < nbClusters; ++i) {
 			const DataMap &oCenter = oSeeds[i];
 			U aIndex = (U) (i + 1);
-			IndivClusterType c(aIndex, oCenter, pCancel);
+			IndivClusterType c(aIndex, oCenter,STRINGTYPE(), pCancel);
 			clusters.push_back(c);
 		} // i
 		while (this->m_niter < nbIters) {

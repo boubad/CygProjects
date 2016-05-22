@@ -21,7 +21,7 @@ BOOST_AUTO_TEST_CASE(testClusterizeRandom) {
 	using ClusterizeKMeansType = ClusterizeKMeans<>;
 	IndivSourceType *pMan = get_source();
 	BOOST_CHECK(pMan != nullptr);
-	size_t nbClusters = 5;
+	size_t nbClusters = 6;
 	//LinkMode mode = LinkMode::linkMean;
 	size_t nbIters = 20;
 	//

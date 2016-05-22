@@ -14,24 +14,24 @@
 /////////////////////////////////
 namespace info {
 ///////////////////////////
-template<typename U = unsigned long>
-class IndivsTree: public ClustersCollection<U> {
+template<typename U = unsigned long,typename STRINGTYPE = std::string>
+class IndivsTree: public ClustersCollection<U,STRINGTYPE> {
 public:
 	using IndexType = U;
-	using IndivType = Indiv<U>;
+	using IndivType = Indiv<U,STRINGTYPE>;
 	using IndivTypePtr = std::shared_ptr<IndivType>;
 	using DataMap = std::map<U, InfoValue>;
-	using TreeItemType = TreeItem<U>;
+	using TreeItemType = TreeItem<U,STRINGTYPE>;
 	using PTreeItemType = TreeItemType *;
 	using ints_sizet_map = std::map<U, size_t>;
-	using IndivClusterType = IndivCluster<U>;
+	using IndivClusterType = IndivCluster<U,STRINGTYPE>;
 	using treeitems_vector = std::vector<PTreeItemType>;
 	using SourceType = IIndivSource<U>;
 	using clusters_vector = std::vector<IndivClusterType>;
 	using ints_vector = std::vector<U>;
 	using sizet_intsvector_map = std::map<size_t, ints_vector>;
 	using datamaps_vector = std::vector<DataMap>;
-	using ClustersCollectionType = ClustersCollection<U>;
+	using ClustersCollectionType = ClustersCollection<U,STRINGTYPE>;
 private:
 	LinkMode m_mode;
 	treeitems_vector m_items;
@@ -152,7 +152,7 @@ protected:
 			if (this->check_interrupt()) {
 				return (false);
 			}
-			IndivClusterType c((U) (i + 1), pCancel);
+			IndivClusterType c((U) (i + 1), STRINGTYPE(),pCancel);
 			const PTreeItemType p = v[i];
 			p->get_cluster(c);
 			c.update_center();

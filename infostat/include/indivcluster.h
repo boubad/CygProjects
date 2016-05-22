@@ -8,47 +8,54 @@
 /////////////////////////////////
 namespace info {
 ///////////////////////////////
-template<typename U = unsigned long>
+template<typename U = unsigned long, typename STRINGTYPE = std::string>
 class IndivCluster: public InterruptObject {
 public:
 	using IndexType = U;
-	using IndivType = Indiv<U>;
+	using IndivType = Indiv<U,STRINGTYPE>;
 	using DataMap = std::map<U, InfoValue>;
 	using IndivTypePtr = std::shared_ptr<IndivType>;
 	using SourceType = IIndivSource<U>;
 	using indivptrs_vector = std::vector<IndivTypePtr>;
-	using IndivClusterType = IndivCluster<U>;
+	using IndivClusterType = IndivCluster<U,STRINGTYPE>;
 	using ints_sizet_map = std::map<U, size_t>;
 	using iterator = typename indivptrs_vector::const_iterator;
 	using ints_vector = std::vector<U>;
 private:
 	IndexType m_index;
+	STRINGTYPE m_sigle;
 	indivptrs_vector m_indivs;
 	DataMap m_center;
 public:
-	IndivCluster(const IndexType aIndex = 0,std::atomic_bool *pCancel = nullptr) :
-			InterruptObject(pCancel), m_index(aIndex) {
+	IndivCluster(const IndexType aIndex = 0, const STRINGTYPE & sSigle =
+			STRINGTYPE(), std::atomic_bool *pCancel = nullptr) :
+			InterruptObject(pCancel), m_index(aIndex), m_sigle(sSigle) {
 	}
 	IndivCluster(const IndexType aIndex, const DataMap &oMap,
+			const STRINGTYPE & sSigle = STRINGTYPE(),
 			std::atomic_bool *pCancel = nullptr) :
-			InterruptObject(pCancel), m_index(aIndex), m_center(oMap) {
+			InterruptObject(pCancel), m_index(aIndex), m_sigle(sSigle), m_center(
+					oMap) {
 	}
 	IndivCluster(const IndexType aIndex, const IndivTypePtr &oInd,
+			const STRINGTYPE & sSigle = STRINGTYPE(),
 			std::atomic_bool *pCancel = nullptr) :
-			InterruptObject(pCancel), m_index(aIndex) {
+			InterruptObject(pCancel), m_index(aIndex), m_sigle(sSigle) {
 		const IndivType *p = oInd.get();
 		if (p != nullptr) {
 			this->m_center = p->center();
 		}
 	}
 	IndivCluster(const IndivClusterType &other) :
-			InterruptObject(other), m_index(other.m_index), m_indivs(
-					other.m_indivs), m_center(other.m_center) {
+			InterruptObject(other), m_index(other.m_index), m_sigle(
+					other.m_sigle), m_indivs(other.m_indivs), m_center(
+					other.m_center) {
 	}
 	IndivClusterType & operator=(const IndivClusterType &other) {
 		if (this != &other) {
 			InterruptObject::operator=(other);
 			this->m_index = other.m_index;
+			this->m_sigle = other.m_sigle;
 			this->m_indivs = other.m_indivs;
 			this->m_center = other.m_center;
 		}
@@ -62,6 +69,12 @@ public:
 	}
 	void id(const IndexType n) {
 		this->m_index = n;
+	}
+	const STRINGTYPE &sigle(void) const {
+		return (this->m_sigle);
+	}
+	void sigle(const STRINGTYPE &s) {
+		this->m_sigle = s;
 	}
 	const indivptrs_vector members(void) const {
 		return (this->m_indivs);
@@ -221,11 +234,11 @@ public:
 			const IndivTypePtr &oInd = *it;
 			const IndivType *p = oInd.get();
 			assert(p != nullptr);
-			os << p->id();
+			os << p->sigle();
 		} // it
 		os << "]," << std::endl;
 		std::string s;
-		info_global_write_map(this->m_center,s);
+		info_global_write_map(this->m_center, s);
 		os << s;
 		os << std::endl << "}";
 		return os;
@@ -242,11 +255,11 @@ public:
 			const IndivTypePtr &oInd = *it;
 			const IndivType *p = oInd.get();
 			assert(p != nullptr);
-			os << p->id();
+			os << p->sigle();
 		} // it
 		os << L"]," << std::endl;
 		std::wstring s;
-		info_global_write_map(this->m_center,s);
+		info_global_write_map(this->m_center, s);
 		os << s;
 		os << std::endl << L"}";
 		return os;
@@ -256,12 +269,14 @@ public:
 ///////////////////////////////
 }// namespace info
 /////////////////////////////////////
-template <typename U>
-inline std::ostream & operator<<(std::ostream &os, const info::IndivCluster<U> &d){
+template<typename U, typename STRINGTYPE>
+inline std::ostream & operator<<(std::ostream &os,
+		const info::IndivCluster<U, STRINGTYPE> &d) {
 	return d.write_to(os);
 }
-template <typename U>
-inline std::wostream & operator<<(std::wostream &os, const info::IndivCluster<U> &d){
+template<typename U, typename STRINGTYPE>
+inline std::wostream & operator<<(std::wostream &os,
+		const info::IndivCluster<U, STRINGTYPE> &d) {
 	return d.write_to(os);
 }
 /////////////////////////////////

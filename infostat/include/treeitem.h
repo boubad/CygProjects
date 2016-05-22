@@ -10,17 +10,17 @@ enum class LinkMode {
 	linkInvalid, linkMean, linkMin, linkMax
 };
 ///////////////////////////////////
-template<typename U>
+template<typename U,typename STRINGTYPE>
 class TreeItem: public InterruptObject, private boost::noncopyable {
 public:
 	using IndexType = U;
-	using IndivType = Indiv<U>;
+	using IndivType = Indiv<U,STRINGTYPE>;
 	using IndivTypePtr = std::shared_ptr<IndivType>;
 	using DataMap = std::map<U, InfoValue>;
-	using TreeItemType = TreeItem<U>;
+	using TreeItemType = TreeItem<U,STRINGTYPE>;
 	using ints_sizet_map = std::map<U, size_t>;
 	using ints_vector = std::vector<U>;
-	using IndivClusterType = IndivCluster<U>;
+	using IndivClusterType = IndivCluster<U,STRINGTYPE>;
 private:
 	TreeItemType *m_pleft;
 	TreeItemType *m_pright;

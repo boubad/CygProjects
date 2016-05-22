@@ -21,6 +21,7 @@
 #include <tuple>
 #include <cstdlib>
 #include <ctime>
+#include <cmath>
 /////////////////////////////////
 #include "infovalue.h"
 //////////////////////////////
