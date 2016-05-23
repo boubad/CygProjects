@@ -11,86 +11,23 @@
 ////////////////////////////////
 #include "crititem.h"
 #include "interruptable_object.h"
+#include "matcomputeparams.h"
 ////////////////////////////////////
 namespace info {
 /////////////////////////////////
-template<typename U, typename W>
-class MatComputeParams {
-public:
-	using ints_vector = std::vector<U>;
-	using sizets_vector = std::vector<size_t>;
-	using DistanceMapType = DistanceMap<U,W>;
-	using MatComputeParamsType = MatComputeParams<U,W>;
-private:
-	const DistanceMapType *m_pdistances;
-	const ints_vector *m_pids;
-public:
-	MatComputeParams(const ints_vector *pids, const DistanceMapType *pdist) :
-			m_pdistances(pdist), m_pids(pids) {
-		assert(this->m_pdistances != nullptr);
-		assert(this->m_pids != nullptr);
-	}
-	MatComputeParams(const MatComputeParamsType &other) :
-			m_pdistances(other.m_pdistances), m_pids(other.m_pids) {
-	}
-	MatComputeParamsType & operator=(const MatComputeParamsType &other) {
-		if (this != &other) {
-			this->m_pdistances = other.m_pdistances;
-			this->m_pids = other.m_pids;
-		}
-		return (*this);
-	}
-	virtual ~MatComputeParams() {
-	}
-public:
-	size_t size(void) const {
-		assert(this->m_pids != nullptr);
-		return (this->m_pids->size());
-	}
-	W distance(const size_t i1, const size_t i2) const {
-		assert(this->m_pdistances != nullptr);
-		assert(this->m_pids != nullptr);
-		const ints_vector &oIds = *(this->m_pids);
-		assert(i1 < oIds.size());
-		assert(i2 < oIds.size());
-		const U aIndex1 = oIds[i1];
-		const U aIndex2 = oIds[i2];
-		W dRet = 0;
-		this->m_pdistances->get(aIndex1, aIndex2, dRet);
-		return (dRet);
-	}
-	W criteria(const sizets_vector &indexes) const {
-		const size_t n = indexes.size();
-		W dRet = 0;
-		if (n < 2) {
-			return (0);
-		}
-		const size_t nx = (size_t) (n - 1);
-		for (size_t i = 0; i < nx; ++i) {
-			const size_t i1 = indexes[i];
-			const size_t i2 = indexes[i + 1];
-			dRet = (W) (dRet + this->distance(i1, i2));
-		} // i
-		return (dRet);
-	} // criteria
-	W operator()(const size_t i1, const size_t i2) const {
-		return (this->distance(i1, i2));
-	}
-	W operator()(const sizets_vector &indexes) const {
-		return (this->criteria(indexes));
-	}
-};
-// class MatComputeParams<U,W>
-////////////////////////////
-template<typename U = unsigned long, typename W = double>
+template<typename U = unsigned long, typename DISTANCETYPE = long,
+		typename STRINGTYPE = std::string>
 class MatItem: public InterruptObject {
 public:
+	using IndexType = U;
+	using sizets_pair = std::pair<size_t,size_t>;
+	using pairs_queue = std::queue<sizets_pair>;
 	using sizets_vector = std::vector<size_t>;
-	using MatComputeParamsType = MatComputeParams<U,W>;
-	using MatItemType = MatItem<U,W>;
+	using MatComputeParamsType = MatComputeParams<IndexType,DISTANCETYPE,STRINGTYPE>;
+	using MatItemType = MatItem<IndexType,DISTANCETYPE,STRINGTYPE>;
 private:
 	const MatComputeParamsType *m_params;
-	W m_criteria;
+	DISTANCETYPE m_criteria;
 	sizets_vector m_indexes;
 public:
 	MatItem(const MatComputeParamsType *pParams, std::atomic_bool *pCancel =
@@ -154,11 +91,14 @@ public:
 		}
 		return (false);
 	} // try_permute
-	bool find_best_try(size_t &i1, size_t &i2, W &crit) const {
+	bool find_best_try(pairs_queue &q, W &crit) const {
+		while (!q.empty()) {
+			q.pop();
+		}
+		const MatComputeParamsType pParams = this->*m_params;
 		crit = this->m_criteria;
 		const sizets_vector &indexes = this->m_indexes;
 		const size_t n = indexes.size();
-		bool bPermuted = false;
 		for (size_t i = 0; i < n; ++i) {
 			if (this->check_interrupt()) {
 				return (false);
@@ -167,33 +107,75 @@ public:
 				if (this->check_interrupt()) {
 					return (false);
 				}
-				if (this->try_permute(i, j, crit)) {
-					i1 = i;
-					i2 = j;
-					bPermuted = true;
+				sizets_vector temp(indexes);
+				const size_t tt = temp[i];
+				temp[i] = temp[j];
+				temp[j] = tt;
+				W c = pParams->criteria(temp);
+				if (c < crit) {
+					while (!q.empty()) {
+						q.pop();
+					}
+					q.push(std::make_pair(i, j));
+					crit = c;
+				} else if (c == crit) {
+					if (!q.empty()) {
+						q.push(std::make_pair(i, j));
+					}
 				}
 			} // j
 		} // i
-		return (bPermuted);
+		return (!q.empty());
 	} //find_best_try
 	bool permute() {
+		const MatComputeParamsType *pParams = this->m_params;
+		std::atomic_bool *pCancel = this->get_cancelleable_flag();
 		do {
 			if (this->check_interrupt()) {
 				return (false);
 			}
-			size_t i1 = 0, i2 = 0;
+			pairs_queue q;
 			W crit = 0;
-			if (!this->find_best_try(i1,i2,crit)){
+			if (!this->find_best_try(q, crit)) {
 				break;
 			}
-			if (i1 == i2){
-				break;
+			if (this->check_interrupt()) {
+				return (false);
 			}
-			sizets_vector &indexes = this->m_indexes;
-			const size_t tt = indexes[i1];
-			indexes[i1] = indexes[i2];
-			indexes[i2] = tt;
-			this->m_criteria = crit;
+			sizets_vector best_indexes;
+			W bestCrit = crit;
+			while (!q.empty()) {
+				if (this->check_interrupt()) {
+					return (false);
+				}
+				sizets_pair p = q.front();
+				q.pop();
+				size_t i1 = p.first;
+				size_t i2 = p.second;
+				if (i1 == i2) {
+					continue;
+				}
+				sizets_vector &indexes = this->m_indexes;
+				sizets_vector temp(indexes);
+				const size_t tt = temp[i1];
+				temp[i1] = temp[i2];
+				temp[i2] = tt;
+				MatItem oMat(pParams, temp, pCancel);
+				oMat.permute();
+				if (this->check_interrupt()) {
+					return (false);
+				}
+				W cc = oMat.criteria();
+				if (best_indexes.empty()) {
+					bestCrit = cc;
+					best_indexes = oMat.indexes();
+				} else if (cc < bestCrit) {
+					bestCrit = cc;
+					best_indexes = oMat.indexes();
+				}
+			} // while
+			this->m_indexes = best_indexes;
+			this->m_criteria = bestCrit;
 		} while (true);
 		return ((this->check_interrupt()) ? false : true);
 	} // permute
