@@ -77,6 +77,10 @@ public:
 	virtual ~ArrangeIndivs() {
 	}
 public:
+	const DistanceMapType & distances_map(void) const {
+		return (this->m_distanceMap);
+	}
+protected:
 	virtual void clear(void) {
 		ClustersCollectionType::clear();
 		this->m_distanceMap.clear();

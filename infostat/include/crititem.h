@@ -18,7 +18,7 @@ enum class ClusterMergeMode {
 };
 ////////////////////////////////////////
 template<typename U = unsigned long, typename W = double>
-class CritItem: private boost::noncopyable {
+class CritItem {
 public:
 	using CritItemType = CritItem<U,W>;
 	using crititems_vector = std::vector<CritItemType>;
