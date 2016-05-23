@@ -12,7 +12,7 @@
 ////////////////////////////////////
 namespace info {
 ///////////////////////////////
-template<typename U,typename STRINGTYPE>
+template<typename U, typename STRINGTYPE>
 class ClustersCollection: public InterruptObject, private boost::noncopyable {
 public:
 	using IndexType = U;
@@ -139,7 +139,10 @@ public:
 	} // process
 	virtual ~ClustersCollection() {
 	}
-public:
+	DataMap & center(void) {
+		return (this->m_center);
+	}
+protected:
 	ClustersCollection(std::atomic_bool *pCancel = nullptr) :
 			InterruptObject(pCancel), m_provider(nullptr), m_nbclusters(0), m_nbindivs(
 					0), m_nbmaxiters(100), m_finter(0), m_fintra(0), m_ff(0) {
@@ -153,14 +156,14 @@ public:
 	size_t get_nbClusters(void) const {
 		return (this->m_nbclusters);
 	}
-	size_t get_nbMawIters(void) const {
+	size_t get_nbMaxIters(void) const {
 		return (this->m_nbmaxiters);
 	}
 	clusters_vector & clusters(void) {
 		return (this->m_clusters);
 	}
-	DataMap & center(void) {
-		return (this->m_center);
+	void set_clusters(const clusters_vector &v) {
+		this->m_clusters = v;
 	}
 	void get_indivs_map(ints_sizet_map &oMap) const {
 		oMap.clear();
@@ -228,7 +231,6 @@ public:
 		}
 		return (false);
 	}	  // get_criterias
-protected:
 	virtual void clear(void) {
 		this->m_clusters.clear();
 		this->m_center.clear();
@@ -291,14 +293,14 @@ protected:
 ///////////////////////////////
 }// namespace info
 /////////////////////////////////////
-template<typename U,typename STRINGTYPE>
+template<typename U, typename STRINGTYPE>
 inline std::ostream & operator<<(std::ostream &os,
-		const info::ClustersCollection<U,STRINGTYPE> &d) {
+		const info::ClustersCollection<U, STRINGTYPE> &d) {
 	return d.write_to(os);
 }
-template<typename U,typename STRINGTYPE>
+template<typename U, typename STRINGTYPE>
 inline std::wostream & operator<<(std::wostream &os,
-		const info::ClustersCollection<U,STRINGTYPE> &d) {
+		const info::ClustersCollection<U, STRINGTYPE> &d) {
 	return d.write_to(os);
 }
 /////////////////////////

@@ -24,14 +24,6 @@ BOOST_AUTO_TEST_CASE(testTreeItemMean) {
 	LinkMode mode = LinkMode::linkMean;
 	//
 	IndivsTreeType oTree;
-<<<<<<< HEAD
-	oTree.process(pMan, nbClusters, mode);
-	double fIntra = 0, fInter = 0, ff = 0;
-	bool bRet = oTree.get_criterias(fIntra, fInter, ff);
-	BOOST_CHECK(bRet);
-	//BOOST_TEST_MESSAGE("TREE LINK MEAN");
-	//BOOST_TEST_MESSAGE("fIntra: " << fIntra << " ,fInter:" << fInter << " ,ff:" << ff);
-=======
 	oTree.link_mode(mode);
 	oTree.process(pMan, nbClusters);
 	std::stringstream os;
@@ -46,18 +38,6 @@ BOOST_AUTO_TEST_CASE(testTreeItemMeanRecode) {
 	pMan->transformation(TransformationType::recode);
 	size_t nbClusters = 6;
 	LinkMode mode = LinkMode::linkMean;
->>>>>>> branch 'master' of https://github.com/boubad/CygProjects.git
-	//
-<<<<<<< HEAD
-	IndivsTreeType::datamaps_vector oVec;
-	oTree.get_centers(oVec);
-	std::for_each(oVec.begin(), oVec.end(),
-			[&](const IndivsTreeType::DataMap &oMap) {
-				std::string s;
-				test_write_map(oMap,s);
-				//BOOST_TEST_MESSAGE(s);
-			});
-=======
 	IndivsTreeType oTree;
 	oTree.link_mode(mode);
 	oTree.process(pMan, nbClusters);
@@ -65,7 +45,6 @@ BOOST_AUTO_TEST_CASE(testTreeItemMeanRecode) {
 	os << oTree;
 	std::string ss = os.str();
 	BOOST_TEST_MESSAGE("TREE LINK MEAN RECODE\n" << ss);
->>>>>>> branch 'master' of https://github.com/boubad/CygProjects.git
 } //testTreeItemMean
 BOOST_AUTO_TEST_CASE(testTreeItemMin) {
 	using IndivsTreeType = IndivsTree<>;
@@ -75,30 +54,12 @@ BOOST_AUTO_TEST_CASE(testTreeItemMin) {
 	LinkMode mode = LinkMode::linkMin;
 	//
 	IndivsTreeType oTree;
-<<<<<<< HEAD
-	oTree.process(pMan, nbClusters, mode);
-	double fIntra = 0, fInter = 0, ff = 0;
-	bool bRet = oTree.get_criterias(fIntra, fInter, ff);
-	BOOST_CHECK(bRet);
-	//BOOST_TEST_MESSAGE("TREE LINK MIN");
-	//BOOST_TEST_MESSAGE("fIntra: " << fIntra << " ,fInter:" << fInter << " ,ff:" << ff);
-	//
-	IndivsTreeType::datamaps_vector oVec;
-	oTree.get_centers(oVec);
-	std::for_each(oVec.begin(), oVec.end(),
-			[&](const IndivsTreeType::DataMap &oMap) {
-				std::string s;
-				test_write_map(oMap,s);
-				//BOOST_TEST_MESSAGE(s);
-			});
-=======
 	oTree.link_mode(mode);
 	oTree.process(pMan, nbClusters);
 	std::stringstream os;
 	os << oTree;
 	std::string ss = os.str();
 	BOOST_TEST_MESSAGE("TREE LINK MIN\n" << ss);
->>>>>>> branch 'master' of https://github.com/boubad/CygProjects.git
 } //testTreeItemMin
 BOOST_AUTO_TEST_CASE(testTreeItemMax) {
 	using IndivsTreeType = IndivsTree<>;
@@ -108,30 +69,12 @@ BOOST_AUTO_TEST_CASE(testTreeItemMax) {
 	LinkMode mode = LinkMode::linkMax;
 	//
 	IndivsTreeType oTree;
-<<<<<<< HEAD
-	oTree.process(pMan, nbClusters, mode);
-	double fIntra = 0, fInter = 0, ff = 0;
-	bool bRet = oTree.get_criterias(fIntra, fInter, ff);
-	BOOST_CHECK(bRet);
-	//BOOST_TEST_MESSAGE("TREE LINK MAX");
-	//BOOST_TEST_MESSAGE("fIntra: " << fIntra << " ,fInter:" << fInter << " ,ff:" << ff);
-	//
-	IndivsTreeType::datamaps_vector oVec;
-	oTree.get_centers(oVec);
-	std::for_each(oVec.begin(), oVec.end(),
-			[&](const IndivsTreeType::DataMap &oMap) {
-				std::string s;
-				test_write_map(oMap,s);
-				//BOOST_TEST_MESSAGE(s);
-			});
-=======
 	oTree.link_mode(mode);
 	oTree.process(pMan, nbClusters);
 	std::stringstream os;
 	os << oTree;
 	std::string ss = os.str();
 	BOOST_TEST_MESSAGE("TREE LINK MAX\n" << ss);
->>>>>>> branch 'master' of https://github.com/boubad/CygProjects.git
 } //testTreeItemMax
 BOOST_AUTO_TEST_SUITE_END();
 

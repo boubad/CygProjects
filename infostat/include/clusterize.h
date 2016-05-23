@@ -9,7 +9,6 @@
 #ifndef CLUSTERIZE_H_
 #define CLUSTERIZE_H_
 /////////////////////////////////
-#include "treeitem.h"
 #include "clusterscollection.h"
 /////////////////////////////////
 namespace info {
@@ -22,11 +21,8 @@ public:
 	using IndivTypePtr = std::shared_ptr<IndivType>;
 	using indivptrs_vector = std::vector<IndivTypePtr>;
 	using DataMap = std::map<U, InfoValue>;
-	using TreeItemType = TreeItem<U,STRINGTYPE>;
-	using PTreeItemType = TreeItemType *;
 	using ints_sizet_map = std::map<U, size_t>;
 	using IndivClusterType = IndivCluster<U,STRINGTYPE>;
-	using treeitems_vector = std::vector<PTreeItemType>;
 	using SourceType = IIndivSource<U>;
 	using clusters_vector = std::vector<IndivClusterType>;
 	using ints_vector = std::vector<U>;
@@ -105,7 +101,7 @@ public:
 		this->m_map.clear();
 	} // clear
 	virtual bool one_iteration(void) {
-		if (this->m_niter > this->get_nbMawIters()) {
+		if (this->m_niter > this->get_nbMaxIters()) {
 			return (false);
 		}
 		clusters_vector &clusters = this->clusters();
