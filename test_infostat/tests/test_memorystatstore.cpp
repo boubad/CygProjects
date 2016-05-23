@@ -7,7 +7,7 @@
 /////////////////////////////
 using namespace info;
 //////////////////////////////////
-BOOST_FIXTURE_TEST_SUITE(MemoryStoreTestSuite, MemoryStoreFixture);
+BOOST_FIXTURE_TEST_SUITE(MemoryStoreTestSuite, MemoryStoreFixture<>);
 BOOST_AUTO_TEST_CASE(testDatasets) {
 	IStoreType *pMan = this->get_store();
 	//

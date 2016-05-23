@@ -7,7 +7,7 @@
 /////////////////////////////
 using namespace info;
 //////////////////////////////////
-BOOST_FIXTURE_TEST_SUITE(IndivProviderTestSuite, StoreIndivSorceFixture);
+BOOST_FIXTURE_TEST_SUITE(IndivProviderTestSuite, StoreIndivSorceFixture<>);
 BOOST_AUTO_TEST_CASE(testRandomAccess) {
 	IndivSourceType *pMan = get_source();
 	BOOST_CHECK(pMan != nullptr);

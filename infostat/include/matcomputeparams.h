@@ -70,10 +70,10 @@ public:
 	virtual ~MatComputeParams() {
 	}
 public:
-	size_t size(void) const {
+	size_t size(void)  {
 		return (this->m_ids.size());
 	}
-	DISTANCETYPE distance(const size_t i1, const size_t i2) const {
+	DISTANCETYPE distance(const size_t i1, const size_t i2)  {
 		const ints_vector &oIds = this->m_ids;
 		assert(i1 < oIds.size());
 		assert(i2 < oIds.size());
@@ -83,7 +83,7 @@ public:
 		this->m_distances.get(aIndex1, aIndex2, dRet);
 		return (dRet);
 	}
-	DISTANCETYPE criteria(const sizets_vector &indexes) const {
+	DISTANCETYPE criteria(sizets_vector &indexes) {
 		const size_t n = indexes.size();
 		DISTANCETYPE dRet = 0;
 		if (n < 2) {
@@ -97,10 +97,10 @@ public:
 		} // i
 		return (dRet);
 	} // criteria
-	DISTANCETYPE operator()(const size_t i1, const size_t i2) const {
+	DISTANCETYPE operator()(const size_t i1, const size_t i2)  {
 		return (this->distance(i1, i2));
 	}
-	DISTANCETYPE operator()(const sizets_vector &indexes) const {
+	DISTANCETYPE operator()(sizets_vector &indexes)  {
 		return (this->criteria(indexes));
 	}
 };

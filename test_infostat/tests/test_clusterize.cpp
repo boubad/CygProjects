@@ -14,7 +14,7 @@
 /////////////////////////////
 using namespace info;
 //////////////////////////////////
-BOOST_FIXTURE_TEST_SUITE(ClusterizeTestSuite, StoreIndivSorceFixture)
+BOOST_FIXTURE_TEST_SUITE(ClusterizeTestSuite, StoreIndivSorceFixture<>)
 ;
 BOOST_AUTO_TEST_CASE(testClusterizeRandom) {
 	using ClusterizeKMeansType = ClusterizeKMeans<>;

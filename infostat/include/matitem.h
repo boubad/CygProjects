@@ -26,11 +26,11 @@ public:
 	using MatComputeParamsType = MatComputeParams<IndexType,DISTANCETYPE,STRINGTYPE>;
 	using MatItemType = MatItem<IndexType,DISTANCETYPE,STRINGTYPE>;
 private:
-	const MatComputeParamsType *m_params;
+	MatComputeParamsType *m_params;
 	DISTANCETYPE m_criteria;
 	sizets_vector m_indexes;
 public:
-	MatItem(const MatComputeParamsType *pParams, std::atomic_bool *pCancel =
+	MatItem(MatComputeParamsType *pParams, std::atomic_bool *pCancel =
 			nullptr) :
 			InterruptObject(pCancel), m_params(pParams), m_criteria(0) {
 		assert(this->m_params != nullptr);
@@ -42,7 +42,7 @@ public:
 		}
 		this->m_criteria = pParams->criteria(indexes);
 	} // MatItem
-	MatItem(const MatComputeParamsType *pParams, const sizets_vector &oIndexes,
+	MatItem(MatComputeParamsType *pParams, const sizets_vector &oIndexes,
 			std::atomic_bool *pCancel = nullptr) :
 			InterruptObject(pCancel), m_params(pParams), m_criteria(0), m_indexes(
 					oIndexes) {
@@ -69,14 +69,14 @@ public:
 	const MatComputeParamsType *params(void) const {
 		return (this->m_params);
 	}
-	W criteria(void) const {
+	DISTANCETYPE criteria(void) const {
 		return (this->m_criteria);
 	}
 	const sizets_vector &indexes(void) const {
 		return (this->m_indexes);
 	}
 public:
-	bool try_permute(const size_t i1, const size_t i2, W &crit) const {
+	bool try_permute(const size_t i1, const size_t i2, DISTANCETYPE &crit) const {
 		assert(this->m_params != nullptr);
 		sizets_vector temp(this->m_indexes);
 		assert(i1 < temp.size());
@@ -84,18 +84,18 @@ public:
 		const size_t tt = temp[i1];
 		temp[i1] = temp[i2];
 		temp[i2] = tt;
-		W c = this->m_params->criteria(temp);
+		DISTANCETYPE c = this->m_params->criteria(temp);
 		if (c < crit) {
 			crit = c;
 			return (true);
 		}
 		return (false);
 	} // try_permute
-	bool find_best_try(pairs_queue &q, W &crit) const {
+	bool find_best_try(pairs_queue &q, DISTANCETYPE &crit) const {
 		while (!q.empty()) {
 			q.pop();
 		}
-		const MatComputeParamsType pParams = this->*m_params;
+		MatComputeParamsType *pParams = this->m_params;
 		crit = this->m_criteria;
 		const sizets_vector &indexes = this->m_indexes;
 		const size_t n = indexes.size();
@@ -111,7 +111,7 @@ public:
 				const size_t tt = temp[i];
 				temp[i] = temp[j];
 				temp[j] = tt;
-				W c = pParams->criteria(temp);
+				DISTANCETYPE c = pParams->criteria(temp);
 				if (c < crit) {
 					while (!q.empty()) {
 						q.pop();
@@ -128,14 +128,14 @@ public:
 		return (!q.empty());
 	} //find_best_try
 	bool permute() {
-		const MatComputeParamsType *pParams = this->m_params;
+		MatComputeParamsType *pParams = this->m_params;
 		std::atomic_bool *pCancel = this->get_cancelleable_flag();
 		do {
 			if (this->check_interrupt()) {
 				return (false);
 			}
 			pairs_queue q;
-			W crit = 0;
+			DISTANCETYPE crit = 0;
 			if (!this->find_best_try(q, crit)) {
 				break;
 			}
@@ -143,7 +143,7 @@ public:
 				return (false);
 			}
 			sizets_vector best_indexes;
-			W bestCrit = crit;
+			DISTANCETYPE bestCrit = crit;
 			while (!q.empty()) {
 				if (this->check_interrupt()) {
 					return (false);
@@ -165,7 +165,7 @@ public:
 				if (this->check_interrupt()) {
 					return (false);
 				}
-				W cc = oMat.criteria();
+				DISTANCETYPE cc = oMat.criteria();
 				if (best_indexes.empty()) {
 					bestCrit = cc;
 					best_indexes = oMat.indexes();

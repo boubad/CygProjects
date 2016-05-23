@@ -14,7 +14,7 @@
 /////////////////////////////
 using namespace info;
 //////////////////////////////////
-BOOST_FIXTURE_TEST_SUITE(TreeItemTestSuite, StoreIndivSorceFixture)
+BOOST_FIXTURE_TEST_SUITE(TreeItemTestSuite, StoreIndivSorceFixture<>)
 ;
 BOOST_AUTO_TEST_CASE(testTreeItemMean) {
 	using IndivsTreeType = IndivsTree<>;
@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(testTreeItemMeanRecode) {
 	using IndivsTreeType = IndivsTree<>;
 	StoreIndivSourceType *pMan = m_source.get();
 	BOOST_CHECK(pMan != nullptr);
-	pMan->transformation(TransformationType::recode);
+	//pMan->transformation(TransformationType::recode);
 	size_t nbClusters = 6;
 	LinkMode mode = LinkMode::linkMean;
 	IndivsTreeType oTree;
