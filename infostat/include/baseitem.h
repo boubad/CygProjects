@@ -2,8 +2,7 @@
 #ifndef __BASEITEM_H__
 #define __BASEITEM_H__
 /////////////////////////////////////
-#include "stringconvert.h"
-#include "infovalue.h"
+#include "info_global.h"
 //////////////////////////////////
 namespace info {
 	///////////////////////////////////////
@@ -72,6 +71,9 @@ namespace info {
 		virtual bool is_writeable(void) const {
 			return (false);
 		}
+		virtual bool is_valid(void) const {
+			return ((this->id() != 0) && this->is_writeable());
+		}
 	}; // class BaseInfoStatItem<IDTYPE,INTTYPE,STRINGTYPE>
 	/////////////////////////////////////////
 	template <typename IDTYPE, typename INTTYPE, typename STRINGTYPE>
@@ -131,7 +133,7 @@ namespace info {
 		}
 	}; // class NamedBaseInfoStatItem<IDTYPE,INTTYPE,STRINGTYPE>;
 	///////////////////////////////////////////
-	template <typename IDTYPE = unsigned long, typename INTTYPE = int, typename STRINGTYPE = std::string>
+	template <typename IDTYPE = unsigned long, typename INTTYPE = unsigned long, typename STRINGTYPE = std::string>
 	class StatDataset : public NamedBaseInfoStatItem<IDTYPE, INTTYPE, STRINGTYPE> {
 		using NamedBaseInfoStatItemType = NamedBaseInfoStatItem<IDTYPE, INTTYPE, STRINGTYPE>;
 		using StatDatasetType = StatDataset<IDTYPE, INTTYPE, STRINGTYPE>;
@@ -196,7 +198,7 @@ namespace info {
 		}
 	}; // class DatasetChild
 	//////////////////////////////////////////////
-	template <typename IDTYPE = unsigned long, typename INTTYPE = int, typename STRINGTYPE = std::string, typename WEIGHTYPE = float>
+	template <typename IDTYPE = unsigned long, typename INTTYPE = unsigned long, typename STRINGTYPE = std::string, typename WEIGHTYPE = double>
 	class StatVariable : public DatasetChild<IDTYPE, INTTYPE, STRINGTYPE, WEIGHTYPE> {
 		using DatasetChildType = DatasetChild<IDTYPE, INTTYPE, STRINGTYPE, WEIGHTYPE>;
 		using StatDatasetType = StatDataset<IDTYPE, INTTYPE, STRINGTYPE>;
@@ -266,7 +268,7 @@ namespace info {
 
 	}; // class StatVariable
 	/////////////////////////////////////////////
-	template <typename IDTYPE = unsigned long, typename INTTYPE = int, typename STRINGTYPE = std::string, typename WEIGHTYPE = float>
+	template <typename IDTYPE = unsigned long, typename INTTYPE = unsigned long, typename STRINGTYPE = std::string, typename WEIGHTYPE = double>
 	class StatIndiv : public DatasetChild<IDTYPE, INTTYPE, STRINGTYPE, WEIGHTYPE> {
 		using DatasetChildType = DatasetChild<IDTYPE, INTTYPE, STRINGTYPE, WEIGHTYPE>;
 		using StatDatasetType = StatDataset<IDTYPE, INTTYPE, STRINGTYPE>;
@@ -288,7 +290,7 @@ namespace info {
 		virtual ~StatIndiv() {}
 	}; // class StatIndiv
 	/////////////////////////////////////
-	template <typename IDTYPE = unsigned long, typename INTTYPE = int, typename STRINGTYPE = std::string>
+	template <typename IDTYPE = unsigned long, typename INTTYPE = unsigned int, typename STRINGTYPE = std::string>
 	class StatValue :public BaseInfoStatItem<IDTYPE, INTTYPE, STRINGTYPE> {
 		using BaseInfoStatItemType = BaseInfoStatItem<IDTYPE, INTTYPE, STRINGTYPE>;
 		using StatValueType = StatValue<IDTYPE, INTTYPE, STRINGTYPE>;
@@ -296,31 +298,36 @@ namespace info {
 	private:
 		IDTYPE m_varid;
 		IDTYPE m_indid;
+		IDTYPE m_datasetid;
 		InfoValue m_val;
 	public:
-		StatValue(){}
+		StatValue():m_varid(0),m_indid(0),m_datasetid(0){}
 		template <typename WEIGHTYPE>
 		StatValue(const StatVariable<IDTYPE, INTTYPE, STRINGTYPE, WEIGHTYPE> &oVar,
-			const StatIndiv<IDTYPE, INTTYPE, STRINGTYPE, WEIGHTYPE> &oInd) :m_varid(oVar.id()), m_indid(oInd.id()){
+			const StatIndiv<IDTYPE, INTTYPE, STRINGTYPE, WEIGHTYPE> &oInd) :m_varid(oVar.id()), m_indid(oInd.id()),m_datasetid(oVar.dataset_id()){
 		}
 		template <typename T, typename WEIGHTYPE>
 		StatValue(const StatVariable<IDTYPE, INTTYPE, STRINGTYPE, WEIGHTYPE> &oVar,
 			const StatIndiv<IDTYPE, INTTYPE, STRINGTYPE, WEIGHTYPE> &oInd,
-			const T &v) :m_varid(oVar.id()), m_indid(oInd.id()), m_val(v) {
+			const T &v) :m_varid(oVar.id()), m_indid(oInd.id()), m_datasetid(oVar.dataset_id()), m_val(v) {
 		}
 		StatValue(const StatValueType &other):BaseInfoStatItemType(other),
-			m_varid(other.m_varid),m_indid(other.m_indid),m_val(other.m_val){}
+			m_varid(other.m_varid),m_indid(other.m_indid),m_datasetid(other.m_datasetid),m_val(other.m_val){}
 		StatValueType & operator=(const StatValueType &other) {
 			if (this != &other) {
 				BaseInfoStatItemType::operator=(other);
 				this->m_varid = other.m_varid;
 				this->m_indid = other.m_indid;
+				this->m_datasetid = other.m_datasetid;
 				this->m_val = other.m_val;
 			}
 			return (*this);
 		}
 		virtual ~StatValue(){}
 	public:
+		IDTYPE dataset_id(void) const {
+			return (this->m_datasetid);
+		}
 		IDTYPE variable_id(void) const {
 			return (this->m_varid);
 		}
@@ -356,6 +363,10 @@ namespace info {
 			this->m_varid = 0;
 			this->m_indid = 0;
 			this->m_val = InfoValue();
+		}
+		virtual bool is_valid(void) const {
+			return ((this->id() != 0) && this->is_writeable() &&
+				(!this->m_val.empty()));
 		}
 	}; // class StatValue<IDTYPE, INTTYPE, STRINGTYPE>;
 	////////////////////////////////////

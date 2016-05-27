@@ -65,6 +65,7 @@ namespace info_sqlite {
 		bool set_parameter(int iParam, const wchar_t *pwszVal);
 		bool set_parameter(int iParam, const std::string &sVal);
 		bool set_parameter(int iParam, const std::wstring &sVal);
+		bool set_parameter(int iParam, const InfoValue &val);
 		//
 		bool set_parameter_null(const std::string &sname);
 		bool set_parameter_null(const std::wstring &sname);
@@ -74,6 +75,8 @@ namespace info_sqlite {
 		bool set_parameter(const std::wstring &sname, double dval);
 		bool set_parameter(const std::string &sname, const std::string &sval);
 		bool set_parameter(const std::wstring &sname, const std::wstring &sval);
+		bool set_parameter(const std::string &sname, const InfoValue &val);
+		bool set_parameter(const std::wstring &sname, const InfoValue &val);
 		//
 		bool exec(void);
 		bool next(void);
@@ -152,6 +155,9 @@ namespace info_sqlite {
 		}
 		void bind(unsigned long parameter_id, const std::wstring &item) {
 			this->set_parameter((int)parameter_id, item);
+		}
+		void bind(unsigned long parameter_id, const InfoValue &val) {
+			this->set_parameter((int)parameter_id, val);
 		}
 		void bind_null(unsigned long parameter_id) {
 			this->set_parameter_null((int)parameter_id);

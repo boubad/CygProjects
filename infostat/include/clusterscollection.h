@@ -65,6 +65,16 @@ namespace info {
 			os << s << std::endl;
 			return (os);
 		} // write_to
+		void to_string(std::string &s)const {
+			std::stringstream os;
+			this->write_to(os);
+			s = os.str();
+		}
+		void to_string(std::wstring &s)const {
+			std::wstringstream os;
+			this->write_to(os);
+			s = os.str();
+		}
 	public:
 		bool get_random_indivs(const size_t nc, indivptrs_vector &oRes) {
 			assert(nc > 0);
@@ -149,7 +159,7 @@ namespace info {
 				0), m_nbmaxiters(100), m_finter(0), m_fintra(0), m_ff(0) {
 		}
 		ClustersCollection(const ClustersCollectionType &other) :InterruptObject(other),
-			m_provider(other.m_provider),
+			m_ptovider(other.m_provider),
 			m_nbclusters(other.m_nbclusters), m_nbindivs(other.m_nbindivs), m_nbmaxiters(other.m_nbmaxiters),
 			m_finter(other.m_finter), m_fintra(other.m_fintra), m_ff(other.m_ff),
 			m_clusters(other.m_clusters), m_center(other.m_center),

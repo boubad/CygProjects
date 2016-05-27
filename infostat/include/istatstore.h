@@ -9,7 +9,7 @@
 //////////////////////////////////////////
 namespace info {
 	//////////////////////////////////////////////
-	template <typename IDTYPE = unsigned long, typename INTTYPE = int, typename STRINGTYPE = std::string, typename WEIGHTYPE = float>
+	template <typename IDTYPE = unsigned long, typename INTTYPE = unsigned long, typename STRINGTYPE = std::string, typename WEIGHTYPE = double>
 	class IStatStore {
 	public:
 		using strings_vector = std::vector<STRINGTYPE>;
@@ -80,6 +80,158 @@ namespace info {
 		virtual bool find_variable_values_count(VariableType &oVar, size_t &nc) = 0;
 	public:
 		virtual ~IStatStore() {}
+	public:
+		template <typename T>
+		void fetch_data_type(T &d, std::string &stype) {
+			boost::any v(d);
+			if ((v.type() == typeid(double)) || (v.type() == typeid(float)) || (v.type() == typeid(long double))) {
+				stype = "real";
+			}
+			else if ((v.type() == typeid(short)) || (v.type() == typeid(unsigned short)) || (v.type() == typeid(int)) ||
+				(v.type() == typeid(unsigned int)) || (v.type() == typeid(long)) || (v.type() == typeid(unsigned long)) ||
+				(v.type() == typeid(long long))) {
+				stype = "integer";
+			}
+			else if (v.type() == typeid(bool)) {
+				stype = "boolean";
+			}
+			else {
+				stype = "text";
+			}
+		}//fetch_data_type
+		template <typename T>
+		void fetch_data_type(T &d, std::wstring &stype) {
+			boost::any v(d);
+			if ((v.type() == typeid(double)) || (v.type() == typeid(float)) || (v.type() == typeid(long double))) {
+				stype = L"real";
+			}
+			else if ((v.type() == typeid(short)) || (v.type() == typeid(unsigned short)) || (v.type() == typeid(int)) ||
+				(v.type() == typeid(unsigned int)) || (v.type() == typeid(long)) || (v.type() == typeid(unsigned long)) ||
+				(v.type() == typeid(long long))) {
+				stype = L"integer";
+			}
+			else if (v.type() == typeid(bool)) {
+				stype = L"boolean";
+			}
+			else {
+				stype = L"text";
+			}
+		}//fetch_data_type
+	public:
+		template <typename T>
+		void import(const DatasetType &oSet, size_t nRows, size_t nCols,
+			const std::vector<T> &data,
+			const strings_vector &rowNames,
+			const strings_vector &colNames) {
+			STRINGTYPE stype;
+			T dummy = 0;
+			fetch_data_type(dummy, stype);
+			bool bRet = false;
+			assert(oSet.id() != 0);
+			variables_vector oVars;
+			for (size_t i = 0; i < nCols; ++i) {
+				STRINGTYPE sigle = colNames[i];
+				VariableType v(oSet, sigle);
+				if (!this->find_variable(v)) {
+					v.sigle(sigle);
+					v.dataset_id(oSet.id());
+					v.vartype(stype);
+					oVars.push_back(v);
+				}
+			} // i
+			if (!oVars.empty()) {
+				bRet = this->maintains_variables(oVars);
+				assert(bRet);
+			}
+			indivs_vector oInds;
+			for (size_t i = 0; i < nRows; ++i) {
+				STRINGTYPE sigle = rowNames[i];
+				IndivType v(oSet, sigle);
+				if (!this->find_indiv(v)) {
+					v.sigle(sigle);
+					v.dataset_id(oSet.id());
+					oInds.push_back(v);
+				}
+			} // i
+			if (!oInds.empty()) {
+				bRet = this->maintains_indivs(oInds);
+				assert(bRet);
+			}
+			if ((nRows > 0) && (nCols > 0) && (colNames.size() >= nCols) && (rowNames.size() >= nRows)) {
+				size_t nn = (size_t)(nRows * nCols);
+				if (data.size() >= nn) {
+					oInds.clear();
+					bRet = this->find_dataset_indivs(oSet,oInds, 0, nRows);
+					assert(bRet);
+					assert(nRows == oInds.size());
+					oVars.clear();
+					bRet = this->find_dataset_variables(oSet,oVars, 0, nCols);
+					assert(bRet);
+					assert(nCols == oVars.size());
+					//
+					std::map<STRINGTYPE, VariableType *> pVars;
+					for (auto &s : colNames) {
+						STRINGTYPE sigle = s;
+						STRINGTYPE rsigle;
+						VariableType ovar(oSet, sigle);
+						rsigle = ovar.sigle();
+						VariableType *p = nullptr;
+						for (size_t i = 0; i < oVars.size(); ++i) {
+							VariableType &vv = oVars[i];
+							STRINGTYPE  sx = vv.sigle();
+							if (sx == rsigle) {
+								p = &vv;
+								break;
+							}
+						} // i
+						assert(p != nullptr);
+						pVars[sigle] = p;
+					}// s
+					std::map<STRINGTYPE, IndivType *> pInds;
+					for (auto &s : rowNames) {
+						STRINGTYPE  sigle = s;
+						STRINGTYPE  rsigle;
+						IndivType ovar(oSet, sigle);
+						rsigle = ovar.sigle();
+						IndivType *p = nullptr;
+						for (size_t i = 0; i < oInds.size(); ++i) {
+							IndivType &vv = oInds[i];
+							STRINGTYPE  sx = vv.sigle();
+							if (sx == rsigle) {
+								p = &vv;
+								break;
+							}
+						} // i
+						assert(p != nullptr);
+						pInds[sigle] = p;
+					}// s
+					values_vector oVals;
+					for (size_t i = 0; i < nRows; ++i) {
+						STRINGTYPE  sigleind = rowNames[i];
+						IndivType *pInd = pInds[sigleind];
+						assert(pInd != nullptr);
+						for (size_t j = 0; j < nCols; ++j) {
+							STRINGTYPE  siglevar = colNames[j];
+							VariableType *pVar = pVars[siglevar];
+							assert(pVar != nullptr);
+							ValueType val(*pVar, *pInd);
+							if (!this->find_value(val)) {
+								T f = data[i * nCols + j];
+								InfoValue vv(f);
+								val.value(vv);
+								val.variable_id(pVar->id());
+								val.indiv_id(pInd->id());
+								oVals.push_back(val);
+							}
+						} // j
+					} // i
+					if (!oVals.empty()) {
+						bRet = this->maintains_values(oVals);
+						//assert(bRet);
+					}
+				}// ok import data
+			}
+		} // import
 	}; // class IStatStore<IDTYPE,INTTYPE,STRINGTYPE,WEIGHTTYPE>
 	///////////////////////////////////////////////
 	template <typename IDTYPE, typename INTTYPE, typename STRINGTYPE, typename WEIGHTYPE>

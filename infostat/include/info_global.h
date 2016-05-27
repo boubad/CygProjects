@@ -31,12 +31,22 @@
 #include <future>
 #include <condition_variable>
 /////////////////////////////////
+#include "stringconvert.h"
 #include "infovalue.h"
 //////////////////////////////
 #include <boost/noncopyable.hpp>
 ////////////////////////////////////
 namespace info {
 	///////////////////////////////////
+#if defined(__CYGWIN__)
+	template<typename Iterator, typename Func>
+	void info_parallel_for_each(Iterator first, Iterator last, Func &&f, ptrdiff_t range = 16)
+	{
+		for (auto it = first; it != last; ++it) {
+			f(*it);
+			}//it
+	}//info_parallel_for_each
+#else
 	template<typename Iterator, typename Func>
 	void info_parallel_for_each(Iterator first, Iterator last, Func &&f, ptrdiff_t range = 16)
 	{
@@ -60,6 +70,7 @@ namespace info {
 		}
 		bgtask.get();
 	}// info_parallel_for_each
+#endif // __CYGWIN__
 	//////////////////////////////////
 	template<typename U>
 	void info_global_write_map(const std::map<U, info::InfoValue> &oMap,

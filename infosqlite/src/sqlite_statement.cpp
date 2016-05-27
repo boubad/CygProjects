@@ -367,7 +367,47 @@ namespace info_sqlite {
 	bool SQLite_Statement::set_parameter(int iParam, const std::wstring &sVal) {
 		return this->set_parameter(iParam, sVal.c_str());
 	} // set_parameter
+	bool SQLite_Statement::set_parameter(int iParam, const InfoValue &val) {
+		if (val.is_empty()) {
+			return (this->set_parameter_null(iParam));
+		}
+		const boost::any &v = val.value();
+		if ((v.type() == typeid(double)) || (v.type() == typeid(float)) || (v.type() == typeid(long double))) {
+			double dval = val.double_value();
+			return (this->set_parameter(iParam, dval));
+		}
+		else if ((v.type() == typeid(short)) || (v.type() == typeid(unsigned short)) || (v.type() == typeid(int)) ||
+			(v.type() == typeid(unsigned int)) || (v.type() == typeid(long)) || (v.type() == typeid(unsigned long)) ||
+			(v.type() == typeid(long long))) {
+			unsigned long lval = val.unsigned_long_value();
+			return (this->set_parameter(iParam, lval));
+		}
+		else if (v.type() == typeid(bool)) {
+			bool b = val.bool_value();
+			std::string s = (b) ? "T" : "F";
+			return (this->set_parameter(iParam, s));
+		}
+		else {
+			std::string s;
+			if (val.string_value(s)) {
+				return (this->set_parameter(iParam, s));
+			}
+		}
+		return (false);
+	}// set_parameter
 	  ///////////////////////////////
+	bool SQLite_Statement::set_parameter(const std::string &sname, const InfoValue &val) {
+		::sqlite3_stmt *p = this->m_pstmt;
+		int iParam = ::sqlite3_bind_parameter_index(p, sname.c_str());
+		if (iParam < 1) {
+			return (false);
+		}
+		return this->set_parameter(iParam, val);
+	} // set_parameter
+	bool SQLite_Statement::set_parameter(const std::wstring &sname, const InfoValue &val) {
+		std::string ss = StringConvert::ws2s(sname);
+		return this->set_parameter(ss, val);
+	} // set_parameter
 	bool SQLite_Statement::set_parameter_null(const std::string &sname) {
 		::sqlite3_stmt *p = this->m_pstmt;
 		int iParam = ::sqlite3_bind_parameter_index(p, sname.c_str());

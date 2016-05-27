@@ -56,9 +56,11 @@ namespace info
 		InfoValue & operator=(long double dval);
 		InfoValue & operator=(const std::string &s);
 		InfoValue & operator=(const std::wstring &s);
+		InfoValue & operator=(const boost::any &v);
 		InfoValueType get_infovalue_type(void) const;
 		const std::type_info & type(void) const;
 		const boost::any & value(void) const;
+		void value(const boost::any &v);
 		bool is_valid(void) const;
 		bool empty(void) const;
 		bool bool_value(void) const;

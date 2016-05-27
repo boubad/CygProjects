@@ -211,49 +211,6 @@ namespace info {
 		BOOST_LOG_TRIVIAL(error) << "SQLite error: " << err.code() << " , " << err.what();
 #endif // __CYGWIN
 	}
-	static void convert_value(const std::string &stype, const boost::any &vsrc, boost::any &vRes) {
-		InfoValue v0(vsrc);
-		if ((stype == "bool") || (stype == "boolean") || (stype == "logical")) {
-			vRes = v0.bool_value();
-		}
-		else if (stype == "short") {
-			vRes = v0.short_value();
-		}
-		else if (stype == "unsigned short") {
-			vRes = v0.unsigned_short_value();
-		}
-		else if (stype == "int") {
-			vRes = v0.int_value();
-		}
-		else if (stype == "unsigned int") {
-			vRes = v0.unsigned_int_value();
-		}
-		else if (stype == "long") {
-			vRes = v0.long_value();
-		}
-		else if (stype == "unsigned long") {
-			vRes = v0.unsigned_long_value();
-		}
-		else if ((stype == "double") || (stype == "real")) {
-			vRes = v0.double_value();
-		}
-		else if (stype == "string") {
-			std::string s;
-			v0.string_value(s);
-			vRes = s;
-		}
-		else if (stype == "wstring") {
-			std::wstring s;
-			v0.string_value(s);
-			vRes = s;
-		}
-		else {
-			std::string s;
-			v0.string_value(s);
-			vRes = s;
-		}
-
-	}// convert_value
 	//////////////////////////////////////////////
 	void SQLiteStatHelper::begin_transaction(void) {
 		assert(this->is_valid());
@@ -440,10 +397,6 @@ namespace info {
 			if (!this->find_dataset(xSet)) {
 				return (false);
 			}
-			ints_string_map oMap;
-			if (!this->find_dataset_variables_types(xSet, oMap)) {
-				return (false);
-			}
 			IDTYPE nDatasetId = xSet.id();
 			SQLite_Statement q(*(this->m_base), SQL_FIND_DATASET_VALUES);
 			assert(q.get_parameters_count() == 3);
@@ -454,13 +407,7 @@ namespace info {
 			while (q.move_next()) {
 				ValueType cur;
 				this->read_value(q, cur);
-				IDTYPE key = cur.variable_id();
-				if (oMap.find(key) != oMap.end()) {
-					boost::any h;
-					convert_value(oMap[key], cur.value(), h);
-					cur.value(InfoValue(h));
-					oList.push_back(cur);
-				}
+				oList.push_back(cur);
 			}
 			return (true);
 		}// try
@@ -484,7 +431,6 @@ namespace info {
 			if (!this->find_variable(oVar)) {
 				return (false);
 			}
-			STRINGTYPE stype = oVar.vartype();
 			IDTYPE nId = oVar.id();
 			SQLite_Statement q(*(this->m_base), SQL_VALUES_BY_VARIABLEID);
 			assert(q.get_parameters_count() == 3);
@@ -495,9 +441,6 @@ namespace info {
 			while (q.move_next()) {
 				ValueType cur;
 				this->read_value(q, cur);
-				boost::any h;
-				convert_value(stype, cur.value(), h);
-				cur.value(InfoValue(h));
 				oList.push_back(cur);
 			}
 			return (true);
@@ -617,10 +560,6 @@ namespace info {
 			if (!this->find_dataset(xSet)) {
 				return (false);
 			}
-			ints_string_map oMap;
-			if (!this->find_dataset_variables_types(xSet, oMap)) {
-				return (false);
-			}
 			IDTYPE nId = oInd.id();
 			SQLite_Statement q(*(this->m_base), SQL_VALUES_BY_INDIVID);
 			assert(q.get_parameters_count() == 3);
@@ -631,13 +570,7 @@ namespace info {
 			while (q.move_next()) {
 				ValueType cur;
 				this->read_value(q, cur);
-				IDTYPE key = cur.variable_id();
-				if (oMap.find(key) != oMap.end()) {
-					boost::any h;
-					convert_value(oMap[key], cur.value(), h);
-					cur.value(InfoValue(h));
-					oList.push_back(cur);
-				}
+				oList.push_back(cur);
 			}
 			return (true);
 		}// try
@@ -668,18 +601,15 @@ namespace info {
 			SQLite_Statement qRemove(*(this->m_base), SQL_REMOVE_VALUE);
 			assert(qRemove.get_parameters_count() == 1);
 			//
-			std::for_each(oVals.begin(), oVals.end(), [&](const ValueType &oVal) {
+			for (auto &oVal : oVals) {
+				const InfoValue &v = oVal.value();
 				bool mustRemove = bRemove;
 				ValueType xVal(oVal);
 				this->find_value(xVal);
 				IDTYPE nId = xVal.id();
 				STRINGTYPE status = oVal.status();
-				boost::any v0 = oVal.value();
-				InfoValue v(v0);
-				std::string sval;
-				v.string_value(sval);
 				if (nId != 0) {
-					if (sval.empty()) {
+					if (v.empty()) {
 						mustRemove = true;
 					}
 				}
@@ -691,22 +621,22 @@ namespace info {
 				}
 				else if (oVal.is_writeable()) {
 					if (nId != 0) {
-						qUpdate.bind(1, sval);
+						qUpdate.bind(1, v);
 						qUpdate.bind(2, status);
 						qUpdate.bind(3, nId);
 						qUpdate.exec();
 					}
-					else {
+					else if (!v.empty()) {
 						IDTYPE nVarId = oVal.variable_id();
 						IDTYPE nIndId = oVal.indiv_id();
 						qInsert.bind(1, nVarId);
 						qInsert.bind(2, nIndId);
-						qInsert.bind(3, sval);
+						qInsert.bind(3, v);
 						qInsert.bind(4, status);
 						qInsert.exec();
 					}
 				} // writeable
-			});
+			}// oVal
 			//
 			if (bCommit && bInTrans) {
 				this->commit_transaction();
@@ -808,7 +738,7 @@ namespace info {
 			SQLite_Statement qUpdate(*(this->m_base), SQL_UPDATE_INDIV);
 			assert(qUpdate.get_parameters_count() == 6);
 			//
-			std::for_each(oInds.begin(), oInds.end(), [&](const IndivType &oInd) {
+			for (auto &oInd : oInds) {
 				IndivType xInd(oInd);
 				this->find_indiv(xInd);
 				IDTYPE nId = xInd.id();
@@ -847,7 +777,7 @@ namespace info {
 						qInsert.exec();
 					}
 				}
-			});
+			}// oInd
 			if (bCommit && bInTrans) {
 				this->commit_transaction();
 			}
@@ -1024,7 +954,7 @@ namespace info {
 			SQLite_Statement qUpdate(*(this->m_base), SQL_UPDATE_VARIABLE);
 			assert(qUpdate.get_parameters_count() == 10);
 			//
-			std::for_each(oVars.begin(), oVars.end(), [&](const VariableType &oVar) {
+			for (auto &oVar : oVars) {
 				VariableType xVar(oVar);
 				this->find_variable(xVar);
 				IDTYPE nId = xVar.id();
@@ -1075,7 +1005,7 @@ namespace info {
 						qInsert.exec();
 					}
 				}// writeable
-			});
+			}// oVar
 			if (bCommit && bInTrans) {
 				this->commit_transaction();
 			}
@@ -1561,9 +1491,9 @@ namespace info {
 		}
 		catch (...) {
 #if defined(__CYGWIN__)
-			std::cerr <<  "Unknown exception in open..." << std::endl;
+			std::cerr << "Unknown exception in open..." << std::endl;
 #else
-		BOOST_LOG_TRIVIAL(error) << "Unknown exception in open..." << std::endl;
+			BOOST_LOG_TRIVIAL(error) << "Unknown exception in open..." << std::endl;
 #endif // __CGGWIN__
 		}
 	}

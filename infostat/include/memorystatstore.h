@@ -6,11 +6,9 @@
 #include "memorydataset.h"
 #include "indiv.h"
 /////////////////////////////
-#include <memory>
-/////////////////////////////////////////
 namespace info {
 	////////////////////////////////
-	template <typename IDTYPE = unsigned long, typename INTTYPE = int, typename STRINGTYPE = std::string, typename WEIGHTYPE = float>
+	template <typename IDTYPE = unsigned long, typename INTTYPE = unsigned long, typename STRINGTYPE = std::string, typename WEIGHTYPE = double>
 	class MemoryStatStore : public IStatStore<IDTYPE, INTTYPE, STRINGTYPE, WEIGHTYPE>, private boost::noncopyable {
 	public:
 		using MemoryDatasetType = MemoryDataset<IDTYPE, INTTYPE, STRINGTYPE, WEIGHTYPE>;
@@ -32,10 +30,13 @@ namespace info {
 		using variables_map = std::map<IDTYPE, VariableType>;
 		using indivs_map = std::map<IDTYPE, IndivType>;
 		using values_map = std::map<IDTYPE, ValueType>;
+		using strings_pdataset_map = std::map<STRINGTYPE, PMemoryDatasetType>;
+		using ints_pdataset_map = std::map<IDTYPE, PMemoryDatasetType>;
 	private:
 		//
-		std::atomic<IDTYPE> m_lastid;
-		pmemorydatasets_vector m_osets;
+		IDTYPE m_lastid;
+		strings_pdataset_map m_sigle_map;
+		ints_pdataset_map m_id_map;
 		//
 	public:
 		MemoryStatStore() :m_lastid(1) {}
@@ -71,7 +72,7 @@ namespace info {
 		}
 		//
 		virtual bool find_all_datasets_count(size_t &nCount) {
-			nCount = this->m_osets.size();
+			nCount = this->m_id_map.size();
 			return (true);
 		}
 		virtual bool find_all_datasets(datasets_vector &oList, size_t skip = 0, size_t count = 100) {
@@ -80,27 +81,30 @@ namespace info {
 				count = 100;
 			}
 			size_t nStart = skip;
-			{
-				pmemorydatasets_vector &vv = this->m_osets;
-				size_t nMax = vv.size();
-				if (nStart > nMax) {
-					nStart = nMax;
-				}
-				size_t nEnd = nStart + count;
-				if (nEnd > nMax) {
-					nEnd = nMax;
-				}
-				size_t nc = nEnd - nStart;
-				if (nc > 0) {
-					oList.resize(nc);
-					for (size_t i = 0; i < nc; ++i) {
-						PMemoryDatasetType &o = vv[nStart + i];
+			size_t nMax = this->m_id_map.size();
+			if (nStart > nMax) {
+				nStart = nMax;
+			}
+			size_t nEnd = nStart + count;
+			if (nEnd > nMax) {
+				nEnd = nMax;
+			}
+			size_t nc = nEnd - nStart;
+			if (nc > 0) {
+				ints_pdataset_map &oMap = this->m_id_map;
+				size_t offset = 0;
+				for (auto it = oMap.begin(); it != oMap.end(); ++it) {
+					if (offset >= nStart) {
+						PMemoryDatasetType &o = (*it).second;
 						DatasetType oSet;
 						o->get_dataset(oSet);
-						oList[i] = oSet;
-					}// i
-				}// nc
-			}// sync
+						if (oList.size() >= nc) {
+							break;
+						}
+					}
+					++offset;
+				}// it
+			}// nc
 			return (true);
 		}//find_all_datasets
 		virtual bool find_all_datasets_ids(ints_vector &oList, size_t skip = 0, size_t count = 100) {
@@ -109,102 +113,106 @@ namespace info {
 				count = 100;
 			}
 			size_t nStart = skip;
-			{
-				pmemorydatasets_vector &vv = this->m_osets;
-				size_t nMax = vv.size();
-				if (nStart > nMax) {
-					nStart = nMax;
-				}
-				size_t nEnd = nStart + count;
-				if (nEnd > nMax) {
-					nEnd = nMax;
-				}
-				size_t nc = nEnd - nStart;
-				if (nc > 0) {
-					oList.resize(nc);
-					for (size_t i = 0; i < nc; ++i) {
-						PMemoryDatasetType &o = vv[nStart + i];
-						oList[i] = o->get_datasetid();
-					}// i
-				}// nc
-			}// sync
+			size_t nMax = this->m_id_map.size();
+			if (nStart > nMax) {
+				nStart = nMax;
+			}
+			size_t nEnd = nStart + count;
+			if (nEnd > nMax) {
+				nEnd = nMax;
+			}
+			size_t nc = nEnd - nStart;
+			if (nc > 0) {
+				ints_pdataset_map &oMap = this->m_id_map;
+				size_t offset = 0;
+				for (auto it = oMap.begin(); it != oMap.end(); ++it) {
+					if (offset >= nStart) {
+						oList.push_back((*it).first);
+						if (oList.size() >= nc) {
+							break;
+						}
+					}
+					++offset;
+				}// it
+			}// nc
 			return (true);
 		}//find_all_datasets_ids
 		MemoryDatasetType *get_dataset(DatasetType &cur) {
 			MemoryDatasetType *pRet = nullptr;
-			pmemorydatasets_vector &vv = this->m_osets;
-			size_t nc = vv.size();
 			IDTYPE nId = cur.id();
-			STRINGTYPE sigle = cur.sigle();
-			for (size_t i = 0; i < nc; ++i) {
-				PMemoryDatasetType &o = vv[i];
-				MemoryDatasetType *px = o.get();
-				if (px->find_dataset(nId, sigle)) {
-					pRet = px;
-					break;
+			if (nId != 0) {
+				auto it = this->m_id_map.find(nId);
+				if (it != this->m_id_map.end()) {
+					PMemoryDatasetType o = (*it).second;
+					pRet = o.get();
+					return (pRet);
 				}
-			}// i
+			}
+			STRINGTYPE sigle = cur.sigle();
+			if (!sigle.empty()) {
+				auto it = this->m_sigle_map.find(sigle);
+				if (it != this->m_sigle_map.end()) {
+					PMemoryDatasetType o = (*it).second;
+					pRet = o.get();
+					return (pRet);
+				}
+			}
 			return (pRet);
 		}// get_dataset
 		virtual bool find_dataset(DatasetType &cur) {
-			pmemorydatasets_vector &vv = this->m_osets;
-			size_t nc = vv.size();
-			//IDTYPE nId = cur.id();
-			STRINGTYPE sigle = cur.sigle();
-			for (size_t i = 0; i < nc; ++i) {
-				PMemoryDatasetType &o = vv[i];
-				MemoryDatasetType *px = o.get();
-				DatasetType c(cur);
-				if (px->find_dataset(c)) {
-					cur = c;
-					return (true);
-				}
-			}// i
-			return (false);
+			MemoryDatasetType *pf = this->get_dataset(cur);
+			if (pf == nullptr) {
+				return (false);
+			}
+			return (pf->find_dataset(cur));
 		}//find_dataset
 		virtual bool maintains_dataset(DatasetType &cur, bool/* bCommit = true*/) {
 			if (!cur.is_writeable()) {
 				return (false);
 			}
-			{
-				//MemoryDatasetType *pRet = nullptr;
-				pmemorydatasets_vector &vv = this->m_osets;
-				size_t nc = vv.size();
-				for (size_t i = 0; i < nc; ++i) {
-					PMemoryDatasetType &o = vv[i];
-					DatasetType c(cur);
-					MemoryDatasetType *px = o.get();
-					if (px->find_dataset(c)) {
-						return px->update_dataset(cur);
-					}
-				}// i
-				IDTYPE nx = cur.id();
-				if (nx != 0) {
-					if (nx >= this->m_lastid.load()) {
-						this->m_lastid.store(nx + 1);
-					}
-				}
-				else {
-					cur.id(this->m_lastid++);
-				}
-				cur.version(1);
-				PMemoryDatasetType o = std::make_shared<MemoryDatasetType>(cur);
-				vv.push_back(o);
+			MemoryDatasetType *pf = this->get_dataset(cur);
+			if (pf != nullptr) {
+				return pf->update_dataset(cur);
 			}
-			return (this->find_dataset(cur));
+			IDTYPE nx = cur.id();
+			if (nx != 0) {
+				if (nx >= this->m_lastid) {
+					this->m_lastid = (IDTYPE)(nx + 1);
+				}
+			}
+			else {
+				cur.id(this->m_lastid++);
+			}
+			cur.version(1);
+			PMemoryDatasetType o = std::make_shared<MemoryDatasetType>(cur);
+			IDTYPE key1 = cur.id();
+			this->m_id_map[key1] = o;
+			STRINGTYPE key2 = cur.sigle();
+			this->m_sigle_map[key2] = o;
+			return (true);
 		}//maintains_dataset
 		virtual bool remove_dataset(const DatasetType &cur, bool /*bCommit = true*/) {
-			pmemorydatasets_vector &vv = this->m_osets;
-			auto it = std::find_if(vv.begin(), vv.end(), [&](PMemoryDatasetType &o)->bool {
-				MemoryDatasetType *p = o.get();
-				DatasetType c(cur);
-				if (p->find_dataset(c)) {
-					return (true);
-				}
+			DatasetType xSet(cur);
+			MemoryDatasetType *pf = this->get_dataset(xSet);
+			if (pf == nullptr) {
 				return (false);
-			});
-			if (it != vv.end()) {
-				vv.erase(it);
+			}
+			if (!pf->find_dataset(xSet)) {
+				return (false);
+			}
+			{
+				STRINGTYPE key = xSet.sigle();
+				auto it = this->m_sigle_map.find(key);
+				if (it != this->m_sigle_map.end()) {
+					this->m_sigle_map.erase(it);
+				}
+			}
+			{
+				IDTYPE key = xSet.id();
+				auto it = this->m_id_map.find(key);
+				if (it != this->m_id_map.end()) {
+					this->m_id_map.erase(it);
+				}
 			}
 			return (true);
 		}//remove_dataset
@@ -252,20 +260,6 @@ namespace info {
 					return p->find_variable(cur);
 				}
 				return (false);
-			}
-			{
-				//MemoryDatasetType *pRet = nullptr;
-				pmemorydatasets_vector &vv = this->m_osets;
-				size_t nc = vv.size();
-				for (size_t i = 0; i < nc; ++i) {
-					PMemoryDatasetType &o = vv[i];
-					VariableType c(cur);
-					MemoryDatasetType *px = o.get();
-					if (px->find_variable(c)) {
-						cur = c;
-						return (true);
-					}
-				}// i
 			}
 			return (false);
 		}
@@ -327,20 +321,6 @@ namespace info {
 				}
 				return (false);
 			}
-			{
-				//MemoryDatasetType *pRet = nullptr;
-				pmemorydatasets_vector &vv = this->m_osets;
-				size_t nc = vv.size();
-				for (size_t i = 0; i < nc; ++i) {
-					PMemoryDatasetType &o = vv[i];
-					IndivType c(cur);
-					MemoryDatasetType *px = o.get();
-					if (px->find_indiv(c)) {
-						cur = c;
-						return (true);
-					}
-				}// i
-			}
 			return (false);
 		}
 		virtual bool maintains_indivs(const indivs_vector &oInds, bool bCommit = true,
@@ -382,11 +362,8 @@ namespace info {
 			if (oVals.empty()) {
 				return (false);
 			}
-			VariableType oVar((oVals[0]).variable_id());
-			if (!this->find_variable(oVar)) {
-				return (false);
-			}
-			DatasetType xSet(oVar.dataset_id());
+			IDTYPE nDatasetId = (oVals[0]).dataset_id();
+			DatasetType xSet(nDatasetId);
 			MemoryDatasetType *p = this->get_dataset(xSet);
 			if (p != nullptr) {
 				return p->maintains_values(oVals, bRemove);

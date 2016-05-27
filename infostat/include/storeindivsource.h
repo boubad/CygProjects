@@ -12,7 +12,7 @@ namespace info {
 		typename STRINGTYPE = std::string, typename WEIGHTYPE = float>
 		class StoreIndivSource : public IIndivSource<U, STRINGTYPE>, private boost::noncopyable {
 		public:
-			using IndexType = U;
+		    using IndexType = U;
 			using ints_vector = std::vector<U>;
 			using IndivType = Indiv<U, STRINGTYPE>;
 			using DataMap = std::map<U, InfoValue>;
@@ -88,6 +88,9 @@ namespace info {
 				oInd.dataset_id(oSet.id());
 				size_t nc = 0;
 				if (!pStore->find_indiv_values_count(oInd, nc)) {
+					return (oRet);
+				}
+				if (nc < 1) {
 					return (oRet);
 				}
 				values_vector oVals;
