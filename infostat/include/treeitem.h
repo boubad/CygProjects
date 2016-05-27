@@ -10,14 +10,14 @@ enum class LinkMode {
 	linkInvalid, linkMean, linkMin, linkMax
 };
 ///////////////////////////////////
-template<typename U,typename STRINGTYPE>
+template<typename U,typename STRINGTYPE, typename DISTANCETYPE>
 class TreeItem: public InterruptObject, private boost::noncopyable {
 public:
 	using IndexType = U;
 	using IndivType = Indiv<U,STRINGTYPE>;
 	using IndivTypePtr = std::shared_ptr<IndivType>;
 	using DataMap = std::map<U, InfoValue>;
-	using TreeItemType = TreeItem<U,STRINGTYPE>;
+	using TreeItemType = TreeItem<U,STRINGTYPE,DISTANCETYPE>;
 	using ints_sizet_map = std::map<U, size_t>;
 	using ints_vector = std::vector<U>;
 	using IndivClusterType = IndivCluster<U,STRINGTYPE>;
@@ -134,7 +134,7 @@ public:
 			this->m_pright->get_cluster(oCluster);
 		}
 	} // get_cluster
-	bool distance(const TreeItemType &other, double &dRes, const LinkMode mode =
+	bool distance(const TreeItemType &other, DISTANCETYPE &dRes, const LinkMode mode =
 			LinkMode::linkMean) const {
 		if (this->check_interrupt()) {
 			return (false);
@@ -161,7 +161,7 @@ public:
 		if (other.is_leaf()) {
 			switch (mode) {
 			case LinkMode::linkMax: {
-				double d1 = 0, d2 = 0;
+				DISTANCETYPE d1 = 0, d2 = 0;
 				if (!info_global_compute_distance(l1, c2, d1, pCancel)) {
 					return (false);
 				}
@@ -172,7 +172,7 @@ public:
 				return true;
 			}
 			case LinkMode::linkMin: {
-				double d1 = 0, d2 = 0;
+				DISTANCETYPE d1 = 0, d2 = 0;
 				if (!info_global_compute_distance(l1, c2, d1, pCancel)) {
 					return (false);
 				}
@@ -200,7 +200,7 @@ public:
 			}
 			DataMap &px1 = *it;
 			for (auto jt = dest.begin(); jt != dest.end(); ++jt) {
-				double d = 0;
+				DISTANCETYPE d = 0;
 				DataMap &px2 = *jt;
 				if (!info_global_compute_distance(px1, px2, d, pCancel)) {
 					return (false);

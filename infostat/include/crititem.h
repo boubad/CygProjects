@@ -17,7 +17,7 @@ enum class ClusterMergeMode {
 	invalid, topTop, topBottom, bottomTop, bottomBottom
 };
 ////////////////////////////////////////
-template<typename U = unsigned long, typename W = double>
+template<typename U = size_t, typename W = unsigned long>
 class CritItem {
 public:
 	using CritItemType = CritItem<U,W>;
@@ -59,7 +59,7 @@ public:
 		}
 	}
 	CritItem(const CritItemType &other) :
-			m_first(other.m_crit), m_second(other.m_second), m_crit(
+			m_first(other.m_first), m_second(other.m_second), m_crit(
 					other.m_crit), m_mode(other.m_mode) {
 	}
 	CritItemType & operator=(const CritItemType &other) {
@@ -137,135 +137,6 @@ public:
 	}
 };
 // class CritItem<U,W>
-///////////////////////////////////
-template<typename U = unsigned long, typename W = double>
-class DistanceMap: private boost::noncopyable {
-public:
-	using ints_set = std::set<U>;
-	using entry_type = std::map<U,W>;
-	using map_type = std::map<U, entry_type>;
-	using DistanceType = DistanceMap<U,W>;
-	using CritItemType = CritItem<U,W>;
-	using DistanceMapType = DistanceMap<U,W>;
-private:
-	map_type m_map;
-	ints_set m_set;
-	//
-	std::mutex _mutex;
-public:
-	DistanceMap() {
-	}
-	virtual ~DistanceMap() {
-	}
-public:
-	bool has_entry(const U i1, const U i2) {
-		U index1 = i1, index2 = i2;
-		if (index1 > index2) {
-			const U t = index1;
-			index1 = index2;
-			index2 = t;
-		}
-		std::unique_lock<std::mutex> oLock(this->_mutex);
-		map_type &oMap = this->m_map;
-		auto it = oMap.find(index1);
-		if (it == oMap.end()) {
-			return (false);
-		}
-		entry_type &e = (*it).second;
-		return (e.find() != e.end());
-	}
-	bool get(const U i1, const U i2, W &res) {
-		U index1 = i1, index2 = i2;
-		if (index1 > index2) {
-			const U t = index1;
-			index1 = index2;
-			index2 = t;
-		}
-		std::unique_lock<std::mutex> oLock(this->_mutex);
-		map_type &oMap = this->m_map;
-		auto it = oMap.find(index1);
-		if (it == oMap.end()) {
-			return (false);
-		}
-		entry_type &e = (*it).second;
-		auto jt = e.find(index2);
-		if (jt != e.end()) {
-			res = (*jt).second;
-			return (true);
-		}
-		return (false);
-	}
-	void clear(void) {
-		std::unique_lock<std::mutex> oLock(this->_mutex);
-		this->m_map.clear();
-		this->m_set.clear();
-	} // clear
-	void indexes(ints_set &oSet) {
-		std::unique_lock<std::mutex> oLock(this->_mutex);
-		oSet = this->m_set;
-	}
-	void add(const U i1, const U i2, const W val) {
-		if (i1 == i2) {
-			return;
-		}
-		U index1 = i1, index2 = i2;
-		if (index1 > index2) {
-			const U t = index1;
-			index1 = index2;
-			index2 = t;
-		}
-		std::unique_lock<std::mutex> oLock(this->_mutex);
-		map_type &oMap = this->m_map;
-		auto it = oMap.find(index1);
-		if (it == oMap.end()) {
-			entry_type e;
-			e[index2] = val;
-			oMap[index1] = e;
-		} else {
-			entry_type &e = (*it).second;
-			e[index2] = val;
-		}
-		ints_set &oSet = this->m_set;
-		oSet.insert(index1);
-		oSet.insert(index2);
-	} // add
-	void add(const CritItemType &oCrit) {
-		this->add(oCrit.first(), oCrit.second(), oCrit.criteria());
-	} // add
-	void increase_count(const U i1, const U i2) {
-		if (i1 == i2) {
-			return;
-		}
-		U index1 = i1, index2 = i2;
-		if (index1 > index2) {
-			const U t = index1;
-			index1 = index2;
-			index2 = t;
-		}
-		std::unique_lock<std::mutex> oLock(this->_mutex);
-		map_type &oMap = this->m_map;
-		auto it = oMap.find(index1);
-		if (it == oMap.end()) {
-			entry_type e;
-			e[index2] = (W) 1;
-			oMap[index1] = e;
-		} else {
-			entry_type &e = (*it).second;
-			auto jt = e.find(index2);
-			if (jt == e.end()) {
-				e[index2] = (W) 1;
-			} else {
-				W old = (*jt).second;
-				++old;
-				e[index2] = old;
-			}
-		}
-		ints_set &oSet = this->m_set;
-		oSet.insert(index1);
-		oSet.insert(index2);
-	} // add
-};
-// class DistanceMap<U,W>
 /////////////////////////////////////
 }// namespace info
 //////////////////////////////

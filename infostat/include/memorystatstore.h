@@ -4,7 +4,7 @@
 /////////////////////////////////////////
 #include "istatstore.h"
 #include "memorydataset.h"
-#include "info_global.h"
+#include "indiv.h"
 /////////////////////////////
 #include <memory>
 /////////////////////////////////////////
@@ -37,7 +37,6 @@ namespace info {
 		std::atomic<IDTYPE> m_lastid;
 		pmemorydatasets_vector m_osets;
 		//
-		std::mutex m_mutex;
 	public:
 		MemoryStatStore() :m_lastid(1) {}
 		virtual ~MemoryStatStore() {}
@@ -72,7 +71,6 @@ namespace info {
 		}
 		//
 		virtual bool find_all_datasets_count(size_t &nCount) {
-			std::unique_lock<std::mutex> lck(this->m_mutex);
 			nCount = this->m_osets.size();
 			return (true);
 		}
@@ -83,7 +81,6 @@ namespace info {
 			}
 			size_t nStart = skip;
 			{
-				std::unique_lock<std::mutex> lck(this->m_mutex);
 				pmemorydatasets_vector &vv = this->m_osets;
 				size_t nMax = vv.size();
 				if (nStart > nMax) {
@@ -113,7 +110,6 @@ namespace info {
 			}
 			size_t nStart = skip;
 			{
-				std::unique_lock<std::mutex> lck(this->m_mutex);
 				pmemorydatasets_vector &vv = this->m_osets;
 				size_t nMax = vv.size();
 				if (nStart > nMax) {
@@ -136,7 +132,6 @@ namespace info {
 		}//find_all_datasets_ids
 		MemoryDatasetType *get_dataset(DatasetType &cur) {
 			MemoryDatasetType *pRet = nullptr;
-			std::unique_lock<std::mutex> lck(this->m_mutex);
 			pmemorydatasets_vector &vv = this->m_osets;
 			size_t nc = vv.size();
 			IDTYPE nId = cur.id();
@@ -152,7 +147,6 @@ namespace info {
 			return (pRet);
 		}// get_dataset
 		virtual bool find_dataset(DatasetType &cur) {
-			std::unique_lock<std::mutex> lck(this->m_mutex);
 			pmemorydatasets_vector &vv = this->m_osets;
 			size_t nc = vv.size();
 			//IDTYPE nId = cur.id();
@@ -173,7 +167,6 @@ namespace info {
 				return (false);
 			}
 			{
-				std::unique_lock<std::mutex> lck(this->m_mutex);
 				//MemoryDatasetType *pRet = nullptr;
 				pmemorydatasets_vector &vv = this->m_osets;
 				size_t nc = vv.size();
@@ -201,7 +194,6 @@ namespace info {
 			return (this->find_dataset(cur));
 		}//maintains_dataset
 		virtual bool remove_dataset(const DatasetType &cur, bool /*bCommit = true*/) {
-			std::unique_lock<std::mutex> lck(this->m_mutex);
 			pmemorydatasets_vector &vv = this->m_osets;
 			auto it = std::find_if(vv.begin(), vv.end(), [&](PMemoryDatasetType &o)->bool {
 				MemoryDatasetType *p = o.get();
@@ -262,7 +254,6 @@ namespace info {
 				return (false);
 			}
 			{
-				std::unique_lock<std::mutex> lck(this->m_mutex);
 				//MemoryDatasetType *pRet = nullptr;
 				pmemorydatasets_vector &vv = this->m_osets;
 				size_t nc = vv.size();
@@ -337,7 +328,6 @@ namespace info {
 				return (false);
 			}
 			{
-				std::unique_lock<std::mutex> lck(this->m_mutex);
 				//MemoryDatasetType *pRet = nullptr;
 				pmemorydatasets_vector &vv = this->m_osets;
 				size_t nc = vv.size();

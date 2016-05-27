@@ -14,14 +14,14 @@
 /////////////////////////////////
 namespace info {
 ///////////////////////////
-template<typename U = unsigned long,typename STRINGTYPE = std::string>
+template<typename U = unsigned long,typename STRINGTYPE = std::string,typename DISTANCETYPE = unsigned long>
 class IndivsTree: public ClustersCollection<U,STRINGTYPE> {
 public:
 	using IndexType = U;
 	using IndivType = Indiv<U,STRINGTYPE>;
 	using IndivTypePtr = std::shared_ptr<IndivType>;
 	using DataMap = std::map<U, InfoValue>;
-	using TreeItemType = TreeItem<U,STRINGTYPE>;
+	using TreeItemType = TreeItem<U,STRINGTYPE,DISTANCETYPE>;
 	using PTreeItemType = TreeItemType *;
 	using ints_sizet_map = std::map<U, size_t>;
 	using IndivClusterType = IndivCluster<U,STRINGTYPE>;
@@ -40,11 +40,10 @@ public:
 			ClustersCollectionType(pCancel), m_mode(LinkMode::linkMean) {
 	}
 	virtual ~IndivsTree() {
-		treeitems_vector & v = this->m_items;
-		for (auto it = v.begin(); it != v.end(); ++it) {
-			PTreeItemType p = *it;
+		treeitems_vector &v = this->m_items;
+		for (auto && p : v) {
 			delete p;
-		}
+		}// p
 		v.clear();
 	}
 	LinkMode link_mode(void) const {
@@ -56,13 +55,19 @@ public:
 	const treeitems_vector & items(void) const {
 		return (this->m_items);
 	}
+	void get_centers(datamaps_vector &oVec) const {
+		oVec.clear();
+		for (auto &p : this->m_items) {
+			DataMap oMap = p->center();
+			oVec.push_back(oMap);
+		}//p
+	}
 protected:
 	virtual void clear(void) {
 		treeitems_vector &v = this->m_items;
-		for (auto it = v.begin(); it != v.end(); ++it) {
-			PTreeItemType p = *it;
+		for (auto && p : v) {
 			delete p;
-		}
+		}// p
 		v.clear();
 		ClustersCollectionType::clear();
 	}
@@ -79,6 +84,9 @@ protected:
 		std::atomic_bool *pCancel = this->get_cancelleable_flag();
 		IndivSummator<U> summator(pCancel);
 		for (size_t i = 0; i < nbIndivs; ++i) {
+			if (this->check_interrupt()) {
+				return (false);
+			}
 			IndivTypePtr oInd = pProvider->get(i);
 			const IndivType *pInd = oInd.get();
 			if ((pInd != nullptr) && pInd->has_numeric_fields()) {
@@ -100,7 +108,7 @@ protected:
 		}
 		PTreeItemType pRes1 = nullptr;
 		PTreeItemType pRes2 = nullptr;
-		double distMin = 0;
+		DISTANCETYPE distMin = 0;
 		const LinkMode mode = this->m_mode;
 		for (size_t i = 0; i < n; ++i) {
 			if (this->check_interrupt()) {
@@ -108,8 +116,11 @@ protected:
 			}
 			PTreeItemType p1 = items[i];
 			for (size_t j = 0; j < i; ++j) {
+				if (this->check_interrupt()) {
+					return (false);
+				}
 				PTreeItemType p2 = items[j];
-				double d = 0;
+				DISTANCETYPE d = 0;
 				if (p1->distance(*p2, d, mode)) {
 					if (pRes1 == nullptr) {
 						distMin = d;

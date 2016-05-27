@@ -14,7 +14,7 @@
 namespace info {
 ////////////////////////////////////////
 template<typename U = unsigned long, typename STRINGTYPE = std::string,
-		typename DISTANCETYPE = double>
+		typename DISTANCETYPE = unsigned long>
 class ArrangeIndivs: public ClustersCollection<U, STRINGTYPE> {
 public:
 	using IndexType = U;
@@ -24,7 +24,6 @@ public:
 	using DataMap = std::map<U, InfoValue>;
 	using ints_sizet_map = std::map<U, size_t>;
 	using IndivClusterType = IndivCluster<U,STRINGTYPE>;
-	using treeitems_vector = std::vector<PTreeItemType>;
 	using SourceType = IIndivSource<U,STRINGTYPE>;
 	using clusters_vector = std::vector<IndivClusterType>;
 	using ints_vector = std::vector<U>;
@@ -33,6 +32,7 @@ public:
 	using CritItemType = CritItem<U,DISTANCETYPE>;
 	using DistanceMapType = DistanceMap<U,DISTANCETYPE>;
 	using ClustersCollectionType = ClustersCollection<U,STRINGTYPE>;
+	using ArrangeIndivsType = ArrangeIndivs<U,STRINGTYPE,DISTANCETYPE>;
 private:
 	DistanceMapType m_distanceMap;
 private:
@@ -56,10 +56,10 @@ private:
 						return (false);
 					}
 					IndivTypePtr oInd2 = pProvider->get(j);
-					const IndivType *pInd2 = oInd1.get();
+					const IndivType *pInd2 = oInd2.get();
 					if ((pInd2 != nullptr) && pInd2->has_numeric_fields()) {
 						const U aIndex2 = pInd2->id();
-						double d = 0;
+						DISTANCETYPE d = 0;
 						if (info_global_compute_distance(m1, pInd2->center(), d,
 								pCancel)) {
 							oMap.add(aIndex1, aIndex2, d);
@@ -72,14 +72,51 @@ private:
 	} // compute_distances
 public:
 	ArrangeIndivs(std::atomic_bool *pCancel = nullptr) :
-			ClustersCollectionType(pCancel), m_niter(0) {
+			ClustersCollectionType(pCancel) {
+	}
+	ArrangeIndivs(const ArrangeIndivsType &other):ClustersCollectionType(other),
+		m_distanceMap(other.m_distanceMap){}
+	ArrangeIndivsType & operator=(const ArrangeIndivsType &other) {
+		if (this != &other) {
+			ClustersCollectionType::operator=(other);
+			this->m_distanceMap = other.m_distanceMap;
+		}
+		return (*this);
 	}
 	virtual ~ArrangeIndivs() {
 	}
 public:
+	virtual bool process(SourceType *pSource, const size_t nbClusters = 5,
+		const size_t nbMaxIters = 100,
+		std::atomic_bool *pCancel = nullptr) {
+		size_t nc = 1;
+		return ClustersCollectionType::process(pSource, nc, 100, pCancel);
+	}// process
 	const DistanceMapType & distances_map(void) const {
 		return (this->m_distanceMap);
 	}
+	void indivs(indivptrs_vector &oInds) const {
+		const clusters_vector &vv = this->clusters();
+		oInds.clear();
+		if (!vv.empty()) {
+			const IndivClusterType &c = vv[0];
+			oInds = c.members();
+		}
+	}
+	void indexes(ints_vector &oInds) const {
+		const clusters_vector &vv = this->clusters();
+		oInds.clear();
+		if (!vv.empty()) {
+			const IndivClusterType &c = vv[0];
+			auto v = c.members();
+			for (auto it = v.begin(); it != v.end(); ++it) {
+				IndivTypePtr o = *it;
+				const IndivType *p = o.get();
+				assert(p != nullptr);
+				oInds.push_back(p->id());
+			}// it
+		}
+	}// indexes
 protected:
 	virtual void clear(void) {
 		ClustersCollectionType::clear();
@@ -103,7 +140,7 @@ protected:
 			if (this->check_interrupt()) {
 				return (false);
 			}
-			IndivTypePtr oInd = pProvider->get(i);
+			IndivTypePtr oInd = pSource->get(i);
 			IndivType *pInd = oInd.get();
 			if ((pInd != nullptr) && pInd->has_numeric_fields()) {
 				IndivClusterType c((U) i, STRINGTYPE(), pCancel);

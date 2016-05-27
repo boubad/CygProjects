@@ -13,10 +13,11 @@
 /////////////////////////////////
 namespace info {
 ////////////////////////////////////////
-template<typename U = unsigned long,typename STRINGTYPE = std::string>
+template<typename U = unsigned long,typename STRINGTYPE = std::string,typename DISTANCETYPE = unsigned long>
 class ClusterizeKMeans: public ClustersCollection<U,STRINGTYPE> {
 public:
 	using IndexType = U;
+	using sizets_vector = std::vector<size_t>;
 	using IndivType = Indiv<U,STRINGTYPE>;
 	using IndivTypePtr = std::shared_ptr<IndivType>;
 	using indivptrs_vector = std::vector<IndivTypePtr>;
@@ -32,6 +33,7 @@ public:
 private:
 	size_t m_niter;
 	ints_sizet_map m_map;
+	sizets_vector m_args;
 public:
 	ClusterizeKMeans(std::atomic_bool *pCancel = nullptr) :
 			ClustersCollectionType(pCancel), m_niter(0) {
@@ -42,7 +44,7 @@ public:
 	size_t compute(const datamaps_vector &oSeeds, SourceType *pProvider,
 			size_t nbIters, std::atomic_bool *pxCancel = nullptr) {
 		const size_t nbClusters = oSeeds.size();
-		if (!ClustersCollectionType::initialize_process(pProvider, nbClusters,
+		if (!this->initialize_process(pProvider, nbClusters,
 				nbIters, pxCancel)) {
 			return (0);
 		}
@@ -71,7 +73,7 @@ public:
 		assert(nbClusters > 1);
 		assert(pProvider != nullptr);
 		assert(nbIters > 0);
-		if (!ClustersCollectionType::initialize_process(pProvider, nbClusters,
+		if (!this->initialize_process(pProvider, nbClusters,
 				nbIters, pxCancel)) {
 			return (0);
 		}
@@ -80,74 +82,82 @@ public:
 			return (0);
 		}
 		datamaps_vector oSeeds;
-		std::for_each(oInds.begin(), oInds.end(), [&](const IndivTypePtr &o) {
+		for (auto &o : oInds) {
 			const IndivType *p = o.get();
 			assert(p != nullptr);
 			DataMap oMap = p->center();
 			oSeeds.push_back(oMap);
-		});
+		}
 		return (this->compute(oSeeds, pProvider, nbIters, pxCancel));
 	} //compute_random
-	virtual bool process(SourceType *pSource, const size_t nbClusters,
+	virtual bool process(SourceType *pSource, const size_t nbClusters = 5,
 			const size_t nbMaxIters = 100,
 			std::atomic_bool *pCancel = nullptr) {
 		return (this->compute_random(nbClusters, pSource, nbMaxIters,
-				pCancel));
+				pCancel) > 0);
 	} // process
-public:
+protected:
 	virtual void clear(void) {
 		ClustersCollectionType::clear();
 		this->m_niter = 0;
 		this->m_map.clear();
 	} // clear
+	virtual bool initialize_process(SourceType *pSource,
+		const size_t nbClusters, const size_t nbMaxIters = 100,
+		std::atomic_bool *pCancel = nullptr) {
+		if (!ClustersCollectionType::initialize_process(pSource, nbClusters,
+			nbMaxIters, pCancel)) {
+			return (0);
+		}
+		const size_t n = this->get_nbIndivs();
+		sizets_vector & v = this->m_args;
+		v.resize(n);
+		for (size_t i = 0; i < n; ++i) {
+			v[i] = i;
+		}
+		return ((this->check_interrupt()) ? false : true);
+	} // initalize_process
 	virtual bool one_iteration(void) {
 		if (this->m_niter > this->get_nbMaxIters()) {
 			return (false);
 		}
 		clusters_vector &clusters = this->clusters();
 		const size_t nc = clusters.size();
-		//std::atomic_bool *pCancel = this->get_cancelleable_flag();
-		const size_t nbIndivs = this->get_nbIndivs();
 		SourceType *pProvider = this->source();
 		//
-		std::for_each(clusters.begin(), clusters.end(),
-				[&](IndivClusterType &c) {
-					c.clear_members();
-				});
-		for (size_t i = 0; i < nbIndivs; ++i) {
-			if (this->check_interrupt()) {
-				return (false);
-			}
-			bool bFirst = true;
-			double dMin = 0;
-			size_t iCluster = 0;
+		for (auto && c : clusters) {
+			c.clear_members();
+		}
+		const sizets_vector &args = this->m_args;
+		std::mutex _mutex;
+		info_parallel_for_each(args.begin(), args.end(), [&](const size_t &i) {
+			DISTANCETYPE dMin = 0;
+			IndivClusterType *pRes = nullptr;
 			IndivTypePtr oInd = pProvider->get(i);
 			IndivType *pInd = oInd.get();
 			if (pInd != nullptr) {
 				for (size_t j = 0; j < nc; ++j) {
-					IndivClusterType &c = clusters[j];
-					double d = 0;
-					if (c.distance(oInd, d)) {
-						if (bFirst) {
+					IndivClusterType *pc = &( clusters[j]);
+					DISTANCETYPE d = 0;
+					if (pc->distance(oInd, d)) {
+						if (pRes == nullptr) {
 							dMin = d;
-							iCluster = j;
-							bFirst = false;
-						} else if (d < dMin) {
-							dMin = d;
-							iCluster = j;
+							pRes = pc;
+						}
+						else if (d < dMin) {
+							pRes = pc;
 						}
 					} // distance
 				} // j
-				if (!bFirst) {
-					IndivClusterType &c = clusters[iCluster];
-					c.add(oInd);
+				if (pRes != nullptr) {
+					std::lock_guard<std::mutex> oLock(_mutex);
+					pRes->add(oInd);
 				}
 			} // ind
-		} // i
-		std::for_each(clusters.begin(), clusters.end(),
-				[&](IndivClusterType &c) {
-					c.update_center();
-				});
+		});
+		for (auto && c : clusters) {
+			c.update_center();
+		}
 		if (this->check_interrupt()) {
 			return (false);
 		}
@@ -179,24 +189,22 @@ public:
 	virtual bool post_terminate_process(void) {
 		clusters_vector &clusters = this->clusters();
 		std::set<U> oSet;
-		std::for_each(clusters.begin(), clusters.end(),
-				[&](IndivClusterType c) {
-					if (c.is_empty()) {
-						oSet.insert(c.id());
-					}
-				});
+		for (auto &c : clusters) {
+			if (c.is_empty()) {
+				oSet.insert(c.id());
+			}
+		}
 		if (this->check_interrupt()) {
 			return (false);
 		}
-		std::for_each(oSet.begin(), oSet.end(),
-				[&](const U key) {
-					auto it = std::find_if(clusters.begin(),clusters.end(),[key](IndivClusterType &c)->bool {
-								return (c.id() == key);
-							});
-					if (it != clusters.end()) {
-						clusters.erase(it);
-					}
-				});
+		for (auto &key : oSet) {
+			auto it = std::find_if(clusters.begin(), clusters.end(), [key](IndivClusterType &c)->bool {
+				return (c.id() == key);
+			});
+			if (it != clusters.end()) {
+				clusters.erase(it);
+			}
+		}// key
 		this->update_center();
 		return (ClustersCollectionType::post_terminate_process());
 	} // post_terminate_process

@@ -40,11 +40,6 @@ namespace info {
 		indivs_vector m_indivs;
 		values_vector m_values;
 		//
-		std::mutex m_mutexDataset;
-		std::mutex m_mutexIndiv;
-		std::mutex m_mutexVariable;
-		std::mutex m_mutexValue;
-		//
 		IDTYPE next_id(void) {
 			return (this->m_lastid++);
 		}
@@ -253,16 +248,13 @@ namespace info {
 		MemoryDataset(const DatasetType &oSet) :m_lastid(1), m_oset(oSet) {
 			size_t nMax = this->m_oset.id();
 			if (nMax >= this->m_lastid.load()) {
-				this->m_lastid.store(nMax + 1);
+				this->m_lastid.store((IDTYPE)(nMax + 1));
 			}
 		}
 		~MemoryDataset() {}
 	public:
 		//
 		bool find_indiv_values_count(IndivType &oInd, size_t &nc) {
-			std::unique_lock<std::mutex> lock1(this->m_mutexValue, std::defer_lock);
-			std::unique_lock<std::mutex> lock2(this->m_mutexIndiv, std::defer_lock);
-			std::lock(lock1, lock2);
 			if (!this->find_indiv(oInd, false)) {
 				return (false);
 			}
@@ -278,9 +270,6 @@ namespace info {
 			return (true);
 		}// find_indiv_values_count
 		bool find_variable_values_count(VariableType &oVar, size_t &nc) {
-			std::unique_lock<std::mutex> lock1(this->m_mutexValue, std::defer_lock);
-			std::unique_lock<std::mutex> lock2(this->m_mutexVariable, std::defer_lock);
-			std::lock(lock1, lock2);
 			if (!this->find_variable(oVar, false)) {
 				return (false);
 			}
@@ -299,9 +288,6 @@ namespace info {
 			if (count < 1) {
 				count = 100;
 			}
-			std::unique_lock<std::mutex> lock1(this->m_mutexValue, std::defer_lock);
-			std::unique_lock<std::mutex> lock2(this->m_mutexIndiv, std::defer_lock);
-			std::lock(lock1, lock2);
 			if (!this->find_indiv(oInd, false)) {
 				return (false);
 			}
@@ -328,9 +314,6 @@ namespace info {
 			if (count < 1) {
 				count = 100;
 			}
-			std::unique_lock<std::mutex> lock1(this->m_mutexValue, std::defer_lock);
-			std::unique_lock<std::mutex> lock2(this->m_mutexVariable, std::defer_lock);
-			std::lock(lock1, lock2);
 			if (!this->find_variable(oVar, false)) {
 				return (false);
 			}
@@ -365,9 +348,6 @@ namespace info {
 			if (count < 1) {
 				count = 100;
 			}
-			std::unique_lock<std::mutex> lock1(this->m_mutexValue, std::defer_lock);
-			std::unique_lock<std::mutex> lock2(this->m_mutexVariable, std::defer_lock);
-			std::lock(lock1, lock2);
 			if (!this->find_variable(oVar, false)) {
 				return (false);
 			}
@@ -394,7 +374,6 @@ namespace info {
 			if (count < 1) {
 				count = 100;
 			}
-			std::unique_lock<std::mutex> lock(this->m_mutexValue);
 			const values_vector &vv = this->m_values;
 			const size_t nMax = vv.size();
 			size_t nStart = skip;
@@ -418,15 +397,10 @@ namespace info {
 			return (true);
 		}// find_dataset_values
 		bool find_dataset_values_count(size_t &nCount) {
-			std::unique_lock<std::mutex> lock1(this->m_mutexValue);
 			nCount = this->m_values.size();
 			return (true);
 		}//find_dataset_values_count
 		bool maintains_values(const values_vector &oList, bool bRemove = false) {
-			std::unique_lock<std::mutex> lock1(this->m_mutexValue, std::defer_lock);
-			std::unique_lock<std::mutex> lock2(this->m_mutexVariable, std::defer_lock);
-			std::unique_lock<std::mutex> lock3(this->m_mutexIndiv, std::defer_lock);
-			std::lock(lock1, lock2, lock3);
 			values_vector &values = this->m_values;
 			IDTYPE nMax = 0;
 			std::for_each(oList.begin(), oList.end(), [&](const ValueType &v) {
@@ -520,7 +494,6 @@ namespace info {
 				return (false);
 			}
 			else {
-				std::unique_lock<std::mutex> lock(this->m_mutexValue);
 				const values_vector &vv = this->m_values;
 				if (nId != 0) {
 					auto it = std::find_if(vv.begin(), vv.end(), [nId](const ValueType &p)->bool {
@@ -545,9 +518,6 @@ namespace info {
 		}// find_value
 		//
 		bool remove_indivs(const indivs_vector &oList) {
-			std::unique_lock<std::mutex> lock1(this->m_mutexIndiv, std::defer_lock);
-			std::unique_lock<std::mutex> lock2(this->m_mutexValue, std::defer_lock);
-			std::lock(lock1, lock2);
 			indivs_vector &variables = this->m_indivs;
 			values_vector &values = this->m_values;
 			std::for_each(oList.begin(), oList.end(), [&](const IndivType &p) {
@@ -580,7 +550,6 @@ namespace info {
 		}// remove_indivs
 		bool maintains_indivs(const indivs_vector &oList) {
 			IDTYPE nCurrentDatasetId = this->get_datasetid();
-			std::unique_lock<std::mutex> lock(this->m_mutexIndiv);
 			indivs_vector &vv = this->m_indivs;
 			IDTYPE nMax = 0;
 			std::for_each(oList.begin(), oList.end(), [&](const IndivType &v) {
@@ -654,7 +623,6 @@ namespace info {
 				return (false);
 			}
 			else {
-				std::unique_lock<std::mutex> lock(this->m_mutexIndiv);
 				const indivs_vector &vv = this->m_indivs;
 				if (nId != 0) {
 					auto it = std::find_if(vv.begin(), vv.end(), [nId](const IndivType &p)->bool {
@@ -682,7 +650,6 @@ namespace info {
 			if (count < 1) {
 				count = 100;
 			}
-			std::unique_lock<std::mutex> lock(this->m_mutexIndiv);
 			const indivs_vector &vv = this->m_indivs;
 			const size_t nMax = vv.size();
 			size_t nStart = skip;
@@ -709,7 +676,6 @@ namespace info {
 			if (count < 1) {
 				count = 100;
 			}
-			std::unique_lock<std::mutex> lock(this->m_mutexIndiv);
 			const indivs_vector &vv = this->m_indivs;
 			const size_t nMax = vv.size();
 			size_t nStart = skip;
@@ -733,14 +699,12 @@ namespace info {
 			return (true);
 		}// get_indivs
 		bool get_indivs_count(size_t &nCount) {
-			std::unique_lock<std::mutex> lock(this->m_mutexIndiv);
 			nCount = this->m_indivs.size();
 			return (true);
 		}
 		//
 		bool find_dataset_variables_types(ints_string_map &oMap) {
 			oMap.clear();
-			std::unique_lock<std::mutex> lock2(this->m_mutexVariable);
 			variables_vector &vv = this->m_variables;
 			std::for_each(vv.begin(), vv.end(), [&](VariableType &v) {
 				STRINGTYPE s = v.vartype();
@@ -750,9 +714,6 @@ namespace info {
 			return (true);
 		}//find_dataset_variables_types
 		bool remove_variables(const variables_vector &oList) {
-			std::unique_lock<std::mutex> lock1(this->m_mutexVariable, std::defer_lock);
-			std::unique_lock<std::mutex> lock2(this->m_mutexValue, std::defer_lock);
-			std::lock(lock1, lock2);
 			variables_vector &variables = this->m_variables;
 			values_vector &values = this->m_values;
 			std::for_each(oList.begin(), oList.end(), [&](const VariableType &p) {
@@ -785,7 +746,6 @@ namespace info {
 		}// remove_variables
 		bool maintains_variables(const variables_vector &oList) {
 			IDTYPE nCurrentDatasetId = this->get_datasetid();
-			std::unique_lock<std::mutex> lock(this->m_mutexVariable);
 			variables_vector &vv = this->m_variables;
 			IDTYPE nMax = 0;
 			std::for_each(oList.begin(), oList.end(), [&](const VariableType &v) {
@@ -859,7 +819,6 @@ namespace info {
 				return (false);
 			}
 			else {
-				std::unique_lock<std::mutex> lock(this->m_mutexVariable);
 				const variables_vector &vv = this->m_variables;
 				if (nId != 0) {
 					auto it = std::find_if(vv.begin(), vv.end(), [nId](const VariableType &p)->bool {
@@ -887,7 +846,6 @@ namespace info {
 			if (count < 1) {
 				count = 100;
 			}
-			std::unique_lock<std::mutex> lock(this->m_mutexVariable);
 			const variables_vector &vv = this->m_variables;
 			const size_t nMax = vv.size();
 			size_t nStart = skip;
@@ -914,7 +872,6 @@ namespace info {
 			if (count < 1) {
 				count = 100;
 			}
-			std::unique_lock<std::mutex> lock(this->m_mutexVariable);
 			const variables_vector &vv = this->m_variables;
 			const size_t nMax = vv.size();
 			size_t nStart = skip;
@@ -938,7 +895,6 @@ namespace info {
 			return (true);
 		}// get_variables
 		bool get_variables_count(size_t &nCount) {
-			std::unique_lock<std::mutex> lock(this->m_mutexVariable);
 			nCount = this->m_variables.size();
 			return (true);
 		}
@@ -950,7 +906,6 @@ namespace info {
 				return (false);
 			}
 			{
-				std::unique_lock<std::mutex> lock(this->m_mutexDataset);
 				DatasetType &vv = this->m_oset;
 				if (vv.id() == nId) {
 					vv.version(vv.version() + 1);
@@ -965,7 +920,6 @@ namespace info {
 			return (false);
 		}// update_dataset
 		bool find_dataset(IDTYPE nId, const STRINGTYPE &sigle) {
-			std::unique_lock<std::mutex> lock(this->m_mutexDataset);
 			DatasetType &vv = this->m_oset;
 			if ((nId != 0) && (vv.id() == nId)) {
 				return (true);
@@ -977,7 +931,6 @@ namespace info {
 			return (false);
 		}//find_dataset
 		bool find_dataset(DatasetType &cur) {
-			std::unique_lock<std::mutex> lock(this->m_mutexDataset);
 			DatasetType &vv = this->m_oset;
 			if (cur.id() == vv.id()) {
 				cur = vv;
@@ -994,11 +947,9 @@ namespace info {
 			return (false);
 		}// find_dataset
 		void get_dataset(DatasetType &oCur) {
-			std::unique_lock<std::mutex> lock(this->m_mutexDataset);
 			oCur = this->m_oset;
 		}
 		IDTYPE get_datasetid(void) {
-			std::unique_lock<std::mutex> lock(this->m_mutexDataset);
 			IDTYPE nRet = this->m_oset.id();
 			return (nRet);
 		}//get_datasetid
