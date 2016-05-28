@@ -33,8 +33,8 @@ public:
 		StoreType *ps = p->get_memory_store();
 		assert(ps != nullptr);
 		m_fixture.reset(new SourceFixture(ps));
-		SourceFixture *px = m_fixture.get();
-		assert(px != nullptr);
+		//SourceFixture *px = m_fixture.get();
+		//assert(px != nullptr);
 	} // MyTestFixture
 	virtual ~MyTestFixture() {
 	}

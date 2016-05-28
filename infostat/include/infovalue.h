@@ -2,8 +2,7 @@
 #ifndef __INFOVALUE_H__
 #define __INFOVALUE_H__
 ///////////////////////
-#include  <string>
-#include <boost/any.hpp>
+#include "info_includes.h"
 ////////////////////////////
 namespace info
 {

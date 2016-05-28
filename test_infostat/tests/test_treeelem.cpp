@@ -1,12 +1,12 @@
 /*
- * test_cluterize.cpp
+ * test_treeelem.cpp
  *
  *  Created on: 28 mai 2016
  *      Author: boubad
  */
 #include <boost/test/unit_test.hpp>
 /////////////////////////
-#include <clusterize.h>
+#include <treecollection.h>
 /////////////////////////////
 #include "mytestfixture.h"
 ////////////////////////////////////
@@ -22,14 +22,14 @@ using DataMap = typename MyFixture::DataMap;
 using IndivTypePtr = typename MyFixture::IndivTypePtr;
 using SourceType = typename MyFixture::SourceType;
 ////////////////////////////////
-using ClusterizeKMeansType = ClusterizeKMeans<IDTYPE, STRINGTYPE, DISTANCETYPE>;
+using IndivsTreeType = IndivsTree<IDTYPE,STRINGTYPE,DISTANCETYPE>;
 /////////////////////////////////////
-BOOST_FIXTURE_TEST_SUITE(ClusterizeTestSuite,MyFixture)
-BOOST_AUTO_TEST_CASE(testMortalClusterize) {
+BOOST_FIXTURE_TEST_SUITE(HierarTestSuite,MyFixture)
+BOOST_AUTO_TEST_CASE(testMortalHierar) {
 	SourceType *pProvider = this->mortal_source();
 	BOOST_CHECK(pProvider != nullptr);
 	//
-	ClusterizeKMeansType oMan;
+	IndivsTreeType oMan;
 	size_t nbClusters = 5;
 	size_t nbIters = 20;
 	size_t nIters = oMan.process(pProvider, nbClusters, nbIters);
@@ -38,17 +38,17 @@ BOOST_AUTO_TEST_CASE(testMortalClusterize) {
 	STRINGTYPE ss;
 	oMan.to_string(ss);
 	BOOST_TEST_MESSAGE("");
-	BOOST_TEST_MESSAGE("CLUSTERIZE KMEANS MORTAL");
+	BOOST_TEST_MESSAGE("CLUSTERIZE HIERAR MORTAL");
 	BOOST_TEST_MESSAGE("Nb iterations: " << nIters);
 	BOOST_TEST_MESSAGE("Nb clusters: " << oMan.clusters_count() << "/" << nbClusters);
 	BOOST_TEST_MESSAGE(ss);
 	*/
-} //testMortalClusterize
-BOOST_AUTO_TEST_CASE(testConsoClusterize) {
+} //testMortalHierar
+BOOST_AUTO_TEST_CASE(testConsoHierar) {
 	SourceType *pProvider = this->conso_source();
 	BOOST_CHECK(pProvider != nullptr);
 	//
-	ClusterizeKMeansType oMan;
+	IndivsTreeType oMan;
 	size_t nbClusters = 3;
 	size_t nbIters = 20;
 	size_t nIters = oMan.process(pProvider, nbClusters, nbIters);
@@ -57,18 +57,18 @@ BOOST_AUTO_TEST_CASE(testConsoClusterize) {
 	STRINGTYPE ss;
 	oMan.to_string(ss);
 	BOOST_TEST_MESSAGE("");
-	BOOST_TEST_MESSAGE("CLUSTERIZE KMEANS CONSO");
+	BOOST_TEST_MESSAGE("CLUSTERIZE HIERAR CONSO");
 	BOOST_TEST_MESSAGE("Nb iterations: " << nIters);
 	BOOST_TEST_MESSAGE("Nb clusters: " << oMan.clusters_count() << "/" << nbClusters);
 	BOOST_TEST_MESSAGE(ss);
 	*/
-} //testConsoClusterize
+} //testConsoHierar
 /*
-BOOST_AUTO_TEST_CASE(testTestClusterize) {
+BOOST_AUTO_TEST_CASE(testTestHierar) {
 	SourceType *pProvider = this->test_source();
 	BOOST_CHECK(pProvider != nullptr);
 	//
-	ClusterizeKMeansType oMan;
+	IndivsTreeType oMan;
 	size_t nbClusters = 5;
 	size_t nbIters = 20;
 	size_t nIters = oMan.process(pProvider, nbClusters, nbIters);
@@ -76,11 +76,15 @@ BOOST_AUTO_TEST_CASE(testTestClusterize) {
 	STRINGTYPE ss;
 	oMan.to_string(ss);
 	BOOST_TEST_MESSAGE("");
-	BOOST_TEST_MESSAGE("CLUSTERIZE KMEANS TEST");
+	BOOST_TEST_MESSAGE("CLUSTERIZE HIERAR TEST");
 	BOOST_TEST_MESSAGE("Nb iterations: " << nIters);
 	BOOST_TEST_MESSAGE("Nb clusters: " << oMan.clusters_count() << "/" << nbClusters);
 	BOOST_TEST_MESSAGE(ss);
-} //testTestClusterize
+} //testTestHierar
 */
 BOOST_AUTO_TEST_SUITE_END();
+
+
+
+
 

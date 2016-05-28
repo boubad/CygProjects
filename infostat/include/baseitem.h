@@ -52,11 +52,11 @@ namespace info {
 		void status(const STRINGTYPE &s) {
 			this->m_status = info_trim_upper(s);
 		}
-		bool gas_id(void) const {
+		bool has_id(void) const {
 			return (this->m_id != 0);
 		}
 		bool is_updateable(void) const {
-			return (this->has_id() && this->is_writeabale());
+			return (this->has_id() && this->is_writeable());
 		}
 	public:
 		virtual ~BaseInfoStatItem() {}
@@ -327,6 +327,9 @@ namespace info {
 	public:
 		IDTYPE dataset_id(void) const {
 			return (this->m_datasetid);
+		}
+		void dataset_id(const IDTYPE n){
+			this->m_datasetid = n;
 		}
 		IDTYPE variable_id(void) const {
 			return (this->m_varid);

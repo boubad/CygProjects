@@ -407,6 +407,7 @@ namespace info {
 			while (q.move_next()) {
 				ValueType cur;
 				this->read_value(q, cur);
+				cur.dataset_id(nDatasetId);
 				oList.push_back(cur);
 			}
 			return (true);
@@ -431,6 +432,7 @@ namespace info {
 			if (!this->find_variable(oVar)) {
 				return (false);
 			}
+			IDTYPE nDatasetId = oVar.dataset_id();
 			IDTYPE nId = oVar.id();
 			SQLite_Statement q(*(this->m_base), SQL_VALUES_BY_VARIABLEID);
 			assert(q.get_parameters_count() == 3);
@@ -441,6 +443,7 @@ namespace info {
 			while (q.move_next()) {
 				ValueType cur;
 				this->read_value(q, cur);
+				cur.dataset_id(nDatasetId);
 				oList.push_back(cur);
 			}
 			return (true);
@@ -560,6 +563,7 @@ namespace info {
 			if (!this->find_dataset(xSet)) {
 				return (false);
 			}
+			IDTYPE nDatasetId = xSet.id();
 			IDTYPE nId = oInd.id();
 			SQLite_Statement q(*(this->m_base), SQL_VALUES_BY_INDIVID);
 			assert(q.get_parameters_count() == 3);
@@ -570,6 +574,7 @@ namespace info {
 			while (q.move_next()) {
 				ValueType cur;
 				this->read_value(q, cur);
+				cur.dataset_id(nDatasetId);
 				oList.push_back(cur);
 			}
 			return (true);

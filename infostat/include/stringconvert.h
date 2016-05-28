@@ -2,11 +2,7 @@
 #ifndef __STRINGCONVERT_H__
 #define __STRINGCONVERT_H__
 /////////////////////////////////
-#include <string>
-#include <locale>
-#include <codecvt>
-///////////////////////////////////
-#include <boost/algorithm/string.hpp>
+#include "info_includes.h"
 //////////////////////////////////////
 namespace info {
 /////////////////////////////////////

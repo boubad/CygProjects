@@ -122,11 +122,10 @@ namespace info {
 		void import(const DatasetType &oSet, size_t nRows, size_t nCols,
 			const std::vector<T> &data,
 			const strings_vector &rowNames,
-			const strings_vector &colNames) {
+			const strings_vector &colNames)  {
 			STRINGTYPE stype;
 			T dummy = 0;
 			fetch_data_type(dummy, stype);
-			bool bRet = false;
 			assert(oSet.id() != 0);
 			variables_vector oVars;
 			for (size_t i = 0; i < nCols; ++i) {
@@ -140,8 +139,9 @@ namespace info {
 				}
 			} // i
 			if (!oVars.empty()) {
-				bRet = this->maintains_variables(oVars);
-				assert(bRet);
+				if (!this->maintains_variables(oVars)) {
+					throw info_error("maintains variables error");
+				}
 			}
 			indivs_vector oInds;
 			for (size_t i = 0; i < nRows; ++i) {
@@ -154,19 +154,23 @@ namespace info {
 				}
 			} // i
 			if (!oInds.empty()) {
-				bRet = this->maintains_indivs(oInds);
-				assert(bRet);
+				if (!this->maintains_indivs(oInds)){
+					throw info_error("maintains indivs error");
+				}
+
 			}
 			if ((nRows > 0) && (nCols > 0) && (colNames.size() >= nCols) && (rowNames.size() >= nRows)) {
 				size_t nn = (size_t)(nRows * nCols);
 				if (data.size() >= nn) {
 					oInds.clear();
-					bRet = this->find_dataset_indivs(oSet,oInds, 0, nRows);
-					assert(bRet);
+					if (!this->find_dataset_indivs(oSet,oInds, 0, nRows)){
+						throw info_error("find  dataset indivs error");
+					}
 					assert(nRows == oInds.size());
 					oVars.clear();
-					bRet = this->find_dataset_variables(oSet,oVars, 0, nCols);
-					assert(bRet);
+					if (!this->find_dataset_variables(oSet,oVars, 0, nCols)){
+						throw info_error("find dataset variables error");
+					}
 					assert(nCols == oVars.size());
 					//
 					std::map<STRINGTYPE, VariableType *> pVars;
@@ -226,7 +230,9 @@ namespace info {
 						} // j
 					} // i
 					if (!oVals.empty()) {
-						bRet = this->maintains_values(oVals);
+						if (!this->maintains_values(oVals)){
+							throw info_error("maintains values error");
+						}
 						//assert(bRet);
 					}
 				}// ok import data
