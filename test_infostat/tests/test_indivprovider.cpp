@@ -26,6 +26,7 @@ BOOST_AUTO_TEST_CASE(testMortalProvider) {
 	BOOST_CHECK(pProvider != nullptr);
 	size_t nCount = pProvider->count();
 	BOOST_CHECK(nCount > 0);
+	size_t nbVars = 0;
 	for (size_t i = 0; i < nCount; ++i) {
 		IndivTypePtr oInd = pProvider->get(i);
 		IndivType *pIndiv = oInd.get();
@@ -38,6 +39,10 @@ BOOST_AUTO_TEST_CASE(testMortalProvider) {
 		const DataMap &oCenter = pIndiv->center();
 		BOOST_CHECK(oCenter.size() > 0);
 		BOOST_CHECK(pIndiv->has_numeric_fields());
+		if (nbVars == 0) {
+			nbVars = oCenter.size();
+		}
+		BOOST_CHECK(nbVars == oCenter.size());
 	} //i
 	pProvider->reset();
 	size_t nc = 0;
@@ -56,6 +61,7 @@ BOOST_AUTO_TEST_CASE(testConsoProvider) {
 	BOOST_CHECK(pProvider != nullptr);
 	size_t nCount = pProvider->count();
 	BOOST_CHECK(nCount > 0);
+	size_t nbVars = 0;
 	for (size_t i = 0; i < nCount; ++i) {
 		IndivTypePtr oInd = pProvider->get(i);
 		IndivType *pIndiv = oInd.get();
@@ -68,6 +74,10 @@ BOOST_AUTO_TEST_CASE(testConsoProvider) {
 		const DataMap &oCenter = pIndiv->center();
 		BOOST_CHECK(oCenter.size() > 0);
 		BOOST_CHECK(pIndiv->has_numeric_fields());
+		if (nbVars == 0) {
+			nbVars = oCenter.size();
+		}
+		BOOST_CHECK(nbVars == oCenter.size());
 	} //i
 	pProvider->reset();
 	size_t nc = 0;
@@ -86,6 +96,7 @@ BOOST_AUTO_TEST_CASE(testTestProvider) {
 	BOOST_CHECK(pProvider != nullptr);
 	size_t nCount = pProvider->count();
 	BOOST_CHECK(nCount > 0);
+	size_t nbVars = 0;
 	for (size_t i = 0; i < nCount; ++i) {
 		IndivTypePtr oInd = pProvider->get(i);
 		IndivType *pIndiv = oInd.get();
@@ -98,6 +109,10 @@ BOOST_AUTO_TEST_CASE(testTestProvider) {
 		const DataMap &oCenter = pIndiv->center();
 		BOOST_CHECK(oCenter.size() > 0);
 		BOOST_CHECK(pIndiv->has_numeric_fields());
+		if (nbVars == 0) {
+			nbVars = oCenter.size();
+		}
+		BOOST_CHECK(nbVars == oCenter.size());
 	} //i
 	pProvider->reset();
 	size_t nc = 0;
