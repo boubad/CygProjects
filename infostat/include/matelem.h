@@ -6,6 +6,8 @@
 #include "distancemap.h"
 #include "interruptable_object.h"
 #include "crititem.h"
+/////////////////////////////////
+#include <boost/signals2/signal.hpp>
 //////////////////////////////////
 namespace info {
 ///////////////////////////////////////////
@@ -57,12 +59,16 @@ public:
 	using RescritType = std::atomic<DISTANCETYPE>;
 	using MatElemResultType = MatElemResult<DISTANCETYPE>;
 	using MatElemResultPtr = typename MatElemResultType::MatElemResultPtr;
+	using SignalType = typename boost::signals2::signal<void (MatElemResultPtr)>;
+	using SlotType = typename SignalType::slot_type;
+	using ConnectionType = boost::signals2::connection;
 private:
 	DISTANCETYPE m_crit;
 	DistanceMapType *m_pdist;
 	ints_vector *m_pids;
 	sizets_vector m_indexes;
 	crititems_vector m_args;
+	SignalType m_signal;
 public:
 	MatElem() :
 			m_crit(0), m_pdist(nullptr), m_pids(nullptr) {
@@ -90,25 +96,12 @@ public:
 		}
 		this->m_crit = this->criteria(indexes);
 	}
-	MatElem(const MatElemType &other) :
-			InterruptObject(other), m_crit(other.m_crit), m_pdist(
-					other.m_pdist), m_pids(other.m_pids), m_indexes(
-					other.m_indexes), m_args(other.m_args) {
-	}
-	MatElemType & operator=(const MatElemType &other) {
-		if (this != &other) {
-			InterruptObject::operator=(other);
-			this->m_crit = other.m_crit;
-			this->m_pdist = other.m_pdist;
-			this->m_pids = other.m_pids;
-			this->m_indexes = other.m_indexes;
-			this->m_args = other.m_args;
-		}
-		return (*this);
-	}
 	virtual ~MatElem() {
 	}
 public:
+	ConnectionType connect( const SlotType &subscriber) {
+		return m_signal.connect(subscriber);
+	}
 	DISTANCETYPE criteria(void) const {
 		return (this->m_crit);
 	}
@@ -140,7 +133,7 @@ public:
 		DistanceMapType *pDist = this->m_pdist;
 		ints_vector *pIds = this->m_pids;
 		pairs_list q;
-		if (!this->find_best_try(q,pCrit)) {
+		if (!this->find_best_try(q, pCrit)) {
 			return (false);
 		}
 		if (this->check_interrupt()) {
@@ -223,7 +216,25 @@ public:
 		} while (true);
 		return ((this->check_interrupt()) ? false : true);
 	} // process
-
+	bool process_signal(void) {
+		RescritType crit(this->criteria());
+		do {
+			if (this->check_interrupt()) {
+				break;
+			}
+			bool bRet = this->one_iteration(&crit);
+			if (this->check_interrupt()) {
+				break;
+			}
+			MatElemResultPtr oPtr(
+					new MatElemResultType(crit.load(), this->m_indexes));
+			this->m_signal(oPtr);
+			if (!bRet) {
+				break;
+			}
+		} while (true);
+		return ((this->check_interrupt()) ? false : true);
+	} // process
 protected:
 	bool internal_process(std::atomic<DISTANCETYPE> *pCrit) {
 		using result_type = std::pair<DISTANCETYPE, sizets_vector>;

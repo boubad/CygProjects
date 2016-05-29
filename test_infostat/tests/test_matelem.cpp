@@ -52,6 +52,51 @@ BOOST_AUTO_TEST_CASE(testMortalMatElem) {
 		//BOOST_TEST_MESSAGE(s);
 	}
 } //testMortalMatElem
+#ifdef MYTOTO
+BOOST_AUTO_TEST_CASE(testMortalMatElemSignal) {
+	SourceType *pProvider = this->mortal_source();
+	BOOST_CHECK(pProvider != nullptr);
+	//
+	MatElemType::DistanceMapType oDist(pProvider);
+	MatElemType::ints_vector oIds;
+	oDist.indexes(oIds);
+	//BOOST_TEST_MESSAGE("\nTEST MATELEM MORTAL");
+	MatElemType oMat(&oDist, &oIds);
+	//
+	size_t nIter = 0;
+	DISTANCETYPE oldCrit = 0;
+	auto fReceiver =
+			[&](MatElemType::MatElemResultPtr oCrit) {
+				if (oCrit.get() != nullptr) {
+					++nIter;
+					DISTANCETYPE crit = oCrit->first;
+					if (oldCrit == 0) {
+						BOOST_TEST_MESSAGE("Iteration: " << nIter << ",\t" << crit);
+						oldCrit = crit;
+					} else {
+						DISTANCETYPE delta = oldCrit - crit;
+						double f = 10000.0 * (delta/(double)oldCrit);
+						BOOST_TEST_MESSAGE("Iteration: " << nIter << ",\t" << crit << ",\t" << delta << ",\t" << f);
+						oldCrit = crit;
+					}
+
+				} //ptr
+			};
+	auto con = oMat.connect(fReceiver);
+	//BOOST_TEST_MESSAGE("Start criteria: " << oMat.criteria());
+	oMat.process_signal();
+	//BOOST_TEST_MESSAGE("End criteria: " << oMat.criteria());
+	MatElemType::ints_vector ids;
+	oMat.ids(ids);
+	for (auto aIndex : ids) {
+		MatElemType::IndivTypePtr oInd = pProvider->find(aIndex);
+		MatElemType::IndivType *pInd = oInd.get();
+		BOOST_CHECK(pInd != nullptr);
+		STRINGTYPE s = pInd->sigle();
+		//BOOST_TEST_MESSAGE(s);
+	}
+} //testMortalMatElemSignal
+#endif // MYTOTO
 BOOST_AUTO_TEST_CASE(testConsoMatElem) {
 	SourceType *pProvider = this->conso_source();
 	BOOST_CHECK(pProvider != nullptr);
@@ -74,6 +119,7 @@ BOOST_AUTO_TEST_CASE(testConsoMatElem) {
 		//BOOST_TEST_MESSAGE(s);
 	}
 } //testConsoMatElem
+#ifdef MYTOTO
 BOOST_AUTO_TEST_CASE(testTestMatElem) {
 	SourceType *pProvider = this->test_source();
 	BOOST_CHECK(pProvider != nullptr);
@@ -86,22 +132,23 @@ BOOST_AUTO_TEST_CASE(testTestMatElem) {
 	BOOST_TEST_MESSAGE("Start criteria: " << oMat.criteria());
 	size_t nIter = 0;
 	DISTANCETYPE oldCrit = 0;
-	oMat.process_interm([&](const MatElemResultPtr &oCrit) {
-		if (oCrit.get() != nullptr) {
-			++nIter;
-			DISTANCETYPE crit = oCrit->first;
-			if (oldCrit == 0){
-				BOOST_TEST_MESSAGE("Iteration: " << nIter << ",\t" << crit);
-				oldCrit = crit;
-			} else {
-				DISTANCETYPE delta = oldCrit - crit;
-				double f = 10000.0 * (delta/(double)oldCrit);
-				BOOST_TEST_MESSAGE("Iteration: " << nIter << ",\t" << crit << ",\t" << delta << ",\t" << f);
-				oldCrit = crit;
-			}
+	oMat.process_interm(
+			[&](const MatElemResultPtr &oCrit) {
+				if (oCrit.get() != nullptr) {
+					++nIter;
+					DISTANCETYPE crit = oCrit->first;
+					if (oldCrit == 0) {
+						BOOST_TEST_MESSAGE("Iteration: " << nIter << ",\t" << crit);
+						oldCrit = crit;
+					} else {
+						DISTANCETYPE delta = oldCrit - crit;
+						double f = 10000.0 * (delta/(double)oldCrit);
+						BOOST_TEST_MESSAGE("Iteration: " << nIter << ",\t" << crit << ",\t" << delta << ",\t" << f);
+						oldCrit = crit;
+					}
 
-		}//ptr
-	});
+				} //ptr
+			});
 	BOOST_TEST_MESSAGE("End criteria: " << oMat.criteria());
 	MatElemType::ints_vector ids;
 	oMat.ids(ids);
@@ -113,5 +160,6 @@ BOOST_AUTO_TEST_CASE(testTestMatElem) {
 		BOOST_TEST_MESSAGE(s);
 	}
 } //testTestMatElem
+#endif
 BOOST_AUTO_TEST_SUITE_END();
 
