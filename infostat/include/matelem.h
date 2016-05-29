@@ -70,7 +70,7 @@ private:
 	crititems_vector m_args;
 	SignalType m_signal;
 public:
-	MatElem() :
+	MatElem(std::atomic_bool *pCancel = nullptr) : InterruptObject(pCancel),
 			m_crit(0), m_pdist(nullptr), m_pids(nullptr) {
 	}
 	MatElem(DistanceMapType *pMap, ints_vector *pids, sizets_vector *pindexes =
