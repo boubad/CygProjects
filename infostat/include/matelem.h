@@ -19,17 +19,24 @@ public:
 	DISTANCETYPE first;
 	sizets_vector second;
 public:
-	MatElemResult():first(0){}
-	MatElemResult(const DISTANCETYPE c, const sizets_vector &v):first(c),second(v){}
-	MatElemResult(const MatElemResultType &other):first(other.first),second(other.second){}
-	MatElemResultType & operator=(const MatElemResultType &other){
-		if (this != &other){
+	MatElemResult() :
+			first(0) {
+	}
+	MatElemResult(const DISTANCETYPE c, const sizets_vector &v) :
+			first(c), second(v) {
+	}
+	MatElemResult(const MatElemResultType &other) :
+			first(other.first), second(other.second) {
+	}
+	MatElemResultType & operator=(const MatElemResultType &other) {
+		if (this != &other) {
 			this->first = other.first;
 			this->second = other.second;
 		}
 		return (*this);
 	}
-	virtual ~MatElemResult(){}
+	virtual ~MatElemResult() {
+	}
 };
 /////////////////////////////////////
 template<typename IDTYPE = unsigned long, typename DISTANCETYPE = long,
@@ -133,7 +140,7 @@ public:
 		DistanceMapType *pDist = this->m_pdist;
 		ints_vector *pIds = this->m_pids;
 		pairs_list q;
-		if (!this->find_best_try(q, pCrit)) {
+		if (!this->find_best_try(q,pCrit)) {
 			return (false);
 		}
 		if (this->check_interrupt()) {
@@ -148,12 +155,11 @@ public:
 		q.pop_front();
 		i1 = p.first;
 		i2 = p.second;
-		const DISTANCETYPE crit = pCrit->load();
 		if (i1 == i2) {
 			return (false);
 		}
 		this->permute_items(i1, i2);
-		this->m_crit = crit;
+		this->m_crit = pCrit->load();
 		if (this->check_interrupt()) {
 			return (false);
 		}
@@ -208,7 +214,8 @@ public:
 			if (this->check_interrupt()) {
 				break;
 			}
-			MatElemResultPtr oPtr(new MatElemResultType(crit.load(),this->m_indexes));
+			MatElemResultPtr oPtr(
+					new MatElemResultType(crit.load(), this->m_indexes));
 			f(oPtr);
 			if (!bRet) {
 				break;
@@ -310,17 +317,66 @@ protected:
 		assert(this->m_pids != nullptr);
 		return (this->m_pids->size());
 	}
-	DISTANCETYPE distance(const size_t i1, const size_t i2) const {
-		assert(this->m_pids != nullptr);
-		assert(this->m_pdist != nullptr);
-		ints_vector &oIds = *(this->m_pids);
-		assert(i1 < oIds.size());
-		assert(i2 < oIds.size());
-		const IDTYPE aIndex1 = oIds[i1];
-		const IDTYPE aIndex2 = oIds[i2];
+	DISTANCETYPE distance(const size_t i1, const size_t i2, ints_vector *pinds =
+			nullptr) const {
+		IDTYPE aIndex1, aIndex2;
+		if (pinds == nullptr) {
+			ints_vector &oIds = *(this->m_pids);
+			aIndex1 = oIds[i1];
+			aIndex2 = oIds[i2];
+		} else {
+			ints_vector &oIds = *(pinds);
+			aIndex1 = oIds[i1];
+			aIndex2 = oIds[i2];
+		}
 		DISTANCETYPE dRet = 0;
 		this->m_pdist->get(aIndex1, aIndex2, dRet);
 		return (dRet);
+	}
+	bool fingerprint(const size_t ii1, const size_t ii2,
+			DISTANCETYPE &delta) const {
+		if (ii1 == ii2) {
+			delta = 0;
+			return (false);
+		}
+		ints_vector &oIds = *(this->m_pids);
+		const size_t n = oIds.size();
+		const size_t nm1 = (size_t) (n - 1);
+		DISTANCETYPE dRetOld = 0, dRetNew = 0, d = 0;
+		size_t i1 = ii1, i2 = ii2;
+		if (i1 > i2) {
+			const size_t t = i1;
+			i1 = i2;
+			i2 = t;
+		}
+		if (i1 > 0) {
+			d = this->distance(i1 - 1, i1);
+			dRetOld += d;
+			d = this->distance(i1 - 1, i2);
+			dRetNew += d;
+		}
+		d = this->distance(i1, i1 + 1);
+		dRetOld += d;
+		d = this->distance(i2, i1 + 1);
+		dRetNew += d;
+		d = this->distance(i2 - 1, i2);
+		dRetOld += d;
+		d = this->distance(i2 - 1, i1);
+		dRetNew += d;
+		if (i2 < nm1) {
+			d = this->distance(i2, i2 + 1);
+			dRetOld += d;
+			d = this->distance(i1, i2 + 1);
+			dRetNew += d;
+		}
+		bool bRet = false;
+		if (dRetOld >= dRetNew) {
+			bRet = true;
+			delta = (DISTANCETYPE) (dRetOld - dRetNew);
+		} else {
+			delta = (DISTANCETYPE) (dRetNew - dRetOld);
+		}
+		return (bRet);
 	}
 	DISTANCETYPE criteria(sizets_vector &indexes) const {
 		const size_t n = indexes.size();
@@ -345,6 +401,7 @@ protected:
 		const sizets_vector &indexes = this->m_indexes;
 		crititems_vector &args = const_cast<crititems_vector &>(this->m_args);
 		const int nn = (int) args.size();
+		std::mutex _mutex;
 #pragma omp parallel for
 		for (int kk = 0; kk < nn; ++kk) {
 			const CritItemType &cc = args[kk];
@@ -357,9 +414,10 @@ protected:
 			DISTANCETYPE c = this->criteria(temp);
 			if (c <= pCrit->load()) {
 				sizets_pair oPair(std::make_pair(i, j));
-#pragma omp critical
+//#pragma omp critical
 				{
 					DISTANCETYPE old = pCrit->load();
+					std::lock_guard<std::mutex> oLock(_mutex);
 					auto it =
 							std::find_if(qq.begin(), qq.end(),
 									[i,j](const sizets_pair &p)->bool {
@@ -383,6 +441,54 @@ protected:
 				} // sync
 			} // check
 		} // i
+		return (!qq.empty());
+	} //find_best_try
+	bool find_best_try(pairs_list &qq) const {
+		qq.clear();
+		crititems_vector &args = const_cast<crititems_vector &>(this->m_args);
+		const int nn = (int) args.size();
+		RescritType delta(0);
+		std::mutex _mutex;
+		std::atomic_bool bFirst(true);
+//#pragma omp parallel for
+		for (int kk = 0; kk < nn; ++kk) {
+			const CritItemType &cc = args[kk];
+			const size_t i = (size_t) cc.first();
+			const size_t j = (size_t) cc.second();
+			DISTANCETYPE d = 0;
+			if (this->fingerprint(i, j, d)) {
+				sizets_pair oPair(std::make_pair(i, j));
+				if (bFirst.load()) {
+					std::lock_guard<std::mutex> oLock(_mutex);
+					bFirst.store(false);
+					delta.store(d);
+					qq.push_back(oPair);
+				} else if (d > delta.load()) {
+					std::lock_guard<std::mutex> oLock(_mutex);
+					qq.clear();
+					qq.push_back(oPair);
+					delta.store(d);
+				} else if (d == delta.load()) {
+					std::lock_guard<std::mutex> oLock(_mutex);
+					auto it =
+							std::find_if(qq.begin(), qq.end(),
+									[i,j](const sizets_pair &p)->bool {
+										if ((p.first == i) && (p.second == j)) {
+											return (true);
+										} else if ((p.first == j) && (p.second == i)) {
+											return (true);
+										} else {
+											return (false);
+										}
+									});
+					if (it == qq.end()) {
+						if (!qq.empty()) {
+							qq.push_back(oPair);
+						}
+					}
+				}
+			} // progress
+		} // kk
 		return (!qq.empty());
 	} //find_best_try
 

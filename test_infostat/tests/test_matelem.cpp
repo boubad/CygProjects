@@ -94,8 +94,9 @@ BOOST_AUTO_TEST_CASE(testTestMatElem) {
 				BOOST_TEST_MESSAGE("Iteration: " << nIter << ",\t" << crit);
 				oldCrit = crit;
 			} else {
-				double f = 10000.0 * (oldCrit - crit)/(double)oldCrit;
-				BOOST_TEST_MESSAGE("Iteration: " << nIter << ",\t" << crit << ",\t" << f);
+				DISTANCETYPE delta = oldCrit - crit;
+				double f = 10000.0 * (delta/(double)oldCrit);
+				BOOST_TEST_MESSAGE("Iteration: " << nIter << ",\t" << crit << ",\t" << delta << ",\t" << f);
 				oldCrit = crit;
 			}
 
