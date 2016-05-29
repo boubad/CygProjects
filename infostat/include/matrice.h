@@ -57,9 +57,12 @@ protected:
 		MatElemType *pMat = this->m_vars.get();
 		assert(pMat != nullptr);
 		this->m_connectVars = pMat->connect([&](MatElemResultPtr oCrit) {
-			std::lock_guard<std::mutex> oLock(this->_mutex);
-			this->m_varsResult = oCrit;
-			MatElemResultPtr  o = this->m_indsResults;
+			MatElemResultPtr o;
+			{
+				std::lock_guard<std::mutex> oLock(this->_mutex);
+				this->m_varsResult = oCrit;
+				o = this->m_indsResults;
+			}
 			this->m_signal(o, oCrit);
 		});
 		return (pMat->process_signal());
@@ -75,9 +78,12 @@ protected:
 		MatElemType *pMat = this->m_inds.get();
 		assert(pMat != nullptr);
 		this->m_connectInds = pMat->connect([&](MatElemResultPtr oCrit) {
-			std::lock_guard<std::mutex> oLock(this->_mutex);
-			this->m_indsResults = oCrit;
-			MatElemResultPtr o = this->m_varsResult;
+			MatElemResultPtr o;
+			{
+				std::lock_guard<std::mutex> oLock(this->_mutex);
+				this->m_indsResults = oCrit;
+				o = this->m_varsResult;
+			}
 			this->m_signal(oCrit, o);
 		});
 		return (pMat->process_signal());
@@ -105,7 +111,7 @@ public:
 			return (this->prep_vars(pVarsSource));
 		});
 		bool bRet = bCol.get() && bRow.get();
-		return  (bRet && ((this->check_interrupt()) ? false : true));
+		return (bRet && ((this->check_interrupt()) ? false : true));
 	} // process
 	void get_ids(ints_vector &indids, ints_vector &varids) {
 		indids.clear();
