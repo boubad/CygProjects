@@ -51,7 +51,7 @@ namespace info {
 				IStoreType *p = this->m_sqlite.get();
 				if (p == nullptr) {
 					m_sqlite.reset(new SQLiteStoreType());
-					p = m_man.get();
+					p = m_sqlite.get();
 					assert(p != nullptr);
 					assert(p->is_valid());
 					this->init_data(p);

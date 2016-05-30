@@ -65,19 +65,19 @@ public:
 private:
 	DISTANCETYPE m_crit;
 	DistanceMapType *m_pdist;
-	ints_vector *m_pids;
 	sizets_vector m_indexes;
 	crititems_vector m_args;
 	SignalType m_signal;
+	ints_vector m_resids;
 public:
-	MatElem(std::atomic_bool *pCancel = nullptr) : InterruptObject(pCancel),
-			m_crit(0), m_pdist(nullptr), m_pids(nullptr) {
+	MatElem(std::atomic_bool *pCancel = nullptr) :
+			InterruptObject(pCancel), m_crit(0), m_pdist(nullptr) {
 	}
 	MatElem(DistanceMapType *pMap, ints_vector *pids, sizets_vector *pindexes =
 			nullptr, std::atomic_bool *pCancel = nullptr) :
-			InterruptObject(pCancel), m_crit(0), m_pdist(pMap), m_pids(pids) {
+			InterruptObject(pCancel), m_crit(0), m_pdist(pMap) {
 		assert(this->m_pdist != nullptr);
-		assert(this->m_pids != nullptr);
+		this->m_resids = *pids;
 		const size_t n = pids->size();
 		assert(n > 0);
 		sizets_vector &indexes = this->m_indexes;
@@ -99,7 +99,7 @@ public:
 	virtual ~MatElem() {
 	}
 public:
-	ConnectionType connect( const SlotType &subscriber) {
+	ConnectionType connect(const SlotType &subscriber) {
 		return m_signal.connect(subscriber);
 	}
 	DISTANCETYPE criteria(void) const {
@@ -109,29 +109,103 @@ public:
 		return (this->m_indexes);
 	}
 	void ids(ints_vector &v) const {
-		assert(this->m_pids);
 		v.clear();
 		const sizets_vector &src = this->m_indexes;
-		const ints_vector & dest = *(this->m_pids);
+		const ints_vector & dest = this->m_resids;
 		for (auto it = src.begin(); it != src.end(); ++it) {
 			size_t pos = *it;
 			assert(pos < dest.size());
 			v.push_back(dest[pos]);
 		}
 	}
-	bool one_iteration(RescritType *pCrit) {
-		assert(pCrit != nullptr);
-		using result_type = std::pair<DISTANCETYPE, sizets_vector>;
-		using future_type = std::future<result_type>;
-		using future_vec = std::vector<future_type>;
-		//
-		if (this->check_interrupt()) {
+	bool process(void) {
+		if (this->m_pdist == nullptr) {
 			return (false);
 		}
-		//
-		std::atomic_bool *pCancel = this->get_cancelleable_flag();
-		DistanceMapType *pDist = this->m_pdist;
-		ints_vector *pIds = this->m_pids;
+		RescritType crit(this->criteria());
+		do {
+			if (this->check_interrupt()) {
+				break;
+			}
+			if (!this->one_iteration(&crit)) {
+				break;
+			}
+		} while (true);
+		return ((this->check_interrupt()) ? false : true);
+	} // process
+	bool process(DistanceMapType *pMap, ints_vector *pids) {
+		assert(pMap != nullptr);
+		assert(pids != nullptr);
+		this->m_pdist = pMap;
+		this->m_resids = *pids;
+		const size_t n = pids->size();
+		assert(n > 0);
+		sizets_vector &indexes = this->m_indexes;
+		indexes.resize(n);
+		CritItemType::generate(n, this->m_args);
+		for (size_t i = 0; i < n; ++i) {
+			indexes[i] = i;
+		}
+		this->m_crit = this->criteria(indexes);
+		bool bRet = this->process();
+		return (bRet);
+	} // process
+	bool process(SourceType *pProvider) {
+		assert(pProvider != nullptr);
+		DistanceMapType oDist(pProvider);
+		ints_vector ids;
+		oDist.indexes(ids);
+		bool bRet = this->process(&oDist, &ids);
+		this->m_pdist = nullptr;
+		return bRet;
+	} // pProvider
+	template<typename FUNC>
+	bool process_interm(FUNC &&f) {
+		if (this->m_pdist == nullptr) {
+			return (false);
+		}
+		RescritType crit(this->criteria());
+		do {
+			if (this->check_interrupt()) {
+				break;
+			}
+			bool bRet = this->one_iteration(&crit);
+			if (this->check_interrupt()) {
+				break;
+			}
+			MatElemResultPtr oPtr(
+					new MatElemResultType(crit.load(), this->m_indexes));
+			f(oPtr);
+			if (!bRet) {
+				break;
+			}
+		} while (true);
+		return ((this->check_interrupt()) ? false : true);
+	} // process
+	bool process_signal(void) {
+		if (this->m_pdist == nullptr) {
+			return (false);
+		}
+		RescritType crit(this->criteria());
+		do {
+			if (this->check_interrupt()) {
+				break;
+			}
+			bool bRet = this->one_iteration(&crit);
+			if (this->check_interrupt()) {
+				break;
+			}
+			MatElemResultPtr oPtr(
+					new MatElemResultType(crit.load(), this->m_indexes));
+			this->m_signal(oPtr);
+			if (!bRet) {
+				break;
+			}
+		} while (true);
+		return ((this->check_interrupt()) ? false : true);
+	} // process
+protected:
+	bool one_iteration(RescritType *pCrit) {
 		pairs_list q;
 		if (!this->find_best_try(q, pCrit)) {
 			return (false);
@@ -153,149 +227,63 @@ public:
 		}
 		this->permute_items(i1, i2);
 		this->m_crit = pCrit->load();
-		if (this->check_interrupt()) {
-			return (false);
-		}
 		//
 		if (!q.empty()) {
+			std::atomic_bool *pCancel = this->get_cancelleable_flag();
+			DistanceMapType *pDist = this->m_pdist;
+			ints_vector *pIds = &(this->m_resids);
 			sizets_vector oldIndexes(this->m_indexes);
-			future_vec oTasks;
-			while (!q.empty()) {
-				if (this->check_interrupt()) {
-					break;
-				}
+			sizets_vector *poldIndexes = &oldIndexes;
+			size_t nt = q.size();
+			if (nt < 2) {
 				sizets_pair pp = q.front();
 				size_t j1 = pp.first;
 				size_t j2 = pp.second;
 				q.pop_front();
 				if (j1 != j2) {
-					oTasks.push_back(std::async([&]()->result_type {
-						MatElemType xMat(pDist, pIds, &oldIndexes, pCancel);
-						xMat.permute_items(j1, j2);
-						xMat.one_iteration(pCrit);
-						return (std::make_pair(xMat.m_crit, xMat.m_indexes));
-					}));
-				} // j1/j2
-			} // while
-			if (!oTasks.empty()) {
-				for (future_type & t : oTasks) {
-					result_type p = t.get();
-					if (!this->check_interrupt()) {
-						const DISTANCETYPE cur = p.first;
-						if (cur < this->m_crit) {
-							this->m_indexes = p.second;
-							this->m_crit = cur;
-						}
+					MatElemType xMat(pDist, pIds, poldIndexes, pCancel);
+					xMat.permute_items(j1, j2);
+					xMat.one_iteration(pCrit);
+					if (xMat.m_crit < this->m_crit) {
+						this->m_crit = xMat.m_crit;
+						this->m_indexes = xMat.m_indexes;
 					}
-				} // t
-			} // not empty
-		} // more paths
-		return ((this->check_interrupt()) ? false : true);
-	} //one_iteration
-	bool process() {
-		RescritType crit(this->criteria());
-		return internal_process(&crit);
-	} // process
-	template<typename FUNC>
-	bool process_interm(FUNC &&f) {
-		RescritType crit(this->criteria());
-		do {
-			if (this->check_interrupt()) {
-				break;
-			}
-			bool bRet = this->one_iteration(&crit);
-			if (this->check_interrupt()) {
-				break;
-			}
-			MatElemResultPtr oPtr(
-					new MatElemResultType(crit.load(), this->m_indexes));
-			f(oPtr);
-			if (!bRet) {
-				break;
-			}
-		} while (true);
-		return ((this->check_interrupt()) ? false : true);
-	} // process
-	bool process_signal(void) {
-		RescritType crit(this->criteria());
-		do {
-			if (this->check_interrupt()) {
-				break;
-			}
-			bool bRet = this->one_iteration(&crit);
-			if (this->check_interrupt()) {
-				break;
-			}
-			MatElemResultPtr oPtr(
-					new MatElemResultType(crit.load(), this->m_indexes));
-			this->m_signal(oPtr);
-			if (!bRet) {
-				break;
-			}
-		} while (true);
-		return ((this->check_interrupt()) ? false : true);
-	} // process
-protected:
-	bool internal_process(std::atomic<DISTANCETYPE> *pCrit) {
-		using result_type = std::pair<DISTANCETYPE, sizets_vector>;
-		using future_type = std::future<result_type>;
-		using future_vec = std::vector<future_type>;
-		//
-		std::atomic_bool *pCancel = this->get_cancelleable_flag();
-		DistanceMapType *pDist = this->m_pdist;
-		ints_vector *pIds = this->m_pids;
-		do {
-			if (this->check_interrupt()) {
-				break;
-			}
-			pairs_list q;
-			if (!this->find_best_try(q, pCrit)) {
-				break;
-			}
-			if (this->check_interrupt()) {
-				break;
-			}
-			const size_t nx = q.size();
-			if (nx < 1) {
-				break;
-			}
-			size_t i1 = 0, i2 = 0;
-			sizets_pair p = q.front();
-			q.pop_front();
-			i1 = p.first;
-			i2 = p.second;
-			const DISTANCETYPE crit = pCrit->load();
-			if (i1 == i2) {
-				break;
-			}
-			this->permute_items(i1, i2);
-			this->m_crit = crit;
-			if (this->check_interrupt()) {
-				break;
-			}
-			//
-			if (!q.empty()) {
-				sizets_vector oldIndexes(this->m_indexes);
+				}
+			} else {
+				using result_type = std::pair<DISTANCETYPE, sizets_vector>;
+				using future_type = std::future<result_type>;
+				using future_vec = std::vector<future_type>;
+				//
+				sizets_pair pp = q.front();
+				size_t iFirst = pp.first;
+				size_t iSecond = pp.second;
+				q.pop_front();
 				future_vec oTasks;
 				while (!q.empty()) {
-					if (this->check_interrupt()) {
-						break;
-					}
 					sizets_pair pp = q.front();
 					size_t j1 = pp.first;
 					size_t j2 = pp.second;
 					q.pop_front();
 					if (j1 != j2) {
-						oTasks.push_back(
-								std::async(
-										[&]()->result_type {
-											MatElemType xMat(pDist, pIds, &oldIndexes, pCancel);
-											xMat.permute_items(j1, j2);
-											xMat.internal_process(pCrit);
-											return (std::make_pair(xMat.m_crit, xMat.m_indexes));
-										}));
+						auto tt =
+								[j1,j2,pDist,pIds,poldIndexes,pCancel,pCrit]()->result_type {
+									MatElemType xMat(pDist, pIds, poldIndexes, pCancel);
+									xMat.permute_items(j1, j2);
+									xMat.one_iteration(pCrit);
+									return (std::make_pair(xMat.m_crit, xMat.m_indexes));
+								};
+						oTasks.push_back(std::async(std::launch::async,tt));
 					} // j1/j2
 				} // while
+				if (iFirst != iSecond) {
+					MatElemType xMat(pDist, pIds, poldIndexes, pCancel);
+					xMat.permute_items(iFirst, iSecond);
+					xMat.one_iteration(pCrit);
+					if (xMat.m_crit < this->m_crit) {
+						this->m_crit = xMat.m_crit;
+						this->m_indexes = xMat.m_indexes;
+					}
+				}
 				if (!oTasks.empty()) {
 					for (future_type & t : oTasks) {
 						result_type p = t.get();
@@ -308,86 +296,27 @@ protected:
 						}
 					} // t
 				} // not empty
-			} // more paths
-		} while (true);
+			} // else
+		} // more paths
 		return ((this->check_interrupt()) ? false : true);
-	} // process
+	} //one_iteration
 	void permute_items(const size_t i1, const size_t i2) {
 		assert(i1 != i2);
-		if (this->check_interrupt()) {
-			return;
-		}
 		sizets_vector &vv = this->m_indexes;
-		assert(i1 < vv.size());
-		assert(i2 < vv.size());
 		const size_t tt = vv[i1];
 		vv[i1] = vv[i2];
 		vv[i2] = tt;
 	} // permute_items
 	size_t size(void) {
-		assert(this->m_pids != nullptr);
-		return (this->m_pids->size());
+		return (this->m_indexes.size());
 	}
-	DISTANCETYPE distance(const size_t i1, const size_t i2, ints_vector *pinds =
-			nullptr) const {
-		IDTYPE aIndex1, aIndex2;
-		if (pinds == nullptr) {
-			ints_vector &oIds = *(this->m_pids);
-			aIndex1 = oIds[i1];
-			aIndex2 = oIds[i2];
-		} else {
-			ints_vector &oIds = *(pinds);
-			aIndex1 = oIds[i1];
-			aIndex2 = oIds[i2];
-		}
+	DISTANCETYPE distance(const size_t i1, const size_t i2) const {
+		const ints_vector &oIds = this->m_resids;
+		IDTYPE aIndex1 = oIds[i1];
+		IDTYPE aIndex2 = oIds[i2];
 		DISTANCETYPE dRet = 0;
 		this->m_pdist->get(aIndex1, aIndex2, dRet);
 		return (dRet);
-	}
-	bool fingerprint(const size_t ii1, const size_t ii2,
-			DISTANCETYPE &delta) const {
-		if (ii1 == ii2) {
-			delta = 0;
-			return (false);
-		}
-		ints_vector &oIds = *(this->m_pids);
-		const size_t n = oIds.size();
-		const size_t nm1 = (size_t) (n - 1);
-		DISTANCETYPE dRetOld = 0, dRetNew = 0, d = 0;
-		size_t i1 = ii1, i2 = ii2;
-		if (i1 > i2) {
-			const size_t t = i1;
-			i1 = i2;
-			i2 = t;
-		}
-		if (i1 > 0) {
-			d = this->distance(i1 - 1, i1);
-			dRetOld += d;
-			d = this->distance(i1 - 1, i2);
-			dRetNew += d;
-		}
-		d = this->distance(i1, i1 + 1);
-		dRetOld += d;
-		d = this->distance(i2, i1 + 1);
-		dRetNew += d;
-		d = this->distance(i2 - 1, i2);
-		dRetOld += d;
-		d = this->distance(i2 - 1, i1);
-		dRetNew += d;
-		if (i2 < nm1) {
-			d = this->distance(i2, i2 + 1);
-			dRetOld += d;
-			d = this->distance(i1, i2 + 1);
-			dRetNew += d;
-		}
-		bool bRet = false;
-		if (dRetOld >= dRetNew) {
-			bRet = true;
-			delta = (DISTANCETYPE) (dRetOld - dRetNew);
-		} else {
-			delta = (DISTANCETYPE) (dRetNew - dRetOld);
-		}
-		return (bRet);
 	}
 	DISTANCETYPE criteria(sizets_vector &indexes) const {
 		const size_t n = indexes.size();
@@ -406,15 +335,48 @@ protected:
 		} // i
 		return (dRet);
 	} // criteria
-#if defined(__CYGWIN__)
-	bool find_best_try(pairs_list &qq, std::atomic<DISTANCETYPE> *pCrit) const {
-		qq.clear();
+	static void best_try_step(int kk, const MatElemType *pMat, pairs_list *pqq,
+			std::atomic<DISTANCETYPE> *pCrit, std::mutex *pMutex) {
+		const CritItemType &cc = pMat->m_args[kk];
+		const size_t i = (size_t) cc.first();
+		const size_t j = (size_t) cc.second();
+		sizets_vector temp(pMat->m_indexes);
+		const size_t tt = temp[i];
+		temp[i] = temp[j];
+		temp[j] = tt;
+		DISTANCETYPE c = pMat->criteria(temp);
+		if (c <= pCrit->load()) {
+			std::lock_guard<std::mutex> oLock(*pMutex);
+			sizets_pair oPair(std::make_pair(i, j));
+			DISTANCETYPE old = pCrit->load();
+			auto it = std::find_if(pqq->begin(), pqq->end(),
+					[i,j](const sizets_pair &p)->bool {
+						if ((p.first == i) && (p.second == j)) {
+							return (true);
+						} else if ((p.first == j) && (p.second == i)) {
+							return (true);
+						} else {
+							return (false);
+						}
+					});
+			if (it == pqq->end()) {
+				if ((c == old) && (!pqq->empty())) {
+					pqq->push_back(oPair);
+				} else if (c < old) {
+					pCrit->store(c);
+					pqq->clear();
+					pqq->push_back(oPair);
+				}
+			} // may add
+		} // candidate
+	} // best_try_ste
+	bool find_best_try_serial(pairs_list &qq,
+			std::atomic<DISTANCETYPE> *pCrit) const {
 		const sizets_vector &indexes = this->m_indexes;
 		crititems_vector &args = const_cast<crititems_vector &>(this->m_args);
-		const int nn = (int) args.size();
-		std::mutex _mutex;
-#pragma omp parallel for
-		for (int kk = 0; kk < nn; ++kk) {
+		const size_t nn = args.size();
+		DISTANCETYPE oldCrit = pCrit->load();
+		for (size_t kk = 0; kk < nn; ++kk) {
 			const CritItemType &cc = args[kk];
 			const size_t i = (size_t) cc.first();
 			const size_t j = (size_t) cc.second();
@@ -423,133 +385,78 @@ protected:
 			temp[i] = temp[j];
 			temp[j] = tt;
 			DISTANCETYPE c = this->criteria(temp);
-			if (c <= pCrit->load()) {
+			if (c <= oldCrit) {
 				sizets_pair oPair(std::make_pair(i, j));
-//#pragma omp critical
-				{
-					DISTANCETYPE old = pCrit->load();
-					std::lock_guard<std::mutex> oLock(_mutex);
-					auto it =
-							std::find_if(qq.begin(), qq.end(),
-									[i,j](const sizets_pair &p)->bool {
-										if ((p.first == i) && (p.second == j)) {
-											return (true);
-										} else if ((p.first == j) && (p.second == i)) {
-											return (true);
-										} else {
-											return (false);
-										}
-									});
-					if (it == qq.end()) {
-						if ((c == old) && (!qq.empty())) {
-							qq.push_back(oPair);
-						} else if (c < old) {
-							pCrit->store(c);
-							qq.clear();
-							qq.push_back(oPair);
-						}
-					}
-				} // sync
-			} // check
-		} // i
-		return (!qq.empty());
-	} //find_best_try
-	bool find_best_try(pairs_list &qq) const {
-		qq.clear();
-		crititems_vector &args = const_cast<crititems_vector &>(this->m_args);
-		const int nn = (int) args.size();
-		RescritType delta(0);
-		std::mutex _mutex;
-		std::atomic_bool bFirst(true);
-//#pragma omp parallel for
-		for (int kk = 0; kk < nn; ++kk) {
-			const CritItemType &cc = args[kk];
-			const size_t i = (size_t) cc.first();
-			const size_t j = (size_t) cc.second();
-			DISTANCETYPE d = 0;
-			if (this->fingerprint(i, j, d)) {
-				sizets_pair oPair(std::make_pair(i, j));
-				if (bFirst.load()) {
-					std::lock_guard<std::mutex> oLock(_mutex);
-					bFirst.store(false);
-					delta.store(d);
-					qq.push_back(oPair);
-				} else if (d > delta.load()) {
-					std::lock_guard<std::mutex> oLock(_mutex);
-					qq.clear();
-					qq.push_back(oPair);
-					delta.store(d);
-				} else if (d == delta.load()) {
-					std::lock_guard<std::mutex> oLock(_mutex);
-					auto it =
-							std::find_if(qq.begin(), qq.end(),
-									[i,j](const sizets_pair &p)->bool {
-										if ((p.first == i) && (p.second == j)) {
-											return (true);
-										} else if ((p.first == j) && (p.second == i)) {
-											return (true);
-										} else {
-											return (false);
-										}
-									});
-					if (it == qq.end()) {
-						if (!qq.empty()) {
-							qq.push_back(oPair);
-						}
-					}
-				}
-			} // progress
-		} // kk
-		return (!qq.empty());
-	} //find_best_try
-
-#else
-	bool find_best_try(pairs_list &qq, std::atomic<DISTANCETYPE> *pCrit) const {
-		qq.clear();
-		const sizets_vector &indexes = this->m_indexes;
-		crititems_vector &args = const_cast<crititems_vector &>(this->m_args);
-		std::mutex _mutex;
-		info_parallel_for_each(args.begin(), args.end(),
-				[&](const CritItem &cc) {
-					const size_t i = (size_t) cc.first();
-					const size_t j = (size_t) cc.second();
-					sizets_vector temp(indexes);
-					const size_t tt = temp[i];
-					temp[i] = temp[j];
-					temp[j] = tt;
-					DISTANCETYPE c = this->criteria(temp);
-					if (c <= pCrit->load()) {
-						sizets_pair oPair(std::make_pair(i, j));
-						{
-							std::lock_guard<std::mutex> oLock(_mutex);
-							DISTANCETYPE old = pCrit->load();
-							auto it =
-							std::find_if(qq.begin(), qq.end(),
-									[i,j](const sizets_pair &p)->bool {
-										if ((p.first == i) && (p.second == j)) {
-											return (true);
-										} else if ((p.first == j) && (p.second == i)) {
-											return (true);
-										} else {
-											return (false);
-										}
-									});
-							if (it == qq.end()) {
-								if ((c == old) && (!qq.empty())) {
-									qq.push_back(oPair);
-								} else if (c < old) {
-									pCrit->store(c);
-									qq.clear();
-									qq.push_back(oPair);
-								}
+				auto it = std::find_if(qq.begin(), qq.end(),
+						[i,j](const sizets_pair &p)->bool {
+							if ((p.first == i) && (p.second == j)) {
+								return (true);
+							} else if ((p.first == j) && (p.second == i)) {
+								return (true);
+							} else {
+								return (false);
 							}
-						} // sync
-					} // check
-				});
+						});
+				if (it == qq.end()) {
+					if ((c == oldCrit) && (!qq.empty())) {
+						qq.push_back(oPair);
+					} else if (c < oldCrit) {
+						oldCrit = c;
+						qq.clear();
+						qq.push_back(oPair);
+					}
+				} // may add
+			} // candidate
+		} // kk
+		pCrit->store(oldCrit);
+		return (!qq.empty());
+	} //find_best_try_serial
+	bool find_best_try(pairs_list &qq, std::atomic<DISTANCETYPE> *pCrit) const {
+		using future_type = std::future<bool>;
+		using futures_vec = std::vector<future_type>;
+		//
+		qq.clear();
+		crititems_vector &args = const_cast<crititems_vector &>(this->m_args);
+		const size_t nn = args.size();
+		size_t np = std::thread::hardware_concurrency();
+		if ((np < 2) || (nn <= np)) {
+			return this->find_best_try_serial(qq, pCrit);
+		}
+		int nChunk = (int) (nn / np);
+		std::mutex _mutex;
+		pairs_list *pqq = &qq;
+		std::mutex *pMutex = &_mutex;
+		const MatElemType *pMat = this;
+		int nLast = (int) nn;
+		int iMainEnd = nChunk;
+		if (iMainEnd > nLast) {
+			iMainEnd = nLast;
+		}
+		int nStart = iMainEnd;
+		futures_vec oTasks;
+		while (nStart < nLast) {
+			int nEnd = nStart + nChunk;
+			if (nEnd > nLast) {
+				nEnd = nLast;
+			}
+			auto fTask = [nStart,nEnd,pMat,&pqq,&pCrit,&pMutex]()->bool {
+				for (int k = nStart; k < nEnd; ++k) {
+					best_try_step(k, pMat,pqq,pCrit,pMutex);
+				} // k
+					return (true);
+				};
+			oTasks.push_back(std::async(std::launch::async,fTask));
+			nStart = nEnd;
+		} // while nStart
+		for (int i = 0; i < iMainEnd; ++i) {
+			best_try_step(i, pMat, pqq, pCrit, pMutex);
+		} // i
+		bool bRet = true;
+		for (future_type &t : oTasks) {
+			bRet = bRet && t.get();
+		} //t
 		return (!qq.empty());
 	} //find_best_try
-#endif // __CYGWIN__
-
 };
 
 /////////////////////////////////////////

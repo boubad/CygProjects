@@ -104,13 +104,18 @@ public:
 		if (pCancel != nullptr) {
 			this->set_cancelleable_flag(pCancel);
 		}
-		std::future<bool> bRow = std::async([&]()->bool {
-			return (this->prep_inds(pIndsSource));
-		});
-		std::future<bool> bCol = std::async([&]()->bool {
-			return (this->prep_vars(pVarsSource));
-		});
-		bool bRet = bCol.get() && bRow.get();
+		bool bRet = true;
+		size_t np = std::thread::hardware_concurrency();
+		if (np < 2) {
+			bRet = this->prep_inds(pIndsSource);
+			bRet = bRet && this->prep_vars(pVarsSource);
+		} else {
+			std::future<bool> bRow = std::async(std::launch::async,[&]()->bool {
+				return (this->prep_inds(pIndsSource));
+			});
+			bRet = this->prep_vars(pVarsSource);
+			bRet = bRet && bRow.get();
+		}
 		return (bRet && ((this->check_interrupt()) ? false : true));
 	} // process
 	void get_ids(ints_vector &indids, ints_vector &varids) {
