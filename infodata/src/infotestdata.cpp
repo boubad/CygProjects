@@ -1,4 +1,4 @@
-#include "infotestdata.h"
+#include "../include/infotestdata.h"
 ////////////////////////////////
 #include <cassert>
 #include <map>

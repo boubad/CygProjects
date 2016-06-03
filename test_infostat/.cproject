@@ -31,6 +31,7 @@
 									<listOptionValue builtIn="false" value="_BSD_SOURCE"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.include.paths.1574554263" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/infodata/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/infostat/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/infosqlite/include}&quot;"/>
 								</option>
@@ -45,6 +46,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.cygwin.exe.debug.694670863" name="Cygwin C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.cygwin.exe.debug"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug.1322098145" name="Cygwin C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug">
 								<option id="gnu.cpp.link.option.libs.186897950" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
+									<listOptionValue builtIn="false" value="infodata"/>
 									<listOptionValue builtIn="false" value="infostat"/>
 									<listOptionValue builtIn="false" value="infosqlite"/>
 									<listOptionValue builtIn="false" value="boost_log_setup"/>
@@ -53,6 +55,7 @@
 									<listOptionValue builtIn="false" value="gomp"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.311472547" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/infodata/Debug}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/infostat/Debug}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/infosqlite/Debug}&quot;"/>
 								</option>
@@ -102,6 +105,7 @@
 									<listOptionValue builtIn="false" value="NDEBUG"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.include.paths.547643438" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/infodata/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/infostat/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/infosqlite/include}&quot;"/>
 								</option>
@@ -116,6 +120,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.cygwin.exe.release.2118509251" name="Cygwin C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.cygwin.exe.release"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.release.1209067676" name="Cygwin C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.release">
 								<option id="gnu.cpp.link.option.libs.1859795256" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
+									<listOptionValue builtIn="false" value="infodata"/>
 									<listOptionValue builtIn="false" value="infostat"/>
 									<listOptionValue builtIn="false" value="infosqlite"/>
 									<listOptionValue builtIn="false" value="boost_log_setup"/>
@@ -124,6 +129,7 @@
 									<listOptionValue builtIn="false" value="gomp"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.339071689" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/infodata/Release}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/infostat/Release}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/infosqlite/Release}&quot;"/>
 								</option>

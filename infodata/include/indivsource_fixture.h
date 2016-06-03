@@ -35,7 +35,7 @@ namespace info {
 						pf = m_store.get();
 						assert(pf != nullptr);
 					}
-					ps = pf->get_source(bMemory);
+					ps = pf->get_store(bMemory);
 					assert(ps != nullptr);
 				}
 				{

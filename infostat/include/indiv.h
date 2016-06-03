@@ -16,6 +16,7 @@ namespace info {
 		using IndivTypePtr = std::shared_ptr<IndivType>;
 		using DataMap = std::map<U, InfoValue>;
 		using iterator = typename DataMap::const_iterator;
+		using ints_doubles_map = std::map<U, double>;
 	private:
 		U m_index;
 		STRINGTYPE m_sigle;
@@ -76,6 +77,9 @@ namespace info {
 		const DataMap & center(void) const {
 			return (this->m_center);
 		}
+		DataMap & center(void)  {
+			return (this->m_center);
+		}
 		bool empty(void) const {
 			return (this->m_center.empty());
 		}
@@ -122,6 +126,23 @@ namespace info {
 			}
 			return (false);
 		}	// distance
+		//
+		template<typename XU, typename U3,typename W>
+		bool distance(const std::map<XU, InfoValue> &oPoint, const std::map<U3, double> &weights,W &res) const {
+			return (info_global_compute_distance(this->m_center, oPoint, weights, res));
+		}	// distance
+		template<typename XU, typename XSTRING, typename U3, typename W>
+		bool distance(const Indiv<XU, XSTRING> &other, const std::map<U3, double> &weights, W &res) const {
+			return (info_global_compute_distance(this->m_center, other.m_center, weights, res));
+		}	// distance
+		template<typename XU, typename XSTRING, typename U3, typename W>
+		bool distance(const std::shared_ptr<Indiv<XU, XSTRING> > &oPtr, const std::map<U3, double> &weights, W &res) const {
+			const Indiv<XU, XSTRING> *p = oPtr.get();
+			if (p != nullptr) {
+				return (this->distance(*p, weights, res));
+			}
+			return (false);
+		}	// distance
 	public:
 		std::ostream & write_to(std::ostream &os) const {
 			std::string sx = info_2s(this->m_sigle);
@@ -149,6 +170,7 @@ namespace info {
 		using IndivType = Indiv<U, STRINGTYPE>;
 		using DataMap = std::map<U, InfoValue>;
 		using IndivTypePtr = std::shared_ptr<IndivType>;
+		using ints_doubles_map = std::map<U, double>;
 		using SourceType = IIndivSource<U, STRINGTYPE>;
 	public:
 		virtual size_t count(void) = 0;
@@ -156,6 +178,13 @@ namespace info {
 		virtual void reset(void) = 0;
 		virtual IndivTypePtr next(void) = 0;
 		virtual IndivTypePtr find(const IndexType aIndex) = 0;
+	public:
+		virtual void weights(ints_doubles_map &oWeights) {
+			oWeights.clear();
+		}
+		virtual void set_weights(const ints_doubles_map & /*oWeights*/) {
+		}// weights
+	public:
 		virtual ~IIndivSource() {
 		}
 	};
