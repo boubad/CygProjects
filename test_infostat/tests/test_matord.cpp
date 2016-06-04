@@ -31,7 +31,7 @@ using IndivTypePtr = typename MatOrdType::IndivTypePtr;
 //////////////////////////////////////////
 BOOST_AUTO_TEST_SUITE(MatOrdTestSuite)
 BOOST_AUTO_TEST_CASE(testMortalMatOrd) {
-	BOOST_TEST_MESSAGE("================= MORTAL =======================");
+	//BOOST_TEST_MESSAGE("================= MORTAL =======================");
 	//
 	MyIndivFixture oIndFixture;
 	SourceType *pIndivProvider = oIndFixture.mortal_source();
@@ -54,46 +54,46 @@ BOOST_AUTO_TEST_CASE(testMortalMatOrd) {
 							STRINGTYPE ss;
 							write_vector(pVarCrit->second, ss);
 							write_vector(pIndCrit->second, s);
-							BOOST_TEST_MESSAGE("Ind: " << indCrit << ",\t" << s << ",\tVar: " << varCrit << ", " << ss);
+						//	BOOST_TEST_MESSAGE("Ind: " << indCrit << ",\t" << s << ",\tVar: " << varCrit << ", " << ss);
 						} else if (pVarCrit != nullptr) {
 							DISTANCETYPE varCrit = pVarCrit->first;
 							STRINGTYPE s;
 							write_vector(pVarCrit->second, s);
-							BOOST_TEST_MESSAGE("Var: " << varCrit << ", \t" << s);
+						//	BOOST_TEST_MESSAGE("Var: " << varCrit << ", \t" << s);
 						} else if (pIndCrit != nullptr) {
 							DISTANCETYPE indCrit = pIndCrit->first;
 							STRINGTYPE s;
 							write_vector(pIndCrit->second, s);
-							BOOST_TEST_MESSAGE("Ind: " << indCrit << ", \t" << s);
+							//BOOST_TEST_MESSAGE("Ind: " << indCrit << ", \t" << s);
 						}
 					});
 	bool bRet = oMat.process(pIndivProvider, pVarProvider);
 	BOOST_CHECK(bRet);
 	ints_vector varids, indids;
 	oMat.get_ids(indids, varids);
-	BOOST_TEST_MESSAGE("========================================");
-	BOOST_TEST_MESSAGE("VARIABLES");
+//	BOOST_TEST_MESSAGE("========================================");
+//	BOOST_TEST_MESSAGE("VARIABLES");
 	for (auto &aIndex : varids) {
 		IndivTypePtr oInd = pVarProvider->find(aIndex);
 		IndivType *p = oInd.get();
 		if (p != nullptr) {
 			STRINGTYPE s = p->sigle();
-			BOOST_TEST_MESSAGE(s);
+			//BOOST_TEST_MESSAGE(s);
 		} // p
 	} // varIndex
-	BOOST_TEST_MESSAGE("========================================");
-	BOOST_TEST_MESSAGE("INDIVS");
+	//BOOST_TEST_MESSAGE("========================================");
+	//BOOST_TEST_MESSAGE("INDIVS");
 	for (auto &aIndex : indids) {
 		IndivTypePtr oInd = pIndivProvider->find(aIndex);
 		IndivType *p = oInd.get();
 		if (p != nullptr) {
 			STRINGTYPE s = p->sigle();
-			BOOST_TEST_MESSAGE(s);
+			//BOOST_TEST_MESSAGE(s);
 		} // p
 	} // varIndex
 } //testMortalMatElem
 BOOST_AUTO_TEST_CASE(testCONSOMatOrd) {
-	BOOST_TEST_MESSAGE("================= CONSO =======================");
+	//BOOST_TEST_MESSAGE("================= CONSO =======================");
 	//
 	MyIndivFixture oIndFixture;
 	SourceType *pIndivProvider = oIndFixture.conso_source();
@@ -116,41 +116,41 @@ BOOST_AUTO_TEST_CASE(testCONSOMatOrd) {
 							STRINGTYPE ss;
 							write_vector(pVarCrit->second, ss);
 							write_vector(pIndCrit->second, s);
-							BOOST_TEST_MESSAGE("Ind: " << indCrit << ",\t" << s << ",\tVar: " << varCrit << ", " << ss);
+						//	BOOST_TEST_MESSAGE("Ind: " << indCrit << ",\t" << s << ",\tVar: " << varCrit << ", " << ss);
 						} else if (pVarCrit != nullptr) {
 							DISTANCETYPE varCrit = pVarCrit->first;
 							STRINGTYPE s;
 							write_vector(pVarCrit->second, s);
-							BOOST_TEST_MESSAGE("Var: " << varCrit << ", \t" << s);
+							//BOOST_TEST_MESSAGE("Var: " << varCrit << ", \t" << s);
 						} else if (pIndCrit != nullptr) {
 							DISTANCETYPE indCrit = pIndCrit->first;
 							STRINGTYPE s;
 							write_vector(pIndCrit->second, s);
-							BOOST_TEST_MESSAGE("Ind: " << indCrit << ", \t" << s);
+							//BOOST_TEST_MESSAGE("Ind: " << indCrit << ", \t" << s);
 						}
 					});
 	bool bRet = oMat.process(pIndivProvider, pVarProvider);
 	BOOST_CHECK(bRet);
 	ints_vector varids, indids;
 	oMat.get_ids(indids, varids);
-	BOOST_TEST_MESSAGE("========================================");
-	BOOST_TEST_MESSAGE("VARIABLES");
+	//BOOST_TEST_MESSAGE("========================================");
+	//BOOST_TEST_MESSAGE("VARIABLES");
 	for (auto &aIndex : varids) {
 		IndivTypePtr oInd = pVarProvider->find(aIndex);
 		IndivType *p = oInd.get();
 		if (p != nullptr) {
 			STRINGTYPE s = p->sigle();
-			BOOST_TEST_MESSAGE(s);
+		//	BOOST_TEST_MESSAGE(s);
 		} // p
 	} // varIndex
-	BOOST_TEST_MESSAGE("========================================");
-	BOOST_TEST_MESSAGE("INDIVS");
+	//BOOST_TEST_MESSAGE("========================================");
+	//BOOST_TEST_MESSAGE("INDIVS");
 	for (auto &aIndex : indids) {
 		IndivTypePtr oInd = pIndivProvider->find(aIndex);
 		IndivType *p = oInd.get();
 		if (p != nullptr) {
 			STRINGTYPE s = p->sigle();
-			BOOST_TEST_MESSAGE(s);
+		//	BOOST_TEST_MESSAGE(s);
 		} // p
 	} // varIndex
 } //testMortalMatElem

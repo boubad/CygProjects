@@ -39,7 +39,7 @@ public:
 	}
 	virtual ~MatElemResult() {
 	}
-};
+};// class MatElemResult
 /////////////////////////////////////
 template<typename IDTYPE = unsigned long, typename DISTANCETYPE = long,
 		typename STRINGTYPE = std::string>
