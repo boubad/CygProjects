@@ -9,7 +9,6 @@ namespace info {
 //////////////////////////////////////
 template<typename U = unsigned long, typename W = long>
 class DistanceMap {
-	using mutex_type = std::mutex;
 public:
 	using ints_set = std::set<U>;
 	using ints_vector = std::vector<U>;
@@ -20,99 +19,11 @@ public:
 	using CritItemType = CritItem<U,W>;
 	using crititems_vector = std::vector<CritItemType>;
 	using sizets_vector = std::vector<size_t>;
+	using ints_doubles_map = std::map<U, double>;
 private:
 	map_type m_map;
 	ints_set m_set;
 	ints_vector m_ids;
-private:
-	template<typename XU, typename XW>
-	void add_lock(const XU i1, const XU i2, const XW xval, mutex_type *pMutex) {
-		if (i1 == i2) {
-			return;
-		}
-		U index1 = (U) i1, index2 = (U) i2;
-		if (index1 > index2) {
-			const U t = index1;
-			index1 = index2;
-			index2 = t;
-		}
-		W val = (W) xval;
-		std::unique_lock<mutex_type> oLock(*pMutex);
-		map_type &oMap = this->m_map;
-		auto it = oMap.find(index1);
-		if (it == oMap.end()) {
-			entry_type e;
-			e[index2] = val;
-			oMap[index1] = e;
-		} else {
-			entry_type &e = (*it).second;
-			e[index2] = val;
-		}
-		ints_set &oSet = this->m_set;
-		oSet.insert(index1);
-		oSet.insert(index2);
-	} // add
-	template<typename XU, typename STRINGTYPE>
-	void compute_serial(IIndivSource<XU, STRINGTYPE> *pProvider) {
-		using DataMap = std::map<XU, InfoValue>;
-		using IndivType = Indiv<XU, STRINGTYPE>;
-		using IndivTypePtr = std::shared_ptr<IndivType>;
-		//
-		const size_t n = pProvider->count();
-		for (size_t i = 0; i < n; ++i) {
-			const XU ii = (XU) i;
-			IndivTypePtr oInd1 = pProvider->get(ii);
-			const IndivType *pInd1 = oInd1.get();
-			if ((pInd1 != nullptr) && pInd1->has_numeric_fields()) {
-				const U aIndex1 = (U) pInd1->id();
-				const DataMap &m1 = pInd1->center();
-				for (size_t j = 0; j < i; ++j) {
-					const XU jj = (XU) j;
-					IndivTypePtr oInd2 = pProvider->get(jj);
-					const IndivType *pInd2 = oInd2.get();
-					if ((pInd2 != nullptr) && pInd2->has_numeric_fields()) {
-						const U aIndex2 = (U) pInd2->id();
-						W d = 0;
-						if (info_global_compute_distance(m1, pInd2->center(),
-								d)) {
-							this->add(aIndex1, aIndex2, d);
-						}
-					} // pInd2
-				} // j
-			} // pInd1
-		} // i
-	} // compute_onz_step_serial
-	template<typename XU, typename STRINGTYPE>
-	static void compute_one(IIndivSource<XU, STRINGTYPE> *pProvider,
-			DistanceMapType *pDist, const int iStart, const int iEnd,
-			mutex_type *pMutex) {
-		using DataMap = std::map<XU, InfoValue>;
-		using IndivType = Indiv<XU, STRINGTYPE>;
-		using IndivTypePtr = std::shared_ptr<IndivType>;
-		//
-		for (int i = iStart; i < iEnd; ++i) {
-			const XU ii = (XU) i;
-			IndivTypePtr oInd1 = pProvider->get(ii);
-			const IndivType *pInd1 = oInd1.get();
-			if ((pInd1 != nullptr) && pInd1->has_numeric_fields()) {
-				const U aIndex1 = (U) pInd1->id();
-				const DataMap &m1 = pInd1->center();
-				for (int j = 0; j < i; ++j) {
-					const XU jj = (XU) j;
-					IndivTypePtr oInd2 = pProvider->get(jj);
-					const IndivType *pInd2 = oInd2.get();
-					if ((pInd2 != nullptr) && pInd2->has_numeric_fields()) {
-						const U aIndex2 = (U) pInd2->id();
-						W d = 0;
-						if (info_global_compute_distance(m1, pInd2->center(),
-								d)) {
-							pDist->add_lock(aIndex1, aIndex2, d, pMutex);
-						}
-					} // pInd2
-				} // j
-			} // pInd1
-		} // i
-	} // compute_one
 public:
 	DistanceMap() {
 	}
@@ -136,49 +47,36 @@ public:
 public:
 	template<typename XU, typename STRINGTYPE>
 	void compute(IIndivSource<XU, STRINGTYPE> *pProvider) {
-		assert(pProvider != nullptr);
+		using DataMap = std::map<XU, InfoValue>;
+		using IndivType = Indiv<XU, STRINGTYPE>;
+		using IndivTypePtr = std::shared_ptr<IndivType>;
+		//
 		this->clear();
-		int np = (int) std::thread::hardware_concurrency();
-		if (np < 2) {
-			this->compute_serial(pProvider);
-		} else {
-			const int n = (int) pProvider->count();
-			if (n < np) {
-				this->compute_serial(pProvider);
-			} else {
-				using future_type = std::future<bool>;
-				using futures_vec = std::vector<future_type>;
-				DistanceMapType *pDist = this;
-				mutex_type _mutex;
-				mutex_type *pMutex = &_mutex;
-				int nChunk = (int) (n / np);
-				int nLast = n;
-				int iMainEnd = nChunk;
-				if (iMainEnd > nLast) {
-					iMainEnd = nLast;
-				}
-				int nStart = iMainEnd;
-				futures_vec oTasks;
-				while (nStart < nLast) {
-					int nEnd = nStart + nChunk;
-					if (nEnd > nLast) {
-						nEnd = nLast;
-					}
-					auto fTask =
-							[nStart,nEnd,&pProvider,&pDist,&pMutex]()->bool {
-								compute_one(pProvider,pDist, nStart,nEnd,pMutex);
-								return (true);
-							};
-					oTasks.push_back(std::async(std::launch::async, fTask));
-					nStart = nEnd;
-				} // while nStart
-				compute_one(pProvider, pDist, 0, iMainEnd, pMutex);
-				bool bRet = true;
-				for (future_type &t : oTasks) {
-					bRet = bRet && t.get();
-				} //t
-			}
-		}
+		pProvider->reset();
+		ints_doubles_map weights;
+		pProvider->weights(weights);
+		const size_t n = pProvider->count();
+		for (size_t i = 0; i < n; ++i) {
+			const XU ii = (XU)i;
+			IndivTypePtr oInd1 = pProvider->get(ii);
+			const IndivType *pInd1 = oInd1.get();
+			if ((pInd1 != nullptr) && pInd1->has_numeric_fields()) {
+				const U aIndex1 = (U)pInd1->id();
+				const DataMap &m1 = pInd1->center();
+				for (size_t j = 0; j < i; ++j) {
+					const XU jj = (XU)j;
+					IndivTypePtr oInd2 = pProvider->get(jj);
+					const IndivType *pInd2 = oInd2.get();
+					if ((pInd2 != nullptr) && pInd2->has_numeric_fields()) {
+						const U aIndex2 = (U)pInd2->id();
+						W d = 0;
+						if (info_global_compute_distance(m1, pInd2->center(), weights, d)) {
+							this->add(aIndex1, aIndex2, d);
+						}
+					} // pInd2
+				} // j
+			} // pInd1
+		} // i
 		ints_vector &vz = this->m_ids;
 		vz.clear();
 		for (auto &aIndex : this->m_set) {

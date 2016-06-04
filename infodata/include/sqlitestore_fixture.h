@@ -1,8 +1,7 @@
 #pragma once
-#ifndef __MEMORYSTOREFIXTURE_H__
-#define __MEMORYSTOREFIXTURE_H__
+#ifndef __SQLITESTORE_FIXTURE_H__
+#define __SQLITESTORE_FIXTURE_H__
 ////////////////////////////////////
-#include <memorystatstore.h>
 #include <infosqlitestore.h>
 /////////////////////////////////
 #include "infotestdata.h"
@@ -11,62 +10,34 @@ namespace info {
 	////////////////////////////////
 	template<typename IDTYPE = unsigned long, typename INTTYPE = unsigned long,
 		typename STRINGTYPE = std::string, typename WEIGHTYPE = double>
-		class TestStoreFixture {
+		class SQLiteStoreFixture {
 		public:
-			using SQLiteStoreType = SQLiteStatHelper;
-			using MemoryStoreType = MemoryStatStore<IDTYPE, INTTYPE, STRINGTYPE, WEIGHTYPE>;
+			using ImplStoreType = SQLiteStatHelper;
 			using IStoreType = IStatStore<IDTYPE, INTTYPE, STRINGTYPE, WEIGHTYPE>;
 			using DatasetType = typename IStoreType::DatasetType;
-			using TestStoreType = TestStoreFixture<IDTYPE,INTTYPE,STRINGTYPE,WEIGHTYPE>;
 			//
-			std::unique_ptr<MemoryStoreType> m_man;
-			std::unique_ptr<SQLiteStoreType> m_sqlite;
+			std::unique_ptr<ImplStoreType> m_man;
 		public:
-			TestStoreFixture() {
+			MemoryStoreFixture() {
+				this->init_data();
+				this->fill_mortal_data();
+				this->fill_conso_data();
+				this->fill_test_data();
 			} // init
-			virtual ~TestStoreFixture() {
+			virtual ~MemoryStoreFixture() {
+				this->data_teardown();
 			}
-			IStoreType *get_source(bool bMemory = true) {
-				if (bMemory) {
-					return (this->get_memory_store());
-				}
-				else {
-					return (this->get_sql_store());
-				}
-			}
-			IStoreType *get_memory_store(void) {
+			IStoreType *get_store(void) {
 				IStoreType *p = this->m_man.get();
-				if (p == nullptr) {
-					m_man.reset(new MemoryStoreType());
-					p = m_man.get();
-					assert(p != nullptr);
-					assert(p->is_valid());
-					this->init_data(p);
-				}
 				assert(p != nullptr);
 				assert(p->is_valid());
 				return (p);
-			}// get_memory_store
-			IStoreType *get_sql_store(void) {
-				IStoreType *p = this->m_sqlite.get();
-				if (p == nullptr) {
-					m_sqlite.reset(new SQLiteStoreType());
-					p = m_sqlite.get();
-					assert(p != nullptr);
-					assert(p->is_valid());
-					this->init_data(p);
-				}
-				assert(p != nullptr);
-				assert(p->is_valid());
-				return (p);
-			}// get_sqlite_store
-		private:
-			void init_data(IStoreType *p) {
-				this->fill_test_data(p);
-				this->fill_mortal_data(p);
-				this->fill_conso_data(p);
 			}
-			void fill_test_data(IStoreType *p) {
+		private:
+			void data_teardown(void) {
+				this->m_man.reset();
+			} // data_teardown
+			void fill_test_data(void) {
 				STRINGTYPE name;
 				size_t nRows = 0, nCols = 0;
 				std::vector<int> gdata;
@@ -79,9 +50,9 @@ namespace info {
 				assert(colNames.size() >= nCols);
 				assert(rowNames.size() >= nRows);
 				assert(gdata.size() >= (size_t)(nCols * nRows));
-				this->import(p, name, nRows, nCols, gdata, rowNames, colNames);
+				this->import(name, nRows, nCols, gdata, rowNames, colNames);
 			} // fill_test_data
-			void fill_mortal_data(IStoreType *p) {
+			void fill_mortal_data(void) {
 				STRINGTYPE name;
 				size_t nRows = 0, nCols = 0;
 				std::vector<int> gdata;
@@ -94,9 +65,9 @@ namespace info {
 				assert(colNames.size() >= nCols);
 				assert(rowNames.size() >= nRows);
 				assert(gdata.size() >= (size_t)(nCols * nRows));
-				this->import(p, name, nRows, nCols, gdata, rowNames, colNames);
+				this->import(name, nRows, nCols, gdata, rowNames, colNames);
 			} // fill_mortal_data
-			void fill_conso_data(IStoreType *p) {
+			void fill_conso_data(void) {
 				STRINGTYPE name;
 				size_t nRows = 0, nCols = 0;
 				std::vector<int> gdata;
@@ -109,12 +80,19 @@ namespace info {
 				assert(colNames.size() >= nCols);
 				assert(rowNames.size() >= nRows);
 				assert(gdata.size() >= (size_t)(nCols * nRows));
-				this->import(p, name, nRows, nCols, gdata, rowNames, colNames);
+				this->import(name, nRows, nCols, gdata, rowNames, colNames);
 			} // fill_mortal_data
-			void import(IStoreType *p, const std::string &name, size_t nRows, size_t nCols,
+			void init_data(void) {
+				m_man.reset(new MemoryStoreType());
+				MemoryStoreType *p = this->m_man.get();
+				assert(p != nullptr);
+				assert(p->is_valid());
+			}
+			void import(const std::string &name, size_t nRows, size_t nCols,
 				const std::vector<int> &data,
 				const std::vector<STRINGTYPE> &rowNames,
 				const std::vector<STRINGTYPE> &colNames) {
+				MemoryStoreType *p = this->m_man.get();
 				assert(p != nullptr);
 				assert(p->is_valid());
 				DatasetType oSet(name);
@@ -123,7 +101,8 @@ namespace info {
 					bRet = p->maintains_dataset(oSet);
 					assert(bRet);
 				}
-				p->import(oSet, nRows, nCols, data, rowNames, colNames);
+				bRet = p->import(oSet, nRows, nCols, data, rowNames, colNames);
+				assert(bRet);
 			} // import
 	};
 }// namespace info

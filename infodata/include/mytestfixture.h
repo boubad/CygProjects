@@ -33,17 +33,23 @@ public:
 		StoreType *ps = p->get_memory_store();
 		assert(ps != nullptr);
 		m_fixture.reset(new SourceFixture(ps));
-		//SourceFixture *px = m_fixture.get();
-		//assert(px != nullptr);
+		SourceFixture *px = m_fixture.get();
+		assert(px != nullptr);
 	} // MyTestFixture
 	virtual ~MyTestFixture() {
 	}
 public:
+	StoreType *get_store(bool bMemory = true) {
+		StoreFixture *px = m_store.get();
+		assert(px != nullptr);
+		return (px->get_store(bMemory));
+	}
 	SourceType *mortal_source(void) {
 		SourceFixture *px = m_fixture.get();
 		assert(px != nullptr);
 		SourceType *pProvider = px->mortal_source();
 		assert(pProvider != nullptr);
+		pProvider->reset();
 		return (pProvider);
 	}
 	SourceType *conso_source(void) {
@@ -51,6 +57,7 @@ public:
 		assert(px != nullptr);
 		SourceType *pProvider = px->conso_source();
 		assert(pProvider != nullptr);
+		pProvider->reset();
 		return (pProvider);
 	}
 	SourceType *test_source(void) {
@@ -58,6 +65,7 @@ public:
 		assert(px != nullptr);
 		SourceType *pProvider = px->test_source();
 		assert(pProvider != nullptr);
+		pProvider->reset();
 		return (pProvider);
 	}
 };

@@ -108,6 +108,45 @@ void info_global_write_map(const std::map<U, info::InfoValue> &oMap,
 	ss = os.str();
 } //info_global_write_map
 //////////////////////////////////
+template<typename U1, typename U2, typename U3, typename W>
+bool info_global_compute_distance(const std::map<U1, InfoValue> &oMap1,
+	const std::map<U2, InfoValue> &oMap2,const std::map<U3,double> &weights, W &res) {
+	size_t nc = 0;
+	double fres = 0.0;
+	for (auto & p : oMap1) {
+		const InfoValue &vv1 = p.second;
+		if ((!vv1.empty()) && vv1.is_numerical()) {
+			const U2 key = (U2)p.first;
+			auto it = oMap2.find(key);
+			if (it != oMap2.end()) {
+				const InfoValue &vv2 = (*it).second;
+				if ((!vv2.empty()) && vv2.is_numerical()) {
+					double v1, v2;
+					vv1.get_value(v1);
+					vv2.get_value(v2);
+					const double tt = v1 - v2;
+					double dd = tt * tt;
+					const U3 kk = (U3)key;
+					auto jt = weights.find(kk);
+					if (jt != weights.end()) {
+						double f = (*jt).second;
+						if (f >= 0) {
+							dd *= f;
+						}
+					}
+					fres += dd;
+					++nc;
+				} // vv2
+			} // it
+		} // vv1
+	} // p
+	if (nc > 1) {
+		fres /= nc;
+	}
+	res = (W)fres;
+	return (nc > 0);
+} //info_global_compute_distance
+//////////////////////////////////
 template<typename U1, typename U2, typename W>
 bool info_global_compute_distance(const std::map<U1, InfoValue> &oMap1,
 		const std::map<U2, InfoValue> &oMap2, W &res,

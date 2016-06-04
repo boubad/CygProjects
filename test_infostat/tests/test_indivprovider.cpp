@@ -4,9 +4,10 @@
  *  Created on: 27 mai 2016
  *      Author: boubad
  */
+#include "stdafx.h"
 #include <boost/test/unit_test.hpp>
 /////////////////////////////
-#include "mytestfixture.h"
+#include <mytestfixture.h>
 ////////////////////////////////////
 #include "global_defs.h"
 ////////////////////

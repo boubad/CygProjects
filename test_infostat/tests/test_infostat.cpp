@@ -4,13 +4,14 @@
  *  Created on: 29 mai 2016
  *      Author: boubad
  */
+#include "stdafx.h"
 #include <boost/test/unit_test.hpp>
 /////////////////////////
 #include <infostat.h>
 /////////////////////////////
-#include "mytestfixture.h"
+#include <mytestfixture.h>
 ////////////////////////////////////
-#include "global_defs.h"
+#include <global_defs.h>
 ////////////////////
 using namespace info;
 using namespace std;

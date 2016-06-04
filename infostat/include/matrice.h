@@ -116,6 +116,8 @@ public:
 			bRet = this->prep_vars(pVarsSource);
 			bRet = bRet && bRow.get();
 		}
+		//bRet = prep_vars(pVarsSource);
+		//bRet = bRet && this->prep_inds(pIndsSource);
 		return (bRet && ((this->check_interrupt()) ? false : true));
 	} // process
 	void get_ids(ints_vector &indids, ints_vector &varids) {

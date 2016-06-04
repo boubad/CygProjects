@@ -9,33 +9,15 @@
 #define ACTIVEOBJECT_H_
 //////////////////////////
 #include "info_includes.h"
+#include "sharedqueue.h"
 /////////////////////////////
 namespace info {
 ////////////////////////
 typedef std::function<void()> Operation;
 /////////////////////////
 class Active {
-	class DispatchQueue {
-		std::mutex qlock;
-		std::queue<Operation> ops_queue;
-		std::condition_variable empty;
-	public:
-		void put(Operation op) {
-			std::lock_guard<std::mutex> guard(qlock);
-			ops_queue.push(op);
-			empty.notify_one();
-		} // put
-		Operation take() {
-			std::unique_lock<std::mutex> lock(qlock);
-			empty.wait(lock, [&] {return !ops_queue.empty();});
-			Operation op = ops_queue.front();
-			ops_queue.pop();
-			return op;
-		} // take
-	};
-private:
 	std::atomic<bool> done;
-	DispatchQueue dispatchQueue;
+	DispatchQueue<Operation> dispatchQueue;
 	std::thread runnable;
 private:
 	Active() :
