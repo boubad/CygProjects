@@ -85,7 +85,7 @@ public:
 	} // compute
 public:
 	size_t size(void) const {
-		return (this->m_ids.size());
+		return (this->m_set.size());
 	}
 	template<typename XU>
 	bool has_entry(const XU i1, const XU i2) const {
