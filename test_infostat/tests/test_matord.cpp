@@ -4,7 +4,6 @@
  *  Created on: 29 mai 2016
  *      Author: boubad
  */
-#include "stdafx.h"
 #include <boost/test/unit_test.hpp>
 /////////////////////////
 #include <matrice.h>
@@ -111,8 +110,8 @@ BOOST_AUTO_TEST_CASE(testCONSOMatOrd) {
 						MatElemResultType *pVarCrit = oVarCrit.get();
 						MatElemResultType *pIndCrit = oIndCrit.get();
 						if ((pIndCrit != nullptr) && (pVarCrit != nullptr)) {
-							//DISTANCETYPE varCrit = pVarCrit->first;
-							//DISTANCETYPE indCrit = pIndCrit->first;
+						//	DISTANCETYPE varCrit = pVarCrit->first;
+						//	DISTANCETYPE indCrit = pIndCrit->first;
 							STRINGTYPE s;
 							STRINGTYPE ss;
 							write_vector(pVarCrit->second, ss);

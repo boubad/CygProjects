@@ -8,8 +8,7 @@
 ////////////////////////////////
 namespace info {
 	////////////////////////////////
-	template<typename IDTYPE = unsigned long, typename INTTYPE = unsigned long,
-		typename STRINGTYPE = std::string, typename WEIGHTYPE = double>
+	template<typename IDTYP, typename INTTYPE,typename STRINGTYPE, typename WEIGHTYPE>
 		class SQLiteStoreFixture {
 		public:
 			using ImplStoreType = SQLiteStatHelper;

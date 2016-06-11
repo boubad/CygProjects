@@ -8,7 +8,7 @@
 /////////////////////////////
 namespace info {
 	////////////////////////////////
-	template <typename IDTYPE = unsigned long, typename INTTYPE = unsigned long, typename STRINGTYPE = std::string, typename WEIGHTYPE = double>
+	template <typename IDTYPE, typename INTTYPE, typename STRINGTYPE, typename WEIGHTYPE>
 	class MemoryStatStore : public IStatStore<IDTYPE, INTTYPE, STRINGTYPE, WEIGHTYPE>, private boost::noncopyable {
 	public:
 		using MemoryDatasetType = MemoryDataset<IDTYPE, INTTYPE, STRINGTYPE, WEIGHTYPE>;

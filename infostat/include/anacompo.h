@@ -7,7 +7,7 @@
 ////////////////////////
 namespace info {
 	///////////////////////////////////////////////
-	template<typename T = double>
+	template<typename T>
 	class AnaCompo {
 	public:
 		using AnaCompoType = AnaCompo<T>;

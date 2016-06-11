@@ -26,18 +26,18 @@ private:
 	Active(const Active&) = delete;
 	Active& operator=(const Active&) = delete;
 	void run() {
-		while (!done) {
-			dispatchQueue.take()();
+		while (!this->done.load()) {
+			(this->dispatchQueue.take())();
 		} // while
 	} // run
 public:
 	~Active() {
 		// Schedule a No-Op runnable to flush the dispatch queue
-		dispatchQueue.put([&]() {done = true;});
+		dispatchQueue.put([this]() {this->done.store(true);});
 		runnable.join();
 	} // run
 	void send(Operation msg_) {
-		dispatchQueue.put(msg_);
+		this->dispatchQueue.put(msg_);
 	} // send
 	  // Factory: safe construction of object before thread start
 	static std::unique_ptr<Active> createActive(void) {

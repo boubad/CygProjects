@@ -16,8 +16,7 @@
 ////////////////////////////////////
 namespace info {
 	/////////////////////////////////
-	template<typename U = unsigned long, typename DISTANCETYPE = long,
-		typename STRINGTYPE = std::string>
+	template<typename U, typename DISTANCETYPE,typename STRINGTYPE>
 		class MatItem : public InterruptObject {
 		public:
 			using IndexType = U;

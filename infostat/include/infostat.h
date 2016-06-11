@@ -8,11 +8,11 @@
 namespace info {
 	//////////////////////////////////
 	enum class TransformationType {
-		noTransf, recode, recode1000, recode10000, normalize
+		noTransf, recode, recode100, recode256, recode1000, recode10000, normalize
 	};
 	// enum class TransformationType
 	/////////////////////////////
-	template<typename U = unsigned long, typename STRINGTYPE = std::string>
+	template<typename U, typename STRINGTYPE>
 	class StatInfo {
 	public:
 		using IntType = U;
@@ -263,6 +263,33 @@ namespace info {
 					} // min
 				}
 												 break;
+				case TransformationType::recode100: {
+					if (this->min < this->max) {
+						if ((x >= this->min) && (x <= this->max)) {
+							double dd = ((x - this->min) / (this->max - this->min))
+								* 100.0 + 0.5;
+							int nx = (int)dd;
+							dest = InfoValue(nx);
+							bRet = true;
+						}
+					} // min
+				}
+													 break;
+				case TransformationType::recode256: {
+					if (this->min < this->max) {
+						if ((x >= this->min) && (x <= this->max)) {
+							double dd = ((x - this->min) / (this->max - this->min))
+								* 256.0 + 0.5;
+							int nx = (int)dd;
+							if (nx > 255) {
+								nx = 255;
+							}
+							dest = InfoValue(nx);
+							bRet = true;
+						}
+					} // min
+				}
+													 break;
 				case TransformationType::recode1000: {
 					if (this->min < this->max) {
 						if ((x >= this->min) && (x <= this->max)) {
@@ -311,37 +338,30 @@ namespace info {
 	};
 	// class StatInfo<U>
 	/////////////////////////////////
-	template<typename U = unsigned long, typename STRINGTYPE = std::string>
-	class StatSummator : public InterruptObject {
+	template<typename U, typename STRINGTYPE>
+	class StatSummator : boost::noncopyable {
+		using mutex_type = std::mutex;
+		using lock_type = std::lock_guard<mutex_type>;
 	public:
 		using StatInfoType = StatInfo<U, STRINGTYPE>;
 		using entries_map = std::map<U, StatInfoType>;
-		using StatSummatorType = StatSummator<U>;
-		using IndivType = Indiv<U>;
+		using StatSummatorType = StatSummator<U,STRINGTYPE>;
+		using IndivType = Indiv<U,STRINGTYPE>;
 		using IndivTypePtr = std::shared_ptr<IndivType>;
 		using somme_pair = std::pair<size_t, double>;
 		using correl_map = std::map<U, somme_pair>;
 		using ints_vector = std::vector<U>;
 	private:
 		entries_map m_map;
+		mutex_type _mutex;
 	public:
-		StatSummator(std::atomic_bool *pCancel = nullptr) :
-			InterruptObject(pCancel) {
-		}
-		StatSummator(const StatSummatorType &other) :
-			InterruptObject(other), m_map(other.m_map) {
-		}
-		StatSummatorType & operator=(const StatSummatorType &other) {
-			if (this != &other) {
-				InterruptObject::operator=(other);
-				this->m_map = other.m_map;
-			}
-			return (*this);
+		StatSummator() {
 		}
 		virtual ~StatSummator() {
 		}
 	public:
 		void compute(void) {
+			lock_type oLock(this->_mutex);
 			double ss = 0;
 			entries_map &m = this->m_map;
 			for (auto &p : m) {
@@ -363,14 +383,16 @@ namespace info {
 				}// p
 			}// ss
 		}// compute
-		void get_keys(ints_vector &keys) const {
+		void get_keys(ints_vector &keys)  {
+			lock_type oLock(this->_mutex);
 			keys.clear();
 			const entries_map &m = this->m_map;
 			for (auto &p : m) {
 				keys.push_back(p.first);
 			}// p
 		}// get_keys
-		bool get_covariance(const U key1, const U key2, double &res) const {
+		bool get_covariance(const U key1, const U key2, double &res)  {
+			lock_type oLock(this->_mutex);
 			const entries_map &m = this->m_map;
 			res = 0;
 			auto it = m.find(key1);
@@ -402,7 +424,8 @@ namespace info {
 			}
 			return (false);
 		} // get_covariance
-		bool get_correlation(const U key1, const U key2, double &res) const {
+		bool get_correlation(const U key1, const U key2, double &res)  {
+			lock_type oLock(this->_mutex);
 			const entries_map &m = this->m_map;
 			res = 0;
 			auto it = m.find(key1);
@@ -439,11 +462,13 @@ namespace info {
 			}
 			return (false);
 		} // get_covariance
-		bool has_key(const U key) const {
+		bool has_key(const U key)  {
+			lock_type oLock(this->_mutex);
 			const entries_map &m = this->m_map;
 			return (m.find(key) != m.end());
 		}
-		bool get(const U key, StatInfoType &oInfo) const {
+		bool get(const U key, StatInfoType &oInfo)  {
+			lock_type oLock(this->_mutex);
 			const entries_map &m = this->m_map;
 			auto it = m.find(key);
 			if (it != m.end()) {
@@ -453,10 +478,12 @@ namespace info {
 			return (false);
 		}
 		void clear(void) {
+			lock_type oLock(this->_mutex);
 			this->m_map.clear();
 		}
 		template<typename XU>
 		void add(const std::map<XU, InfoValue> &oMap) {
+			lock_type oLock(this->_mutex);
 			entries_map &m = this->m_map;
 			for (auto &p : oMap) {
 				U key = (U)p.first;
@@ -470,13 +497,13 @@ namespace info {
 				}
 			} // p
 		}	// add
-		template<typename XU>
-		void add(const Indiv<XU> &oInd) {
+		template<typename XU,typename XS>
+		void add(const Indiv<XU,XS> &oInd) {
 			this->add(oInd.center());
 		}	// ass
-		template<typename XU>
-		void add(const std::shared_ptr<Indiv<XU> > &oPtr) {
-			const Indiv<XU> *p = oPtr.get();
+		template<typename XU,typename XS>
+		void add(const std::shared_ptr<Indiv<XU,XS> > &oPtr) {
+			const Indiv<XU,XS> *p = oPtr.get();
 			if (p != nullptr) {
 				this->add(p->center());
 			}
@@ -484,7 +511,8 @@ namespace info {
 		template<typename XU>
 		bool transform(const std::map<XU, InfoValue> &src,
 			std::map<U, InfoValue> &dest, const TransformationType mode =
-			TransformationType::noTransf) const {
+			TransformationType::noTransf) {
+			lock_type oLock(this->_mutex);
 			dest.clear();
 			const entries_map &m = this->m_map;
 			std::for_each(src.begin(), src.end(),
@@ -504,8 +532,9 @@ namespace info {
 			});
 			return (!dest.empty());
 		}	// transform
-		bool transform(IndivType &oInd, const TransformationType mode =
-			TransformationType::noTransf) const {
+		template <typename XU,typename XS>
+		bool transform(Indiv<XU,XS> &oInd, const TransformationType mode =
+			TransformationType::noTransf)  {
 			std::map<U, InfoValue> dest;
 			if (!this->transform(oInd.center(), dest, mode)) {
 				return (false);
@@ -513,12 +542,13 @@ namespace info {
 			oInd.center(dest);
 			return (!oInd.empty());
 		}	// transform
-		IndivTypePtr transform(const IndivTypePtr &oSrc,
-			const TransformationType mode = TransformationType::noTransf) const {
+		template <typename XU, typename XS>
+		IndivTypePtr transform(const std::shared_ptr<Indiv<XU,XS>> &oSrc,
+			const TransformationType mode = TransformationType::noTransf)  {
 			IndivTypePtr oRet;
-			IndivType *pInd = oSrc.get();
+			Indiv<XU, XS> *pInd = oSrc.get();
 			if (pInd != nullptr) {
-				oRet = std::make_shared<IndivType>(*pInd);
+				oRet = std::make_shared<IndivType>(pInd->id(),pInd->center(),pInd->sigle());
 				IndivType *pRet = oRet.get();
 				if (pRet != nullptr) {
 					if (this->transform(*pRet, mode)) {

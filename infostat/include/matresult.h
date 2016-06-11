@@ -3,94 +3,134 @@
 #define MATRESULT_H_
 /////////////////////////////
 #include "info_includes.h"
-//////////////////////////////////
+#include "activeobject.h"
+//////////////////////////////////////
 namespace info {
 	///////////////////////////////////////////
-	enum class DispositionType {invalid,indiv,variable};
+	enum class DispositionType { invalid, indiv, variable };
+	enum class StageType { started, finished, aborted, current };
 	///////////////////////////////////////////
-	template<typename IDTYPE = unsigned long, typename DISTANCETYPE = long>
+	template<typename IDTYPE, typename DISTANCETYPE, typename STRINGTYPE>
 	class IntraMatElemResult {
 	public:
 		using ints_vector = std::vector<IDTYPE>;
 		using sizets_vector = std::vector<size_t>;
-		using IntraMatElemResultType = IntraMatElemResult<IDTYPE,DISTANCETYPE>;
+		using IntraMatElemResultType = IntraMatElemResult<IDTYPE, DISTANCETYPE, STRINGTYPE>;
 		using IntraMatElemResultPtr = std::shared_ptr<IntraMatElemResultType>;
 		//
+		StageType stage;
 		DispositionType disposition;
 		DISTANCETYPE first;
 		sizets_vector second;
-		ints_vector third;
+		STRINGTYPE sigle;
 	public:
-		IntraMatElemResult() : disposition(DispositionType::invalid),first(0) {
+		IntraMatElemResult() : stage(StageType::current), disposition(DispositionType::invalid), first(0) {
 		}
-		IntraMatElemResult(const DISTANCETYPE c, const sizets_vector &v,DispositionType disp = DispositionType::invalid) :
-			disposition(disp),first(c), second(v) {
+		IntraMatElemResult(const DISTANCETYPE c, const sizets_vector &v,
+			DispositionType disp = DispositionType::invalid, StageType st = StageType::current) :
+			stage(st), disposition(disp), first(c), second(v) {
 		}
 		IntraMatElemResult(const IntraMatElemResultType &other) :
-			disposition(other.disposition),first(other.first), second(other.second), third(other.third) {
+			stage(other.stage), disposition(other.disposition), first(other.first), second(other.second), sigle(other.sigle) {
 		}
 		IntraMatElemResultType & operator=(const IntraMatElemResultType &other) {
 			if (this != &other) {
+				this->stage = other.stage;
 				this->disposition = other.disposition;
 				this->first = other.first;
 				this->second = other.second;
-				this->third = other.third;
+				this->sigle = other.sigle;
 			}
 			return (*this);
 		}
 		virtual ~IntraMatElemResult() {
 		}
 		void clear(void) {
+			this->stage = StageType::current;
 			this->disposition = DispositionType::invalid;
 			this->first = 0;
 			this->second.clear();
-			this->third.clear();
+			this->sigle.clear();
 		}// clear
 	};
 	// class IntraMatElemResult
-	////////////////////////////////////////
-	template<typename IDTYPE = unsigned long, typename DISTANCETYPE = long>
-	class IntraMatOrdResult {
+	////////////////////////////////////////////
+	template<typename IDTYPE, typename DISTANCETYPE, typename STRINGTYPE>
+	class MatElemResultClient : boost::noncopyable {
 	public:
-		using IntraMatElemResultType = IntraMatElemResult<IDTYPE, DISTANCETYPE>;
-		using IntraMatElemResultPtr = std::shared_ptr<IntraMatElemResultType>;
-		using IntraMatOrdResultType = IntraMatOrdResult<IDTYPE, DISTANCETYPE>;
-		using IntraMatOrdResultTypePtr = std::shared_ptr<IntraMatOrdResultType>;
+		using MatElemResultType = IntraMatElemResult<IDTYPE, DISTANCETYPE, STRINGTYPE>;
+		using MatElemResultPtr = std::shared_ptr<MatElemResultType>;
+		using MatElemFunctionType = std::function<void(MatElemResultPtr)>;
+		using MatElemResultClientType = MatElemResultClient<IDTYPE, DISTANCETYPE, STRINGTYPE>;
 	private:
-		IntraMatElemResultPtr m_indsResults;
-		IntraMatElemResultPtr m_varsResults;
+		MatElemFunctionType m_f;
 	public:
-		IntraMatOrdResult(){}
-		IntraMatOrdResult(IntraMatElemResultPtr rInds, IntraMatElemResultPtr rVars) :
-			m_indsResults(rInds), m_varsResults(rVars) {}
-		IntraMatOrdResult(const IntraMatOrdResultType &other):m_indsResults(other.m_indsResults),m_varsResults(other.m_varsResults){}
-		IntraMatOrdResultType & operator=(const IntraMatOrdResultType &other) {
-			if (this != &other) {
-				this->m_indsResults = other.m_indsResults;
-				this->m_varsResults = other.m_varsResults;
-			}
-			return (*this);
+		MatElemResultClient() :m_f([](MatElemResultPtr o) {}) {
 		}
-		virtual ~IntraMatOrdResult(){}
+		MatElemResultClient(MatElemFunctionType f) :m_f(f) {
+		}
+		virtual ~MatElemResultClient() {
+		}
+		void set_function(MatElemFunctionType f) {
+			this->m_f = f;
+		}
+		void operator()(MatElemResultPtr oRes) {
+			this->process_result(oRes);
+		}
+	protected:
+		virtual void process_result(MatElemResultPtr oRes) {
+			MatElemFunctionType &f = this->m_f;
+			f(oRes);
+		}//process_result
 	public:
-		IntraMatElemResultPtr indivs_results(void) const {
-			return (this->m_indsResults);
+		virtual void put(MatElemResultPtr oRes) {
+			this->process_result(oRes);
+		}// put
+	}; // class IntraMatElemBackgrounder<IDTYPE,DISTANCETYPE,STRINGTYPE>
+	////////////////////////////////////////
+	template<typename IDTYPE, typename DISTANCETYPE, typename STRINGTYPE>
+	class MatElemResultBackgounder : public MatElemResultClient<IDTYPE, DISTANCETYPE, STRINGTYPE> {
+	public:
+		using MatElemResultType = IntraMatElemResult<IDTYPE, DISTANCETYPE, STRINGTYPE>;
+		using MatElemResultPtr = std::shared_ptr<MatElemResultType>;
+		using MatElemFunctionType = std::function<void(MatElemResultPtr)>;
+		using BaseType = MatElemResultClient<IDTYPE, DISTANCETYPE, STRINGTYPE>;
+	private:
+		std::atomic<bool> done;
+		SharedQueue<MatElemResultPtr> dispatchQueue;
+		std::unique_ptr<std::thread> runnable;
+		//
+		void init(void) {
+			this->runnable.reset(new std::thread([this]() {
+				while (!this->done.load()) {
+					MatElemResultPtr o = this->dispatchQueue.take();
+					if (o.get() == nullptr) {
+						this->done.store(true);
+						break;
+					}
+					this->process_result(o);
+				} // while
+			}));
+		}// init
+	public:
+		MatElemResultBackgounder() : done(false) {
+			this->init();
 		}
-		void indivs_result(IntraMatElemResultPtr o) {
-			this->m_indivsResults = o;
+		MatElemResultBackgounder(MatElemFunctionType f) : BaseType(f), done(false) {
+			this->init();
 		}
-		IntraMatElemResultPtr variables_results(void) const {
-			return (this->m_varsResults);
+		virtual ~MatElemResultBackgounder() {
+			MatElemResultPtr o;
+			this->done.store(true);
+			this->dispatchQueue.put(o);
+			this->runnable->join();
 		}
-		void variables_result(IntraMatElemResultPtr o) {
-			this->m_varsResults = o;
-		}
-		void clear(void) {
-			this->m_indsResults.reset();
-			this->m_varsResults.reset();
-		}// clear
-	};
-	/////////////////////////////////////
-}// namespace infi
+	public:
+		virtual void put(MatElemResultPtr oRes) {
+			this->dispatchQueue.put(oRes);
+		}// put
+	}; // class IntraMatElemBackgrounder<IDTYPE,DISTANCETYPE,STRINGTYPE>
+	////////////////////////////////////////////
+}// namespace info
  ///////////////////////////////////
 #endif /* INTRAMAT_H_ */

@@ -8,8 +8,7 @@
 ///////////////////////////////////
 namespace info {
 	/////////////////////////////
-	template<typename U = unsigned long, typename INTTYPE = unsigned long,
-		typename STRINGTYPE = std::string, typename WEIGHTYPE = double>
+	template<typename U , typename INTTYPE,typename STRINGTYPE, typename WEIGHTYPE>
 		class StoreBaseProvider : public IIndivSource<U, STRINGTYPE>, private boost::noncopyable {
 		using mutex_type = std::mutex;
 		using lock_type = std::lock_guard<mutex_type>;
@@ -87,7 +86,7 @@ namespace info {
 			}// weights
 			virtual void weights(ints_doubles_map &oWeights) {
 				oWeights.clear();
-				lock_type oLock(this->_mutex);;
+				lock_type oLock(this->_mutex);
 				oWeights = this->m_weights;
 			}// weights
 			virtual size_t count(void) {
@@ -97,6 +96,7 @@ namespace info {
 				bool bFound = false;
 				size_t ipos = 0;
 				{
+					lock_type oLock(this->_mutex);
 					ints_vector & vv = this->m_ids;
 					const size_t n = vv.size();
 					for (size_t i = 0; i < n; ++i) {
@@ -117,17 +117,19 @@ namespace info {
 				if (pos >= this->m_ncount.load()) {
 					return oRet;
 				}
-				indivptrs_vector & vv = this->m_indivs;
-				oRet = vv[pos];
-				if (oRet.get() != nullptr) {
-					return (oRet);
-				}
-				U aIndex = (this->m_ids)[pos];
-				oRet = impl_get_indiv(this->m_pstore, this->m_oset, aIndex);
-				if (oRet.get() != nullptr) {
+				{
 					lock_type oLock(this->_mutex);
-					vv[pos] = oRet;
-					this->m_summator.add(oRet);
+					indivptrs_vector & vv = this->m_indivs;
+					oRet = vv[pos];
+					if (oRet.get() != nullptr) {
+						return (oRet);
+					}
+					U aIndex = (this->m_ids)[pos];
+					oRet = impl_get_indiv(this->m_pstore, this->m_oset, aIndex);
+					if (oRet.get() != nullptr) {
+						vv[pos] = oRet;
+						this->m_summator.add(oRet);
+					}
 				}
 				return (oRet);
 			}

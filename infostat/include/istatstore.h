@@ -4,12 +4,9 @@
 ////////////////////////////////
 #include "baseitem.h"
 //////////////////////////////////
-#include <vector>
-#include <map>
-//////////////////////////////////////////
 namespace info {
 	//////////////////////////////////////////////
-	template <typename IDTYPE = unsigned long, typename INTTYPE = unsigned long, typename STRINGTYPE = std::string, typename WEIGHTYPE = double>
+	template <typename IDTYPE, typename INTTYPE, typename STRINGTYPE, typename WEIGHTYPE>
 	class IStatStore {
 	public:
 		using strings_vector = std::vector<STRINGTYPE>;

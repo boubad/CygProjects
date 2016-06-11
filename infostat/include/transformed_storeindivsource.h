@@ -6,8 +6,7 @@
 ///////////////////////////////////
 namespace info {
 	/////////////////////////////
-	template<typename U = unsigned long, typename INTTYPE = unsigned long,
-		typename STRINGTYPE = std::string, typename WEIGHTYPE = double>
+	template<typename U, typename INTTYPE,typename STRINGTYPE, typename WEIGHTYPE>
 		class TranformedStoreIndivSource : public StoreIndivSource<U, INTTYPE,
 		STRINGTYPE, WEIGHTYPE> {
 		using mutex_type = std::mutex;
@@ -27,6 +26,7 @@ namespace info {
 			using indivptrs_vector = std::vector<IndivTypePtr>;
 			using StatSummatorType = StatSummator<U, STRINGTYPE>;
 			using StatInfoType = StatInfo<U, STRINGTYPE>;
+			using TranformedStoreIndivSourceType = TranformedStoreIndivSource<U, INTTYPE, STRINGTYPE, WEIGHTYPE>;
 		protected:
 			TransformationType m_transf;
 			ints_vector m_varids;
@@ -46,13 +46,16 @@ namespace info {
 			}
 		public:
 			TransformationType transformation(void) {
+				lock_type oLock(this->_xmutex);
 				return (this->m_transf);
 			}
 			void transformation(TransformationType t) {
+				lock_type oLock(this->_xmutex);
 				this->m_transf = t;
 			}
 		public:
 			virtual IndivTypePtr get(const size_t pos) {
+				lock_type oLock(this->_xmutex);
 				IndivTypePtr oRet;
 				indivptrs_vector &vv = this->m_cache;
 				if (pos >= vv.size()) {
@@ -92,34 +95,30 @@ namespace info {
 				else {
 					rr = oSum.transform(oInd, this->m_transf);
 				}
-				{
-					lock_type oLock(this->_xmutex);
-					this->m_indids.push_back(pInd->id());
-					vv[pos] = rr;
-				}// sync
+				this->m_indids.push_back(pInd->id());
+				vv[pos] = rr;
 				return (rr);
 			}// get
 			virtual void reset(void) {
+				lock_type oLock(this->_xmutex);
 				StoreIndivSourceType::reset();
-				{
-					size_t nc = this->count();
-					lock_type oLock(this->_xmutex);
-					this->m_cache.resize(nc);
-					StatSummatorType &oSum = this->get_summator();
-					ints_vector &oIds = this->m_varids;
-					oIds.clear();
-					ints_vector temp;
-					oSum.get_keys(temp);
-					for (auto &aIndex : temp) {
-						StatInfoType info;
-						oSum.get(aIndex, info);
-						if ((info.get_count() > 1) && (info.get_variance() > 0)) {
-							oIds.push_back(aIndex);
-						}
-					}// aIndex
-				}// sync
+				size_t nc = this->count();
+				this->m_cache.resize(nc);
+				StatSummatorType &oSum = this->get_summator();
+				ints_vector &oIds = this->m_varids;
+				oIds.clear();
+				ints_vector temp;
+				oSum.get_keys(temp);
+				for (auto &aIndex : temp) {
+					StatInfoType info;
+					oSum.get(aIndex, info);
+					if ((info.get_count() > 1) && (info.get_variance() > 0)) {
+						oIds.push_back(aIndex);
+					}
+				}// aIndex
 			} // reset
-			size_t get_variables_count(void) const {
+			size_t get_variables_count(void)  {
+				lock_type oLock(this->_xmutex);
 				return (this->m_varids.size());
 			}
 			void get_variables_ids(ints_vector &v) const {
@@ -128,7 +127,8 @@ namespace info {
 			void get_indivs_names(strings_vector &v) const {
 				v = this->m_names;
 			}
-			bool get_variable_id(const size_t pos, U &aIndex) const {
+			bool get_variable_id(const size_t pos, U &aIndex)  {
+				lock_type oLock(this->_xmutex);
 				bool bRet = false;
 				const ints_vector &vars = this->m_varids;
 				if (pos < vars.size()) {
@@ -140,7 +140,8 @@ namespace info {
 				}
 				return	(bRet);
 			}
-			void get_indivs_ids(ints_vector &v) const {
+			void get_indivs_ids(ints_vector &v)  {
+				lock_type oLock(this->_xmutex);
 				v = this->m_indids;
 			}
 			bool get_indiv_id(const size_t pos, U &aIndex) const {

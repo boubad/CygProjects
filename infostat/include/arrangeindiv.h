@@ -13,8 +13,7 @@
 /////////////////////////////////
 namespace info {
 ////////////////////////////////////////
-template<typename U = unsigned long, typename STRINGTYPE = std::string,
-		typename DISTANCETYPE = unsigned long>
+template<typename U, typename STRINGTYPE,typename DISTANCETYPE>
 class ArrangeIndivs: public ClustersCollection<U, STRINGTYPE> {
 public:
 	using IndexType = U;

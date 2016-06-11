@@ -6,7 +6,7 @@
 /////////////////////////////////////
 namespace info {
 	////////////////////////////////
-	template <typename IDTYPE = unsigned long, typename INTTYPE = unsigned long, typename STRINGTYPE = std::string, typename WEIGHTYPE = double>
+	template <typename IDTYPE, typename INTTYPE, typename STRINGTYPE, typename WEIGHTYPE>
 	class MemoryDataset : private boost::noncopyable {
 	public:
 		using ints_set = std::set<IDTYPE>;
@@ -250,7 +250,7 @@ namespace info {
 		MemoryDataset() :m_lastid(1) {}
 		MemoryDataset(const DatasetType &oSet) :m_lastid(1), m_oset(oSet) {
 			size_t nMax = this->m_oset.id();
-			if (nMax >= this->m_lastid) {
+			if (nMax >= (size_t)this->m_lastid) {
 				this->m_lastid = (IDTYPE)(nMax + 1);
 			}
 		}

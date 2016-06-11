@@ -13,7 +13,7 @@
 /////////////////////////////////
 namespace info {
 ////////////////////////////////////////
-template<typename U = unsigned long,typename STRINGTYPE = std::string,typename DISTANCETYPE = unsigned long>
+template<typename U ,typename STRINGTYPE,typename DISTANCETYPE>
 class ClusterizeKMeans: public ClustersCollection<U,STRINGTYPE> {
 public:
 	using IndexType = U;
@@ -24,7 +24,7 @@ public:
 	using DataMap = std::map<U, InfoValue>;
 	using ints_sizet_map = std::map<U, size_t>;
 	using IndivClusterType = IndivCluster<U,STRINGTYPE>;
-	using SourceType = IIndivSource<U>;
+	using SourceType = IIndivSource<U,STRINGTYPE>;
 	using clusters_vector = std::vector<IndivClusterType>;
 	using ints_vector = std::vector<U>;
 	using sizet_intsvector_map = std::map<size_t, ints_vector>;
@@ -33,7 +33,6 @@ public:
 private:
 	size_t m_niter;
 	ints_sizet_map m_map;
-	sizets_vector m_args;
 public:
 	ClusterizeKMeans(std::atomic_bool *pCancel = nullptr) :
 			ClustersCollectionType(pCancel), m_niter(0) {
@@ -102,21 +101,6 @@ protected:
 		this->m_niter = 0;
 		this->m_map.clear();
 	} // clear
-	virtual bool initialize_process(SourceType *pSource,
-		const size_t nbClusters, const size_t nbMaxIters = 100,
-		std::atomic_bool *pCancel = nullptr) {
-		if (!ClustersCollectionType::initialize_process(pSource, nbClusters,
-			nbMaxIters, pCancel)) {
-			return (0);
-		}
-		const size_t n = this->get_nbIndivs();
-		sizets_vector & v = this->m_args;
-		v.resize(n);
-		for (size_t i = 0; i < n; ++i) {
-			v[i] = i;
-		}
-		return ((this->check_interrupt()) ? false : true);
-	} // initalize_process
 	virtual bool one_iteration(void) {
 		if (this->m_niter > this->get_nbMaxIters()) {
 			return (false);
@@ -128,16 +112,15 @@ protected:
 		for (auto && c : clusters) {
 			c.clear_members();
 		}
-		const sizets_vector &args = this->m_args;
-		std::mutex _mutex;
-		info_parallel_for_each(args.begin(), args.end(), [&](const size_t &i) {
+		const size_t ni = this->get_nbIndivs();
+		for (size_t i = 0; i < ni; ++i) {
 			DISTANCETYPE dMin = 0;
 			IndivClusterType *pRes = nullptr;
 			IndivTypePtr oInd = pProvider->get(i);
 			IndivType *pInd = oInd.get();
 			if (pInd != nullptr) {
 				for (size_t j = 0; j < nc; ++j) {
-					IndivClusterType *pc = &( clusters[j]);
+					IndivClusterType *pc = &(clusters[j]);
 					DISTANCETYPE d = 0;
 					if (pc->distance(oInd, d)) {
 						if (pRes == nullptr) {
@@ -150,11 +133,10 @@ protected:
 					} // distance
 				} // j
 				if (pRes != nullptr) {
-					std::lock_guard<std::mutex> oLock(_mutex);
 					pRes->add(oInd);
 				}
 			} // ind
-		});
+		}// i
 		for (auto && c : clusters) {
 			c.update_center();
 		}

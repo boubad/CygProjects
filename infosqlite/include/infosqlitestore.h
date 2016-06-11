@@ -14,6 +14,8 @@ namespace info_sqlite {
 namespace info {
 	//////////////////////////////////////
 	class SQLiteStatHelper : public IStatStore<unsigned long, unsigned long, std::string, double>, private boost::noncopyable {
+		using mutex_type = std::recursive_mutex;
+		using lock_type = std::unique_lock<mutex_type>;
 	public:
 		using IDTYPE = unsigned long;
 		using INTTYPE = unsigned long;
@@ -35,13 +37,17 @@ namespace info {
 	private:
 		bool m_intransaction;
 		std::unique_ptr<info_sqlite::SQLite_Database> m_base;
-		static const STRINGTYPE DEFAULT_DATABASE_NAME;
+		mutex_type _mutex;
 		//
 		void check_schema(void);
 		void read_dataset(info_sqlite::SQLite_Statement &q, DatasetType &cur);
 		void read_variable(info_sqlite::SQLite_Statement &q, VariableType &cur);
 		void read_indiv(info_sqlite::SQLite_Statement &q, IndivType &cur);
 		void read_value(info_sqlite::SQLite_Statement &q, ValueType &cur);
+		//
+		bool find_variable_type(IDTYPE nVarId, STRINGTYPE stype);
+	public:
+		static const STRINGTYPE DEFAULT_DATABASE_NAME;
 	public:
 		SQLiteStatHelper(const STRINGTYPE &sDatabaseName = DEFAULT_DATABASE_NAME);
 		virtual ~SQLiteStatHelper();

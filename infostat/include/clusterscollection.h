@@ -22,7 +22,7 @@ namespace info {
 		using DataMap = std::map<U, InfoValue>;
 		using ints_sizet_map = std::map<U, size_t>;
 		using IndivClusterType = IndivCluster<U, STRINGTYPE>;
-		using SourceType = IIndivSource<U>;
+		using SourceType = IIndivSource<U,STRINGTYPE>;
 		using clusters_vector = std::vector<IndivClusterType>;
 		using ints_vector = std::vector<U>;
 		using sizet_intsvector_map = std::map<size_t, ints_vector>;
