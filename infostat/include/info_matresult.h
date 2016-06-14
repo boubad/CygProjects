@@ -60,6 +60,10 @@ private:
 			for (size_t i = 0; i < n; ++i) {
 				s2[i] = ids[i];
 			}
+		} else {
+			for (size_t i = 0; i < n; ++i) {
+				s2[i] = (IDTYPE) i;
+			}
 		}
 		this->m_sigle = STRINGTYPE(sSigle.vegin(), sSigle.end());
 	}
