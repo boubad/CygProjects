@@ -9,18 +9,18 @@
 ////////////////////////////////////
 namespace info {
 	////////////////////////////////////
-	template<typename U = unsigned long, typename STRINGTYPE = std::string>
+	template<typename U, typename STRINGTYPE>
 	class IndivCluster : public InterruptObject {
 	public:
 		using IndexType = U;
 		using IndivType = Indiv<U, STRINGTYPE>;
 		using DataMap = std::map<U, InfoValue>;
 		using IndivTypePtr = std::shared_ptr<IndivType>;
-		using SourceType = IIndivSource<U>;
+		using SourceType = IIndivSource<U,STRINGTYPE>;
 		using indivptrs_vector = std::deque<IndivTypePtr>;
 		using IndivClusterType = IndivCluster<U, STRINGTYPE>;
 		using ints_sizet_map = std::map<U, size_t>;
-		using iterator = typename indivptrs_vector::const_iterator;
+		using const_iterator = typename indivptrs_vector::const_iterator;
 		using ints_vector = std::vector<U>;
 	private:
 		IndexType m_index;
@@ -85,10 +85,10 @@ namespace info {
 		const DataMap & center(void) const {
 			return (this->m_center);
 		}
-		iterator begin(void) const {
+		const_iterator begin(void) const {
 			return (this->m_indivs.begin());
 		}
-		iterator end(void) const {
+		const_iterator end(void) const {
 			return (this->m_indivs.end());
 		}
 	public:
@@ -204,6 +204,21 @@ namespace info {
 			}// oInd
 			summator.get_result(this->m_center);
 		} // update_center
+		//
+		template<typename XU, typename U3, typename W>
+		bool distance(const std::map<XU, InfoValue> &oPoint, const std::map<U3, double> &weights, W &res) const {
+			return info_global_compute_distance(this->m_center, oPoint, weights,res);
+		} // distance
+		template<typename XU, typename XSTRING, typename U3, typename W>
+		bool distance(const std::shared_ptr<Indiv<XU, XSTRING> > &oInd, const std::map<U3, double> &weights, W &res) const {
+			const IndivType *p = oInd.get();
+			if (p == nullptr) {
+				res = 0;
+				return (false);
+			}
+			return info_global_compute_distance(this->m_center, p->center(), weights, res);
+		} // distance
+		//
 		template<typename XU, typename XSTRING, typename W>
 		bool distance(const std::shared_ptr<Indiv<XU,XSTRING> > &oInd, W &res) const {
 			const IndivType *p = oInd.get();
@@ -224,6 +239,109 @@ namespace info {
 			return info_global_compute_distance(this->m_center, oPoint, res,
 				this->get_cancelleable_flag());
 		} // distance
+		template<typename W, typename U3>
+		bool cluster_min_distance(const IndivClusterType &other,
+			ClusterMergeMode &mode, const std::map<U3, double> &weights, W &res) const {
+			res = 0;
+			mode = ClusterMergeMode::invalid;
+			if (this->is_empty() || other.is_empty()) {
+				return (false);
+			}
+			const indivptrs_vector &vv1 = this->m_indivs;
+			const IndivType *pInd1Top = vv1.front().get();
+			assert(pInd1Top != nullptr);
+			const size_t n1 = vv1.size();
+			const indivptrs_vector &vv2 = other.m_indivs;
+			const IndivType *pInd2Top = vv2.front().get();
+			assert(pInd2Top != nullptr);
+			const size_t n2 = vv2.size();
+			if ((n1 == 1) && (n2 == 1)) {
+				mode = ClusterMergeMode::topTop;
+				return (info_global_compute_distance(pInd1Top->center(),
+					pInd2Top->center(), weights, res));
+			}
+			else if ((n1 == 1) && (n2 > 1)) {
+				const IndivType *pInd2Bottom = vv2.back().get();
+				assert(pInd2Bottom != nullptr);
+				W d1 = 0;
+				if (!info_global_compute_distance(pInd1Top->center(),
+					pInd2Top->center(), weights, d1)) {
+					return (false);
+				}
+				res = d1;
+				mode = ClusterMergeMode::topTop;
+				W d2 = 0;
+				if (!info_global_compute_distance(pInd1Top->center(),
+					pInd2Bottom->center(), weights, d2)) {
+					return (false);
+				}
+				if (d2 < res) {
+					mode = ClusterMergeMode::topBottom;
+					return (true);
+				}
+			}
+			else if ((n1 > 1) && (n2 == 1)) {
+				const IndivType *pInd1Bottom = vv1.back().get();
+				assert(pInd1Bottom != nullptr);
+				W d1 = 0;
+				if (!info_global_compute_distance(pInd1Top->center(),
+					pInd2Top->center(), weights,d1)) {
+					return (false);
+				}
+				res = d1;
+				mode = ClusterMergeMode::topTop;
+				W d2 = 0;
+				if (!info_global_compute_distance(pInd1Bottom->center(),
+					pInd2Top->center(), weights, d2)) {
+					return (false);
+				}
+				if (d2 < res) {
+					mode = ClusterMergeMode::bottomTop;
+					return (true);
+				}
+			}
+			else {
+				const IndivType *pInd1Bottom = vv1.back().get();
+				assert(pInd1Bottom != nullptr);
+				const IndivType *pInd2Bottom = vv2.back().get();
+				assert(pInd2Bottom != nullptr);
+				W d1 = 0;
+				if (!info_global_compute_distance(pInd1Top->center(),
+					pInd2Top->center(), weights,d1)) {
+					return (false);
+				}
+				res = d1;
+				mode = ClusterMergeMode::topTop;
+				W d2 = 0;
+				if (!info_global_compute_distance(pInd1Top > center(),
+					pInd2Bottom->center(), weights, d2)) {
+					return (false);
+				}
+				if (d2 < res) {
+					mode = ClusterMergeMode::topBottom;
+					return (true);
+				}
+				W d3 = 0;
+				if (!info_global_compute_distance(pInd1Bottom->center(),
+					pInd2Top->center(), weights, d3)) {
+					return (false);
+				}
+				if (d3 < res) {
+					mode = ClusterMergeMode::bottomTop;
+					return (true);
+				}
+				W d4 = 0;
+				if (!info_global_compute_distance(pInd1Bottom->center(),
+					pInd2Bottom->center(), weights, d4)) {
+					return (false);
+				}
+				if (d4 < res) {
+					mode = ClusterMergeMode::bottomBottom;
+					return (true);
+				}
+			}
+			return (false);
+		} //cluster_min_distance
 		template<typename W>
 		bool cluster_min_distance(const IndivClusterType &other,
 			ClusterMergeMode &mode, W &res) const {

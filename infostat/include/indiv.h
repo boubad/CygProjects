@@ -8,7 +8,7 @@
 ////////////////////////////////////
 namespace info {
 	//////////////////////////////////
-	template<typename U = unsigned long, typename STRINGTYPE = std::string>
+	template<typename U, typename STRINGTYPE>
 	class Indiv : public InterruptObject {
 	public:
 		using IndexType = U;
@@ -163,7 +163,7 @@ namespace info {
 	};
 	// class Indiv<U,T>
 	//////////////////////////////////////
-	template<typename U = unsigned long, typename STRINGTYPE = std::string>
+	template<typename U, typename STRINGTYPE>
 	class IIndivSource {
 	public:
 		using IndexType = U;

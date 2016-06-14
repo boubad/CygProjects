@@ -14,7 +14,7 @@
 /////////////////////////////////
 namespace info {
 ///////////////////////////
-template<typename U = unsigned long,typename STRINGTYPE = std::string,typename DISTANCETYPE = unsigned long>
+template<typename U,typename STRINGTYPE,typename DISTANCETYPE>
 class IndivsTree: public ClustersCollection<U,STRINGTYPE> {
 public:
 	using IndexType = U;
@@ -26,7 +26,7 @@ public:
 	using ints_sizet_map = std::map<U, size_t>;
 	using IndivClusterType = IndivCluster<U,STRINGTYPE>;
 	using treeitems_vector = std::vector<PTreeItemType>;
-	using SourceType = IIndivSource<U>;
+	using SourceType = IIndivSource<U,STRINGTYPE>;
 	using clusters_vector = std::vector<IndivClusterType>;
 	using ints_vector = std::vector<U>;
 	using sizet_intsvector_map = std::map<size_t, ints_vector>;

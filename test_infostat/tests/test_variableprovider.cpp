@@ -4,7 +4,6 @@
  *  Created on: 29 mai 2016
  *      Author: boubad
  */
-#include "stdafx.h"
 #include <boost/test/unit_test.hpp>
 /////////////////////////////
 #include <mytestvariablefixture.h>

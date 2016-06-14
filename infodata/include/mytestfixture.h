@@ -11,8 +11,7 @@
 #include "store_fixture.h"
 #include "indivsource_fixture.h"
 /////////////////////////////////////
-template<typename IDTYPE = unsigned long, typename INTTYPE = unsigned long,
-		typename STRINGTYPE = std::string, typename WEIGHTYPE = double>
+template<typename IDTYPE, typename INTTYPE,typename STRINGTYPE, typename WEIGHTYPE>
 class MyTestFixture {
 public:
 	using StoreFixture = info::TestStoreFixture<IDTYPE, INTTYPE, STRINGTYPE, WEIGHTYPE>;
@@ -30,7 +29,7 @@ public:
 		StoreFixture *p = new StoreFixture();
 		assert(p != nullptr);
 		m_store.reset(p);
-		StoreType *ps = p->get_memory_store();
+		StoreType *ps = p->get_store();
 		assert(ps != nullptr);
 		m_fixture.reset(new SourceFixture(ps));
 		SourceFixture *px = m_fixture.get();

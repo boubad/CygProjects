@@ -6,8 +6,7 @@
 ///////////////////////////////////
 namespace info {
 	/////////////////////////////
-	template<typename U = unsigned long, typename INTTYPE = unsigned long,
-		typename STRINGTYPE = std::string, typename WEIGHTYPE = double>
+	template<typename U, typename INTTYPE,typename STRINGTYPE, typename WEIGHTYPE>
 		class StoreIndivSource : public StoreBaseProvider<U, INTTYPE, STRINGTYPE, WEIGHTYPE> {
 		public:
 			using IndexType = U;

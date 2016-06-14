@@ -3,17 +3,16 @@
 #define __MEMORYSTOREFIXTURE_H__
 ////////////////////////////////////
 #include <memorystatstore.h>
-#include <infosqlitestore.h>
+#include <sqlitestore.h>
 /////////////////////////////////
 #include "infotestdata.h"
 ////////////////////////////////
 namespace info {
 	////////////////////////////////
-	template<typename IDTYPE = unsigned long, typename INTTYPE = unsigned long,
-		typename STRINGTYPE = std::string, typename WEIGHTYPE = double>
+	template<typename IDTYPE, typename INTTYPE,typename STRINGTYPE, typename WEIGHTYPE>
 		class TestStoreFixture {
 		public:
-			using SQLiteStoreType = SQLiteStatHelper;
+			using SQLiteStoreType = SQLiteStore<IDTYPE,INTTYPE,STRINGTYPE,WEIGHTYPE>;
 			using MemoryStoreType = MemoryStatStore<IDTYPE, INTTYPE, STRINGTYPE, WEIGHTYPE>;
 			using IStoreType = IStatStore<IDTYPE, INTTYPE, STRINGTYPE, WEIGHTYPE>;
 			using DatasetType = typename IStoreType::DatasetType;
@@ -23,6 +22,8 @@ namespace info {
 			std::unique_ptr<SQLiteStoreType> m_sqlite;
 		public:
 			TestStoreFixture() {
+				(void)this->get_sql_store();
+				(void)this->get_memory_store();
 			} // init
 			virtual ~TestStoreFixture() {
 			}
@@ -33,6 +34,7 @@ namespace info {
 				else {
 					return (this->get_sql_store());
 				}
+				//return (this->get_sql_store());
 			}
 			IStoreType *get_memory_store(void) {
 				IStoreType *p = this->m_man.get();
@@ -68,6 +70,15 @@ namespace info {
 			}
 			void fill_test_data(IStoreType *p) {
 				STRINGTYPE name;
+				/*
+				InfoTestData::get_test_name(name);
+				{
+					DatasetType oSet(name);
+					if (p->find_dataset(oSet)) {
+						return;
+					}
+				}
+				*/
 				size_t nRows = 0, nCols = 0;
 				std::vector<int> gdata;
 				std::vector<STRINGTYPE> rowNames, colNames;
@@ -83,6 +94,15 @@ namespace info {
 			} // fill_test_data
 			void fill_mortal_data(IStoreType *p) {
 				STRINGTYPE name;
+				/*
+				InfoTestData::get_mortal_name(name);
+				{
+					DatasetType oSet(name);
+					if (p->find_dataset(oSet)) {
+						return;
+					}
+				}
+				*/
 				size_t nRows = 0, nCols = 0;
 				std::vector<int> gdata;
 				std::vector<STRINGTYPE> rowNames, colNames;
@@ -98,6 +118,15 @@ namespace info {
 			} // fill_mortal_data
 			void fill_conso_data(IStoreType *p) {
 				STRINGTYPE name;
+				/**
+				InfoTestData::get_conso_name(name);
+				{
+					DatasetType oSet(name);
+					if (p->find_dataset(oSet)) {
+						return;
+					}
+				}
+				*/
 				size_t nRows = 0, nCols = 0;
 				std::vector<int> gdata;
 				std::vector<STRINGTYPE> rowNames, colNames;
@@ -111,7 +140,8 @@ namespace info {
 				assert(gdata.size() >= (size_t)(nCols * nRows));
 				this->import(p, name, nRows, nCols, gdata, rowNames, colNames);
 			} // fill_mortal_data
-			void import(IStoreType *p, const std::string &name, size_t nRows, size_t nCols,
+			void import(IStoreType *p, const STRINGTYPE &name, 
+				size_t nRows, size_t nCols,
 				const std::vector<int> &data,
 				const std::vector<STRINGTYPE> &rowNames,
 				const std::vector<STRINGTYPE> &colNames) {

@@ -8,8 +8,7 @@
 ////////////////////////////////////////
 namespace info {
 	///////////////////////////////////////
-	template<typename IDTYPE = unsigned long, typename INTTYPE = unsigned long,
-		typename STRINGTYPE = std::string, typename WEIGHTYPE = double>
+	template<typename IDTYPE, typename INTTYPE,typename STRINGTYPE, typename WEIGHTYPE>
 		class TestSourceFixture {
 		public:
 			using IndivType = Indiv<IDTYPE, STRINGTYPE>;

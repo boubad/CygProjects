@@ -39,11 +39,23 @@ inline std::string info_2s(const std::string &s) {
 inline std::string info_2s(const std::wstring &s) {
 	return (StringConvert::ws2s(s));
 }
-inline std::wstring info_Zws(const std::string &s){
+inline std::wstring info_2ws(const std::string &s){
 	return (StringConvert::s2ws(s));
 }
-inline std::wstring info_Zws(const std::wstring &s){
+inline std::wstring info_2ws(const std::wstring &s){
 	return (s);
+}
+inline void info_convert_string(const std::string &src, std::wstring &dest) {
+	dest = StringConvert::s2ws(src);
+}
+inline void info_convert_string(const std::string &src, std::string &dest) {
+	dest = src;
+}
+inline void info_convert_string(const std::wstring &src, std::wstring &dest) {
+	dest = src;
+}
+inline void info_convert_string(const std::wstring &src, std::string &dest) {
+	dest = StringConvert::ws2s(src);
 }
 ////////////////////////////////////////
 }// namespace sqlite

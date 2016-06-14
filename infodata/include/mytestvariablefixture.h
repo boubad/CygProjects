@@ -11,8 +11,7 @@
 #include "store_fixture.h"
 #include "variablesource_fixture.h"
 /////////////////////////////////////
-template<typename IDTYPE = unsigned long, typename INTTYPE = unsigned long,
-		typename STRINGTYPE = std::string, typename WEIGHTYPE = double>
+template<typename IDTYPE, typename INTTYPE,typename STRINGTYPE, typename WEIGHTYPE>
 class MyTestVariableFixture {
 public:
 	using StoreFixture = info::TestStoreFixture<IDTYPE, INTTYPE, STRINGTYPE, WEIGHTYPE>;

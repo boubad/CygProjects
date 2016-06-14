@@ -196,6 +196,8 @@ namespace info {
 		"DELETE FROM dbvalue where individ = ?";
 	static const char *SQL_FIND_DATASET_VARIABLES_TYPES =
 		"SELECT variableid,vartype FROM dbvariable WHERE datasetid = ?";
+	static const char *SQL_FIND_VARIABLE_TYPE =
+		"SELECT vartype FROM dbvariable WHERE variableid = ?";
 	///////////////////////////////////////
 	static void log_error(const std::exception & err) {
 #if defined(__CYGWIN__)
@@ -211,6 +213,50 @@ namespace info {
 		BOOST_LOG_TRIVIAL(error) << "SQLite error: " << err.code() << " , " << err.what();
 #endif // __CYGWIN
 	}
+	/////////////////////////////////////////////
+	static void convert_value(const std::string &stype, InfoValue &v) {
+		if (stype == "integer") {
+			int v0 = 0;
+			v.get_value(v0);
+			v = v0;
+		}
+		else if ((stype == "real") || (stype == "float")) {
+			float v0 = 0.0f;
+			v.get_value(v0);
+			v = v0;
+		}
+		else if (stype == "double") {
+			double v0 = 0.0;;
+			v.get_value(v0);
+			v = v0;
+		}
+		else if (stype == "boolean") {
+			bool v0 = false;
+			v.get_value(v0);
+			v = v0;
+		}
+	}// convert_value
+	static void convert_values(const SQLiteStatHelper::ints_string_map &types, SQLiteStatHelper::values_vector &vals) {
+		for (auto it = vals.begin(); it != vals.end(); ++it) {
+			SQLiteStatHelper::ValueType &v = *it;
+			SQLiteStatHelper::IDTYPE key = v.variable_id();
+			auto jt = types.find(key);
+			if (jt != types.end()) {
+				SQLiteStatHelper::STRINGTYPE s = (*jt).second;
+				InfoValue vx = v.value();
+				convert_value(s, vx);
+				v.value(vx);
+			}
+		}// it
+	}// convert_values
+	static void convert_values(const SQLiteStatHelper::STRINGTYPE &stype, SQLiteStatHelper::values_vector &vals) {
+		for (auto it = vals.begin(); it != vals.end(); ++it) {
+			SQLiteStatHelper::ValueType &v = *it;
+			InfoValue vx = v.value();
+			convert_value(stype, vx);
+			v.value(vx);
+		}// it
+	}// convert_values
 	//////////////////////////////////////////////
 	void SQLiteStatHelper::begin_transaction(void) {
 		assert(this->is_valid());
@@ -276,6 +322,7 @@ namespace info {
 	bool SQLiteStatHelper::remove_indiv(const IndivType &oInd, bool bCommit /*= true*/) {
 		assert(this->is_valid());
 		bool bInTrans = false;
+		lock_type oLock(this->_mutex);
 		try {
 			if (bCommit) {
 				this->begin_transaction();
@@ -316,6 +363,7 @@ namespace info {
 	bool SQLiteStatHelper::remove_variable(const VariableType &oVar, bool bCommit /*= true*/) {
 		assert(this->is_valid());
 		bool bInTrans = false;
+		lock_type oLock(this->_mutex);
 		try {
 			if (bCommit) {
 				this->begin_transaction();
@@ -397,6 +445,8 @@ namespace info {
 			if (!this->find_dataset(xSet)) {
 				return (false);
 			}
+			ints_string_map types;
+			this->find_dataset_variables_types(xSet, types);
 			IDTYPE nDatasetId = xSet.id();
 			SQLite_Statement q(*(this->m_base), SQL_FIND_DATASET_VALUES);
 			assert(q.get_parameters_count() == 3);
@@ -410,6 +460,7 @@ namespace info {
 				cur.dataset_id(nDatasetId);
 				oList.push_back(cur);
 			}
+			convert_values(types, oList);
 			return (true);
 		}// try
 		catch (sqlite_error &err) {
@@ -432,6 +483,8 @@ namespace info {
 			if (!this->find_variable(oVar)) {
 				return (false);
 			}
+			STRINGTYPE stype;
+			this->find_variable_type(oVar.id(), stype);
 			IDTYPE nDatasetId = oVar.dataset_id();
 			IDTYPE nId = oVar.id();
 			SQLite_Statement q(*(this->m_base), SQL_VALUES_BY_VARIABLEID);
@@ -446,6 +499,7 @@ namespace info {
 				cur.dataset_id(nDatasetId);
 				oList.push_back(cur);
 			}
+			convert_values(stype, oList);
 			return (true);
 		}// try
 		catch (sqlite_error &err) {
@@ -494,6 +548,27 @@ namespace info {
 		}
 		return (false);
 	}//find_variable_distinct_values
+	bool SQLiteStatHelper::find_variable_type(IDTYPE nVarId, STRINGTYPE stype) {
+		assert(this->is_valid());
+		try {
+			stype.clear();
+			SQLite_Statement q(*(this->m_base), SQL_FIND_VARIABLE_TYPE);
+			assert(q.get_parameters_count() == 1);
+			q.bind(1, nVarId);
+			q.exec();
+			if (q.move_next()) {
+				q.get_column(0, stype);
+			}
+			return (true);
+		}// try
+		catch (sqlite_error &err) {
+			log_error(err);
+		}
+		catch (std::exception &ex) {
+			log_error(ex);
+		}
+		return (false);
+	}//find_variable_type
 	bool SQLiteStatHelper::find_indiv_values_count(IndivType &oInd, size_t &nc) {
 		assert(this->is_valid());
 		try {
@@ -505,6 +580,7 @@ namespace info {
 			SQLite_Statement q(*(this->m_base), SQL_INDIV_VALUES_COUNT);
 			assert(q.get_parameters_count() == 1);
 			q.bind(1, nId);
+			q.exec();
 			if (q.move_next()) {
 				int nx = 0;
 				q.get_column(0, nx);
@@ -531,6 +607,7 @@ namespace info {
 			SQLite_Statement q(*(this->m_base), SQL_VARIABLE_VALUES_COUNT);
 			assert(q.get_parameters_count() == 1);
 			q.bind(1, nId);
+			q.exec();
 			if (q.move_next()) {
 				int nx = 0;
 				q.get_column(0, nx);
@@ -563,6 +640,8 @@ namespace info {
 			if (!this->find_dataset(xSet)) {
 				return (false);
 			}
+			ints_string_map types;
+			this->find_dataset_variables_types(xSet, types);
 			IDTYPE nDatasetId = xSet.id();
 			IDTYPE nId = oInd.id();
 			SQLite_Statement q(*(this->m_base), SQL_VALUES_BY_INDIVID);
@@ -577,6 +656,7 @@ namespace info {
 				cur.dataset_id(nDatasetId);
 				oList.push_back(cur);
 			}
+			convert_values(types, oList);
 			return (true);
 		}// try
 		catch (sqlite_error &err) {
@@ -594,6 +674,7 @@ namespace info {
 		bool bRemove /*= false*/) {
 		assert(this->is_valid());
 		bool bInTrans = false;
+		lock_type oLock(this->_mutex);
 		try {
 			if (bCommit) {
 				this->begin_transaction();
@@ -732,6 +813,7 @@ namespace info {
 		bool bRemove /*= false*/) {
 		assert(this->is_valid());
 		bool bInTrans = false;
+		lock_type oLock(this->_mutex);
 		//
 		try {
 			if (bCommit) {
@@ -949,6 +1031,7 @@ namespace info {
 		bool bRemove /*= false*/) {
 		assert(this->is_valid());
 		bool bInTrans = false;
+		lock_type oLock(this->_mutex);
 		try {
 			if (bCommit) {
 				this->begin_transaction();
@@ -1147,6 +1230,7 @@ namespace info {
 		bool bCommit /*= true*/) {
 		assert(this->is_valid());
 		bool bInTrans = false;
+		lock_type oLock(this->_mutex);
 		try {
 			if (bCommit) {
 				this->begin_transaction();
@@ -1211,6 +1295,7 @@ namespace info {
 			return (false);
 		}
 		bool bInTrans = false;
+		lock_type oLock(this->_mutex);
 		try {
 			if (bCommit) {
 				this->begin_transaction();

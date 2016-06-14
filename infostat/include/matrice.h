@@ -12,8 +12,7 @@
 //////////////////////////////////
 namespace info {
 ///////////////////////////////////
-template<typename IDTYPE = unsigned long, typename DISTANCETYPE = long,
-		typename STRINGTYPE = std::string>
+template<typename IDTYPE, typename DISTANCETYPE ,typename STRINGTYPE>
 class MatOrd: public InterruptObject, private boost::noncopyable {
 public:
 	using MatElemType = MatElem<IDTYPE, DISTANCETYPE, STRINGTYPE>;

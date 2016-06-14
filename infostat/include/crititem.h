@@ -17,7 +17,7 @@ enum class ClusterMergeMode {
 	invalid, topTop, topBottom, bottomTop, bottomBottom
 };
 ////////////////////////////////////////
-template<typename U = size_t, typename W = unsigned long>
+template<typename U, typename W>
 class CritItem {
 public:
 	using CritItemType = CritItem<U,W>;
