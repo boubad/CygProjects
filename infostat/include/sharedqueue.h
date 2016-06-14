@@ -2,7 +2,9 @@
 #ifndef __SHAREDQUEUE_H__
 #define __SHAREDQUEUE_H__
 ////////////////////////////////
-#include "info_includes.h"
+#include <queue>
+#include <mutex>
+#include <condition_variable>
 /////////////////////////////////////
 namespace info {
 	///////////////////////////////////
@@ -15,6 +17,20 @@ namespace info {
 		SharedQueue() {}
 		virtual ~SharedQueue() {}
 	public:
+		size_t size(void) {
+			std::lock_guard<std::mutex> guard(qlock);
+			return (this->ops_queue.size());
+		}
+		void clear(void) {
+			std::lock_guard<std::mutex> guard(qlock);
+			while (!this->ops_queue.empty()) {
+				this->ops_queue.pop();
+			}
+		}// clear
+		bool is_empty(void) {
+			std::lock_guard<std::mutex> guard(qlock);
+			return (this->ops_queue.empty())
+		}
 		void put(T op) {
 			std::lock_guard<std::mutex> guard(qlock);
 			ops_queue.push(op);
@@ -27,31 +43,20 @@ namespace info {
 			ops_queue.pop();
 			return op;
 		} // take
-	};
-	////////////////////////////////////
-	template <typename T>
-	class DispatchQueue {
-		std::mutex qlock;
-		std::queue<T> ops_queue;
-		std::condition_variable empty;
-	public:
-		DispatchQueue() {}
-		virtual ~DispatchQueue() {}
-	public:
-		void put(T op) {
-			std::lock_guard<std::mutex> guard(qlock);
-			ops_queue.push(op);
-			empty.notify_one();
-		} // put
-		T take() {
+		T try_take(bool &bOk) {
+			T op;
+			bRet = false;
 			std::unique_lock<std::mutex> lock(qlock);
-			empty.wait(lock, [&] {return !ops_queue.empty(); });
-			T op = ops_queue.front();
-			ops_queue.pop();
-			return op;
-		} // take
+			if (!this->ops_queue.empty()) {
+				 op = ops_queue.front();
+				ops_queue.pop();
+				bOk = true;
+			}
+			return (op);
+		}// try_take
 	};
 	////////////////////////////////////
+	
 }// namespace info
 ////////////////////////////////////
 #endif // !__SHAREDQUEUE_H__

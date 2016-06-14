@@ -36,7 +36,8 @@ namespace info {
 	public:
 		template <typename T>
 		DataVectorIndivSource(const size_t nRows, const size_t nCols, const std::vector<T> &data,
-			const ints_vector &indIds, const ints_vector &varIds, const strings_vector &names, const ints_doubles_map &oWeights) :m_current(0), m_nrows(nRows), m_ncols(nCols),
+			const ints_vector &indIds, const ints_vector &varIds, const strings_vector &names, 
+			const ints_doubles_map &oWeights, bool bComputeWeights = false) :m_current(0), m_nrows(nRows), m_ncols(nCols),
 			m_data(nRows * nCols), m_ids(nRows), m_varids(nCols), m_names(nRows), m_inds(nRows), m_weights(oWeights) {
 			assert(nRows > 0);
 			assert(nCols > 0);
@@ -45,6 +46,40 @@ namespace info {
 			assert(indIds.size() >= nRows);
 			assert(varIds.size() >= nCols);
 			assert(names.size() >= nRows);
+			ints_doubles_map &ww = this->m_weights;
+			ints_doubles_map temp;
+			if (bComputeWeights) {
+				ww.clear();
+				double somme = 0.0;
+				bool bOk = true;
+				for (size_t i = 0; i < nCols; ++i) {
+					double s1 = 0.0;
+					double s2 = 0.0;
+					for (size_t j = 0; j < nRows; ++j) {
+						double x = (double)data[j * nCols + i];
+						s1 += x;
+						s2 += x * x;
+					}// j
+					s1 /= nRows;
+					s2 = (s2 / nRows) - (s1 * s1);
+					if (s2 <= 0.0) {
+						bOk = false;
+						break;
+					}
+					U key = varIds[i];
+					double ff = 1.0 / s2;
+					temp[key] = ff;
+					somme += ff;
+				}// i
+				if (!bOk) {
+					ww.clear();
+				}
+				else {
+					for (auto &p : temp) {
+						ww[p.first] = p.second / somme;
+					}// it
+				}
+			}//
 			doubles_vector &vv = this->m_data;
 			for (size_t i = 0; i < nRows; ++i) {
 				(this->m_ids)[i] = indIds[i];
