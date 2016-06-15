@@ -82,7 +82,7 @@ public:
 		std::stringstream os;
 		std::string sx = info_2s(this->m_sigle);
 		if (!sx.empty()) {
-			os << sx;
+			os << sx << " ";
 		}
 		if (this->m_stage == StageType::started) {
 			os << "STARTED... ";
@@ -103,7 +103,7 @@ public:
 		std::wstringstream os;
 		std::wstring sx = info_w2s(this->m_sigle);
 		if (!sx.empty()) {
-			os << sx;
+			os << sx << L" ";
 		}
 		if (this->m_stage == StageType::started) {
 			os << L"STARTED... ";
@@ -133,10 +133,11 @@ public:
 	using MatElemResultType = MatElemResult<IDTYPE, DISTANCETYPE, STRINGTYPE>;
 	using MatElemResultPtr = std::shared_ptr<MatElemResultType>;
 	using MatElemFunctionType = std::function<void(MatElemResultPtr)>;
+	using BaseType = CancellableObject<std::shared_ptr<MatElemResult<IDTYPE, DISTANCETYPE, STRINGTYPE> > >;
 public:
 	MatElemObject(pcancelflag pFlag = nullptr, PBackgrounder pq = nullptr,
 			MatElemFunctionType f = [](MatElemResultPtr o) {}) :
-			CancellableObject(pFlag, pq,f) {
+			BaseType(pFlag, pq,f) {
 	}
 	virtual ~MatElemObject() {
 	}

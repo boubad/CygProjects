@@ -32,14 +32,13 @@ public:
 	using SourceType = IIndivSource<IDTYPE, STRINGTYPE>;
 	using MatElemType = MatElem<IDTYPE, DISTANCETYPE, STRINGTYPE>;
 	using MatElemResultType = MatElemResult<IDTYPE, DISTANCETYPE, STRINGTYPE>;
-	using aMatElemResultPtr = std::shared_ptr<MatElemResultType>;
+	using MatElemResultPtr = std::shared_ptr<MatElemResultType>;
 	using MatElemFunctionType = std::function<void(MatElemResultPtr)>;
 	using IndivMapType = IndivMap<IDTYPE, STRINGTYPE, DISTANCETYPE>;
 	using BaseType = MatElemObject<IDTYPE, DISTANCETYPE, STRINGTYPE>;
 	using ints_doubles_map = std::map<IDTYPE, double>;
-	using ints_vector = std::vector<IDTYPE>;
-	using strings_vector = std::vector<STRINGTYPE>;
 	using DataSourceType = DataVectorIndivSource<IDTYPE, STRINGTYPE>;
+	using strings_vector = std::vector<STRINGTYPE>;
 private:
 	DispositionType m_disp;
 	DISTANCETYPE m_crit;
@@ -205,7 +204,7 @@ public:
 protected:
 	void notify(StageType stage = StageType::current) {
 		if (!this->is_cancelled()) {
-			IntraMatElemResultPtr res = this->getResult(stage);
+			MatElemResultPtr res = this->getResult(stage);
 			this->send(res);
 		}
 	} //notify

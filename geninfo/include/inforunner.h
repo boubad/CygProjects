@@ -65,7 +65,11 @@ public:
 		}
 	}
 	bool is_cancelled(void) {
-		return ((this->m_pcancel != nullptr) && this->m_pcancel->load());
+		if (this->m_pcancel == nullptr){
+			return (false);
+		}
+		bool bRet = this->m_pcancel->load();
+		return (bRet);
 	} // is_cancelled
 };
 // class CancellableObject
@@ -80,8 +84,7 @@ private:
 	std::atomic<bool> m_cancel;
 	std::unique_ptr<Backgrounder> _active;
 public:
-	InfoRunner() :
-			_active(new Backgrounder()) {
+	InfoRunner() :m_cancel(false),_active(new Backgrounder()) {
 	}
 	virtual ~InfoRunner() {
 	}
