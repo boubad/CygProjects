@@ -18,21 +18,13 @@ private:
 	pcancelflag m_pcancel;
 	PBackgrounder m_pq;
 	function_type m_f;
+private:
+	CancellableObject(const CancellableObject<T> &) = delete;
+	CancellableObject<T> & operator=(const CancellableObject<T> &) = delete;
 public:
 	CancellableObject(pcancelflag pFlag = nullptr, PBackgrounder pq = nullptr,
 			function_type f = [](T arg) {}) :
 			m_pcancel(pFlag), m_pq(pq), m_f(f) {
-	}
-	CancellableObject(const CancellableObject &other) :
-			m_pcancel(other.m_pcancel), m_pq(other.m_pq), m_f(other.m_f) {
-	}
-	CancellableObject & operator=(const CancellableObject &other) {
-		if (this != &other) {
-			this->m_pcancel = other.m_pcancel;
-			this->m_pq = other.m_pq;
-			this->m_f = other.m_f;
-		}
-		return (*this);
 	}
 	virtual ~CancellableObject() {
 	}
