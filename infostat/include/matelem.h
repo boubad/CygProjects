@@ -40,7 +40,7 @@ public:
 	}
 	virtual ~MatElemResult() {
 	}
-};
+};// class MatElemResult
 /////////////////////////////////////
 template<typename IDTYPE, typename DISTANCETYPE, typename STRINGTYPE>
 class MatElem: public InterruptObject {
