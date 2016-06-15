@@ -95,6 +95,46 @@ public:
 	void inter_inertia(double d) {
 		this->m_finter = d;
 	}
+	void to_string(std::string &ss) const {
+		std::stringstream os;
+		if (this->m_stage == StageType::started) {
+			os << "STARTED... ";
+		} else if (this->m_stage == StageType::finished) {
+			os << "FINISHED!! ";
+		} else if (this->m_stage == StageType::aborted) {
+			os << "ABORTED. ";
+		}
+		os << this->m_finter << ", " << this->m_fintra << ", " << this->m_ff
+				<< std::endl;
+		for (auto &p : this->m_classesmap) {
+			size_t key = p.first;
+			os << key << "\t";
+			std::string sx;
+			info_write_vector(p.second, sx);
+			os << sx << std::endl;
+		} // p
+		ss = os.str();
+	} //to_string
+	void to_string(std::wstring &ss) const {
+		std::wstringstream os;
+		if (this->m_stage == StageType::started) {
+			os << L"STARTED... ";
+		} else if (this->m_stage == StageType::finished) {
+			os << L"FINISHED!! ";
+		} else if (this->m_stage == StageType::aborted) {
+			os << L"ABORTED. ";
+		}
+		os << this->m_finter << L", " << this->m_fintra << L", " << this->m_ff
+				<< std::endl;
+		for (auto &p : this->m_classesmap) {
+			size_t key = p.first;
+			os << key << L"\t";
+			std::wstring sx;
+			info_write_vector(p.second, sx);
+			os << sx << std::endl;
+		} // p
+		ss = os.str();
+	} //to_string
 };
 // class ClusterizeResult<U>
 ///////////////////////////////
@@ -102,7 +142,7 @@ template<typename U, typename STRINGTYPE>
 class ClustersCollection: public CancellableObject<
 		std::shared_ptr<ClusterizeResult<U>>>{
 public:
-using BaseType = CancellableObject<RESULT>;
+using BaseType = CancellableObject<std::shared_ptr<ClusterizeResult<U>>>;
 using ClusterizeResultType = ClusterizeResult<U>;
 using ClusterizeResultPtr = std::shared_ptr< ClusterizeResultType>;
 using IndexType = U;
@@ -121,12 +161,15 @@ using ClustersCollectionType = ClustersCollection<U, STRINGTYPE>;
 using cancelflag = std::atomic<bool>;
 using pcancelflag = cancelflag *;
 using PBackgrounder = Backgrounder *;
+using RESULT = std::shared_ptr< ClusterizeResultType>;
+using function_type = std::function<void(RESULT)>;
 private:
 SourceType *m_provider;
 size_t m_nbclusters;
 size_t m_nbindivs;
 size_t m_nbmaxiters;
 DataMap m_center;
+clusters_vector m_clusters;
 ClusterizeResultType m_res;
 private:
 ClustersCollection(const ClustersCollectionType &) = delete;
@@ -151,9 +194,6 @@ bool get_random_indivs(const size_t nc, indivptrs_vector &oRes) {
 	datamaps_vector oSeeds;
 	size_t icur = 0;
 	while ((oRes.size() < nc) && (icur < nbIndivs)) {
-		if (this->check_interrupt()) {
-			return (false);
-		}
 		size_t pos = temp[icur++];
 		IndivTypePtr oInd = pProvider->get(pos);
 		const IndivType *pInd = oInd.get();
@@ -164,7 +204,7 @@ bool get_random_indivs(const size_t nc, indivptrs_vector &oRes) {
 	if (oRes.size() < nc) {
 		return (false);
 	}
-	return (this->check_interrupt()) ? false : true;
+	return (true);
 }
 const ClusterizeResultType &get_result(void) const {
 	return (this->m_res);
@@ -217,7 +257,7 @@ protected:
 ClustersCollection(pcancelflag pFlag = nullptr, PBackgrounder pq = nullptr,
 		function_type f = [](ClusterizeResultPtr arg) {}) :
 BaseType(pFlag, pq, f), m_provider(nullptr), m_nbclusters(0), m_nbindivs(
-		0), m_nbmaxiters(100), m_finter(0), m_fintra(0), m_ff(0) {
+		0), m_nbmaxiters(100) {
 }
 SourceType *source(void) const {
 	return (this->m_provider);
@@ -241,25 +281,16 @@ void get_indivs_map(ints_sizet_map &oMap) const {
 	oMap.clear();
 	const clusters_vector &v = this->clusters();
 	for (auto kt = v.begin(); kt != v.end(); ++kt) {
-		if (this->check_interrupt()) {
-			return;
-		}
 		const IndivClusterType &oInd = *kt;
 		size_t val = (size_t) oInd.id();
 		oInd.get_indivs_map(oMap, val);
 	} // kt
 } //get_indivs_map
 void get_clusters_ids(sizet_intsvector_map &oMap) const {
-	if (this->check_interrupt()) {
-		return;
-	}
 	oMap.clear();
 	const clusters_vector &v = this->clusters();
 	const size_t n = v.size();
 	for (size_t i = 0; i < n; ++i) {
-		if (this->check_interrupt()) {
-			return;
-		}
 		const IndivClusterType & p = v[i];
 		ints_vector oo;
 		p.get_ids(oo);
@@ -268,9 +299,6 @@ void get_clusters_ids(sizet_intsvector_map &oMap) const {
 	}	  // i
 }	  // get_clusters_ids
 bool get_criterias(double &fIntra, double &fInter, double &ff) const {
-	if (this->check_interrupt()) {
-		return (false);
-	}
 	const clusters_vector &v = this->clusters();
 	fIntra = 0;
 	fInter = 0;
@@ -279,15 +307,11 @@ bool get_criterias(double &fIntra, double &fInter, double &ff) const {
 	if (n < 1) {
 		return (false);
 	}
-	std::atomic_bool *pCancel = this->get_cancelleable_flag();
 	const DataMap &oCenter = this->center();
 	for (size_t i = 0; i < n; ++i) {
-		if (this->check_interrupt()) {
-			return (false);
-		}
 		const IndivClusterType &c = v[i];
 		double d = 0;
-		if (info_global_compute_distance(oCenter, c.center(), d, pCancel)) {
+		if (info_global_compute_distance(oCenter, c.center(), d)) {
 			fInter += d;
 		}
 		d = 0;
@@ -309,15 +333,9 @@ virtual void clear(void) {
 	this->m_res.clear();
 } // clear
 virtual void update_center(void) {
-	if (this->check_interrupt()) {
-		return;
-	}
-	IndivSummator<U> summator(this->get_cancelleable_flag());
+	IndivSummator<U> summator;
 	const clusters_vector &v = this->m_clusters;
 	for (auto & oInd : v) {
-		if (this->check_interrupt()) {
-			return;
-		}
 		const DataMap &oMap = oInd.center();
 		summator.add(oMap);
 	}

@@ -35,6 +35,8 @@ public:
 	using PBackgrounder = Backgrounder *;
 	using ClusterizeResultType = ClusterizeResult<U>;
 	using ClusterizeResultPtr = std::shared_ptr< ClusterizeResultType>;
+	using RESULT = 	std::shared_ptr< ClusterizeResultType>;
+	using function_type = std::function<void(RESULT)>;
 private:
 	size_t m_niter;
 	ints_sizet_map m_map;
@@ -47,19 +49,17 @@ public:
 	}
 public:
 	size_t compute(const datamaps_vector &oSeeds, SourceType *pProvider,
-			size_t nbIters, std::atomic_bool *pxCancel = nullptr) {
+			size_t nbIters) {
 		const size_t nbClusters = oSeeds.size();
-		if (!this->initialize_process(pProvider, nbClusters, nbIters,
-				pxCancel)) {
+		if (!this->initialize_process(pProvider, nbClusters, nbIters)) {
 			return (0);
 		}
 		this->clear();
 		clusters_vector &clusters = this->clusters();
-		std::atomic_bool *pCancel = this->get_cancelleable_flag();
 		for (size_t i = 0; i < nbClusters; ++i) {
 			const DataMap &oCenter = oSeeds[i];
 			U aIndex = (U) (i + 1);
-			IndivClusterType c(aIndex, oCenter, STRINGTYPE(), pCancel);
+			IndivClusterType c(aIndex, oCenter, STRINGTYPE());
 			clusters.push_back(c);
 		} // i
 		this->notify(StageType::started);
@@ -76,12 +76,11 @@ public:
 		return (this->m_niter);
 	} // compute
 	size_t compute_random(const size_t nbClusters, SourceType *pProvider,
-			size_t nbIters = 100, std::atomic_bool *pxCancel = nullptr) {
+			size_t nbIters = 100) {
 		assert(nbClusters > 1);
 		assert(pProvider != nullptr);
 		assert(nbIters > 0);
-		if (!this->initialize_process(pProvider, nbClusters, nbIters,
-				pxCancel)) {
+		if (!this->initialize_process(pProvider, nbClusters, nbIters)) {
 			return (0);
 		}
 		indivptrs_vector oInds;
@@ -95,12 +94,11 @@ public:
 			DataMap oMap = p->center();
 			oSeeds.push_back(oMap);
 		}
-		return (this->compute(oSeeds, pProvider, nbIters, pxCancel));
+		return (this->compute(oSeeds, pProvider, nbIters));
 	} //compute_random
 	virtual bool process(SourceType *pSource, const size_t nbClusters = 5,
-			const size_t nbMaxIters = 100,
-			std::atomic_bool *pCancel = nullptr) {
-		return (this->compute_random(nbClusters, pSource, nbMaxIters, pCancel)
+			const size_t nbMaxIters = 100) {
+		return (this->compute_random(nbClusters, pSource, nbMaxIters)
 				> 0);
 	} // process
 protected:

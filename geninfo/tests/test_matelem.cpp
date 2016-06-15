@@ -51,20 +51,15 @@ BOOST_AUTO_TEST_CASE(testMortalMatElem) {
 	PBackgrounder pBack = this->get_backgrounder();
 	BOOST_CHECK(pBack != nullptr);
 	//
-	std::thread t1([&]() {
-		MatElemType oInd(DispositionType::indiv,pCancel,pBack,infologger);
-		oInd.sigle(name);
-		oInd.arrange(pIndProvider);
-	});
+	MatElemType oInd(DispositionType::indiv, pCancel, pBack, infologger);
+	oInd.sigle(name);
+	oInd.arrange(pIndProvider);
 	//
-	std::thread t2([&]() {
-		MatElemType oVar(DispositionType::variable,pCancel,pBack,infologger);
-		oVar.sigle(name);
-		oVar.arrange(pVarProvider);
-	});
-	t1.join();
-	t2.join();
+	MatElemType oVar(DispositionType::variable, pCancel, pBack, infologger);
+	oVar.sigle(name);
+	oVar.arrange(pVarProvider);
 } //testMortalMatElem
+#ifdef MYTOTO
 BOOST_AUTO_TEST_CASE(testConsoMatElem) {
 	MatElemFunctionType infologger = [&](MatElemResultPtr oRes) {
 		MatElemResultType *p = oRes.get();
@@ -73,7 +68,7 @@ BOOST_AUTO_TEST_CASE(testConsoMatElem) {
 			p->to_string(sr,true);
 			BOOST_TEST_MESSAGE(sr);
 		} // p
-		};
+	};
 	SourceType *pIndProvider = this->conso_indiv_provider();
 	BOOST_CHECK(pIndProvider != nullptr);
 	SourceType *pVarProvider = this->conso_variable_provider();
@@ -87,16 +82,16 @@ BOOST_AUTO_TEST_CASE(testConsoMatElem) {
 	BOOST_CHECK(pBack != nullptr);
 	//
 	std::thread t1([&]() {
-		MatElemType oInd(DispositionType::indiv,pCancel,pBack,infologger);
-		oInd.sigle(name);
-		oInd.arrange(pIndProvider);
-	});
+				MatElemType oInd(DispositionType::indiv,pCancel,pBack,infologger);
+				oInd.sigle(name);
+				oInd.arrange(pIndProvider);
+			});
 	//
 	std::thread t2([&]() {
-		MatElemType oVar(DispositionType::variable,pCancel,pBack,infologger);
-		oVar.sigle(name);
-		oVar.arrange(pVarProvider);
-	});
+				MatElemType oVar(DispositionType::variable,pCancel,pBack,infologger);
+				oVar.sigle(name);
+				oVar.arrange(pVarProvider);
+			});
 	t1.join();
 	t2.join();
 } //testConsoMatElem
@@ -108,7 +103,7 @@ BOOST_AUTO_TEST_CASE(testTestMatElem) {
 			p->to_string(sr,false);
 			BOOST_TEST_MESSAGE(sr);
 		} // p
-		};
+	};
 	SourceType *pIndProvider = this->test_indiv_provider();
 	BOOST_CHECK(pIndProvider != nullptr);
 	SourceType *pVarProvider = this->test_variable_provider();
@@ -122,18 +117,19 @@ BOOST_AUTO_TEST_CASE(testTestMatElem) {
 	BOOST_CHECK(pBack != nullptr);
 	//
 	std::thread t1([&]() {
-		MatElemType oInd(DispositionType::indiv,pCancel,pBack,infologger2);
-		oInd.sigle(name);
-		oInd.arrange(pIndProvider);
-	});
+				MatElemType oInd(DispositionType::indiv,pCancel,pBack,infologger2);
+				oInd.sigle(name);
+				oInd.arrange(pIndProvider);
+			});
 	//
 	std::thread t2([&]() {
-		MatElemType oVar(DispositionType::variable,pCancel,pBack,infologger2);
-		oVar.sigle(name);
-		oVar.arrange(pVarProvider);
-	});
+				MatElemType oVar(DispositionType::variable,pCancel,pBack,infologger2);
+				oVar.sigle(name);
+				oVar.arrange(pVarProvider);
+			});
 	t1.join();
 	t2.join();
 } //testTestMatElem
+#endif
 BOOST_AUTO_TEST_SUITE_END();
 

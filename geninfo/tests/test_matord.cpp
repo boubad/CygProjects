@@ -30,7 +30,7 @@ using MatElemResultType = typename MatElemType::MatElemResultType;
 using MatElemResultPtr = typename MatElemType::MatElemResultPtr;
 using MatElemFunctionType = typename MatElemType::MatElemFunctionType;
 //////////////////////////
-BOOST_FIXTURE_TEST_SUITE(MatElemTestSuite,MyFixture)
+BOOST_FIXTURE_TEST_SUITE(MatOrdTestSuite,MyFixture)
 BOOST_AUTO_TEST_CASE(testMortalMatrice) {
 	MatElemFunctionType infologger = [&](MatElemResultPtr oRes) {
 		MatElemResultType *p = oRes.get();
@@ -52,12 +52,10 @@ BOOST_AUTO_TEST_CASE(testMortalMatrice) {
 	PBackgrounder pBack = this->get_backgrounder();
 	BOOST_CHECK(pBack != nullptr);
 	//
-	std::thread t1([&]() {
-		MatriceType oInd(pCancel,pBack,infologger,name);
-		oInd.arrange(pIndProvider,pVarProvider);
-	});
-	t1.join();
+	MatriceType oInd(pCancel, pBack, infologger, name);
+	oInd.arrange(pIndProvider, pVarProvider);
 } //testMortalMatrice
+#ifdef MYTOTO
 BOOST_AUTO_TEST_CASE(testConsoMatrice) {
 	MatElemFunctionType infologger = [&](MatElemResultPtr oRes) {
 		MatElemResultType *p = oRes.get();
@@ -66,7 +64,7 @@ BOOST_AUTO_TEST_CASE(testConsoMatrice) {
 			p->to_string(sr,true);
 			BOOST_TEST_MESSAGE(sr);
 		} // p
-		};
+	};
 	SourceType *pIndProvider = this->conso_indiv_provider();
 	BOOST_CHECK(pIndProvider != nullptr);
 	SourceType *pVarProvider = this->conso_variable_provider();
@@ -80,9 +78,9 @@ BOOST_AUTO_TEST_CASE(testConsoMatrice) {
 	BOOST_CHECK(pBack != nullptr);
 	//
 	std::thread t1([&]() {
-		MatriceType oInd(pCancel,pBack,infologger,name);
-		oInd.arrange(pIndProvider,pVarProvider);
-	});
+				MatriceType oInd(pCancel,pBack,infologger,name);
+				oInd.arrange(pIndProvider,pVarProvider);
+			});
 	t1.join();
 } //testConsoMatrice
 BOOST_AUTO_TEST_CASE(testTestMatrice) {
@@ -93,7 +91,7 @@ BOOST_AUTO_TEST_CASE(testTestMatrice) {
 			p->to_string(sr,false);
 			BOOST_TEST_MESSAGE(sr);
 		} // p
-		};
+	};
 	SourceType *pIndProvider = this->test_indiv_provider();
 	BOOST_CHECK(pIndProvider != nullptr);
 	SourceType *pVarProvider = this->test_variable_provider();
@@ -107,10 +105,11 @@ BOOST_AUTO_TEST_CASE(testTestMatrice) {
 	BOOST_CHECK(pBack != nullptr);
 	//
 	std::thread t1([&]() {
-		MatriceType oInd(pCancel,pBack,infologger,name);
-		oInd.arrange(pIndProvider,pVarProvider);
-	});
+				MatriceType oInd(pCancel,pBack,infologger,name);
+				oInd.arrange(pIndProvider,pVarProvider);
+			});
 	t1.join();
 } //testTestMatrice
+#endif
 BOOST_AUTO_TEST_SUITE_END();
 
