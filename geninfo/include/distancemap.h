@@ -233,6 +233,52 @@ namespace info {
 	;
 	// class DistanceMap<U,W>
 	/////////////////////////////////////////
+	template <typename U, typename W>
+	void info_write_distancemap(const DistanceMap<U, W> &oDist, std::string &s) {
+		std::stringstream os;
+		std::vector<U> ids;
+		oDist.indexes(ids);
+		std::string ss;
+		write_vector(ids, ss);
+		os << ss << std::endl;
+		for (auto it = ids.begin(); it != ids.end(); ++it) {
+			U aIndex1 = *it;
+			for (auto jt = ids.begin(); jt != it; ++jt) {
+				if (jt != ids.begin()) {
+					os << ", ";
+				}
+				W val = 0;
+				U aIndex2 = *jt;
+				oDist.get(aIndex1, aIndex2, val);
+				os << "(" << aIndex1 << "," << aIndex2 << "," << val << ")";
+			}// jt
+			os << std::endl;
+		}// it
+		s = os.str();
+	}//write_distancemap
+	template <typename U, typename W>
+	void info_write_distancemap(const DistanceMap<U, W> &oDist, std::wstring &s) {
+		std::wstringstream os;
+		std::vector<U> ids;
+		oDist.indexes(ids);
+		std::wstring ss;
+		write_vector(ids, ss);
+		os << ss << std::endl;
+		for (auto it = ids.begin(); it != ids.end(); ++it) {
+			U aIndex1 = *it;
+			for (auto jt = ids.begin(); jt != it; ++jt) {
+				if (jt != ids.begin()) {
+					os << L", ";
+				}
+				W val = 0;
+				U aIndex2 = *jt;
+				oDist.get(aIndex1, aIndex2, val);
+				os << L"(" << aIndex1 << L"," << aIndex2 << L"," << val << L")";
+			}// jt
+			os << std::endl;
+		}// it
+		s = os.str();
+	}//write_distancemap
 }// namespace info
 //////////////////////////////
 ////////////////////////////////////

@@ -8,9 +8,8 @@
 #ifndef MATRESULT_H_
 #define MATRESULT_H_
 //////////////////////
-#include "info_includes.h"
+#include "info_global.h"
 ////////////////////////////
-#include "stringconvert.h"
 #include "inforunner.h"
 /////////////////////////////
 namespace info {
@@ -45,40 +44,40 @@ public:
 	StageType stage(void) const {
 		return (this->m_stage);
 	}
-	void stage(StageType s){
+	void stage(StageType s) {
 		this->m_stage = s;
 	}
 	DispositionType disposition(void) const {
 		return (this->m_disp);
 	}
-	void disposition(DispositionType d){
+	void disposition(DispositionType d) {
 		this->m_disp = d;
 	}
 	STRINGTYPE sigle(void) const {
 		return (this->m_sigle);
 	}
-	void sigle(const STRINGTYPE &s){
-		this->m_sigle = STRINGTYPE(s.begin(),s.end());
+	void sigle(const STRINGTYPE &s) {
+		this->m_sigle = STRINGTYPE(s.begin(), s.end());
 	}
 	DISTANCETYPE criteria(void) const {
 		return (this->m_first);
 	}
-	void criteria(DISTANCETYPE c){
+	void criteria(DISTANCETYPE c) {
 		this->m_first = c;
 	}
 	sizets_vector indexes(void) const {
 		return (this->m_second);
 	}
-	void indexes(const sizets_vector &src){
-			const size_t n = src.size();
-			sizets_vector &dest = this->m_second;
-			dest.resize(n);
-			for (size_t i = 0; i < n; ++i){
-				dest[i] = src[i];
-			}
+	void indexes(const sizets_vector &src) {
+		const size_t n = src.size();
+		sizets_vector &dest = this->m_second;
+		dest.resize(n);
+		for (size_t i = 0; i < n; ++i) {
+			dest[i] = src[i];
 		}
+	}
 public:
-	void to_string(std::string &ss) {
+	void to_string(std::string &ss, bool bIndexes = true) {
 		std::stringstream os;
 		std::string sx = info_2s(this->m_sigle);
 		if (!sx.empty()) {
@@ -97,9 +96,14 @@ public:
 			os << "VARS ";
 		}
 		os << this->m_first;
+		if (bIndexes) {
+			std::string sk;
+			info_write_vector(this->m_second, sk);
+			os << " " << sk;
+		}
 		ss = os.str();
 	} // to_string
-	void to_string(std::wstring &ss) {
+	void to_string(std::wstring &ss, bool bIndexes = true) {
 		std::wstringstream os;
 		std::wstring sx = info_w2s(this->m_sigle);
 		if (!sx.empty()) {
@@ -118,14 +122,19 @@ public:
 			os << L"VARS ";
 		}
 		os << this->m_first;
+		if (bIndexes) {
+			std::wstring sk;
+			info_write_vector(this->m_second, sk);
+			os << " " << sk;
+		}
 		ss = os.str();
 	} // to_string
 };
 // class IntraMatElemResult
 ////////////////////////////////////////////
 template<typename IDTYPE, typename DISTANCETYPE, typename STRINGTYPE>
-class MatElemObject:
-		public CancellableObject<std::shared_ptr<MatElemResult<IDTYPE, DISTANCETYPE, STRINGTYPE> > >{
+class MatElemObject: public CancellableObject<
+		std::shared_ptr<MatElemResult<IDTYPE, DISTANCETYPE, STRINGTYPE> > > {
 public:
 	using cancelflag = std::atomic<bool>;
 	using pcancelflag = cancelflag *;
@@ -137,7 +146,7 @@ public:
 public:
 	MatElemObject(pcancelflag pFlag = nullptr, PBackgrounder pq = nullptr,
 			MatElemFunctionType f = [](MatElemResultPtr o) {}) :
-			BaseType(pFlag, pq,f) {
+			BaseType(pFlag, pq, f) {
 	}
 	virtual ~MatElemObject() {
 	}

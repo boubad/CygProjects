@@ -41,8 +41,10 @@ namespace info {
 			m_data(nRows * nCols), m_ids(nRows), m_varids(nCols), m_names(nRows), m_inds(nRows), m_weights(oWeights) {
 			assert(nRows > 0);
 			assert(nCols > 0);
+#ifndef NDEBUG
 			size_t nn = (size_t)(nRows * nCols);
 			assert(data.size() >= nn);
+#endif
 			assert(indIds.size() >= nRows);
 			assert(varIds.size() >= nCols);
 			assert(names.size() >= nRows);

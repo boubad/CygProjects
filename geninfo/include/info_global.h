@@ -47,13 +47,13 @@ void info_global_write_map(const std::map<U, info::InfoValue> &oMap,
 	std::stringstream os;
 	for (auto it = oMap.begin(); it != oMap.end(); ++it) {
 		if (it != oMap.begin()) {
-			os << ", ";
+			os << ",";
 		}
 		std::string s;
 		U key = (*it).first;
 		const info::InfoValue &v = (*it).second;
 		v.get_value(s);
-		os << "(" << key << "," << s << ")";
+		os << " (" << key << "," << s << ")";
 	} // it
 	ss = os.str();
 } //info_global_write_map
@@ -63,16 +63,42 @@ void info_global_write_map(const std::map<U, info::InfoValue> &oMap,
 	std::wstringstream os;
 	for (auto it = oMap.begin(); it != oMap.end(); ++it) {
 		if (it != oMap.begin()) {
-			os << L", ";
+			os << L",";
 		}
 		std::wstring s;
 		U key = (*it).first;
 		const info::InfoValue &v = (*it).second;
 		v.get_value(s);
-		os << L"(" << key << L"," << s << L")";
+		os << L" (" << key << L"," << s << L")";
 	} // it
 	ss = os.str();
 } //info_global_write_map
+template<typename T>
+void info_write_vector(const std::vector<T> &data, std::string &s) {
+	std::stringstream os;
+	os << "\t[";
+	for (auto it = data.begin(); it != data.end(); ++it) {
+		if (it != data.begin()) {
+			os << ", ";
+		}
+		os << *it;
+	} // it
+	os << "]";
+	s = os.str();
+} // writeçvector
+template<typename T>
+void info_write_vector(const std::vector<T> &data, std::wstring &s) {
+	std::wstringstream os;
+	os << L"\t[";
+	for (auto it = data.begin(); it != data.end(); ++it) {
+		if (it != data.begin()) {
+			os << L", ";
+		}
+		os << *it;
+	} // it
+	os << L"]";
+	s = os.str();
+} // writeçvector
 //////////////////////////////////
 template<typename U1, typename U2, typename U3, typename W>
 bool info_global_compute_distance(const std::map<U1, InfoValue> &oMap1,
