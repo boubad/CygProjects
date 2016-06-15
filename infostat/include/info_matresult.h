@@ -86,7 +86,7 @@ public:
 	const ints_vector & ids(void) const {
 		return (this->m_third);
 	}
-	const STRINGTYPE & sigle(void) const {
+	STRINGTYPE  sigle(void) const {
 		return (this->m_sigle);
 	}
 	void to_string(std::string &ss) const {
