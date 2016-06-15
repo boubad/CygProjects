@@ -35,11 +35,11 @@ public:
 	void put(T op) {
 		std::lock_guard<std::mutex> guard(qlock);
 		ops_queue.push(op);
-		empty.notify_one();
+		empty.notify_all();
 	} // put
 	T take() {
 		std::unique_lock<std::mutex> lock(qlock);
-		empty.wait(lock, [&] {return !ops_queue.empty(); });
+		empty.wait(lock, [this] {return !this->ops_queue.empty(); });
 		T op = ops_queue.front();
 		ops_queue.pop();
 		return op;
@@ -70,17 +70,9 @@ public:
 		dispatchQueue.put([this]() {this->done.store(true);});
 		runnable.join();
 	} // run
-	void stop(void) {
-		this->done.store(true);
-		dispatchQueue.put([this]() {this->done.store(true); });
-		runnable.join();
-	}
 	void send(Operation msg_) {
 		this->dispatchQueue.put(msg_);
 	} // send
-	void clear(void) {
-		this->dispatchQueue.clear();
-	}
 	  // Factory: safe construction of object before thread start
 	static std::unique_ptr<Active> createActive(void) {
 		std::unique_ptr<Active> aPtr(new Active());
@@ -99,15 +91,10 @@ protected:
 	void put(Operation op) {
 		this->_active->send(op);
 	}	 // put
-	void clear() {
-		this->_active->clear();
-	}// clear
 public:
-	Backgrounder(){
-		this->_active = Active::createActive();
+	Backgrounder():_active(Active::createActive()){
 	}
 	virtual ~Backgrounder() {
-		this->_active.reset();
 	}
 	void send(Operation op) {
 		this->_active->send(op);

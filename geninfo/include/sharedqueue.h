@@ -9,7 +9,7 @@
 namespace info {
 	///////////////////////////////////
 	template <typename T>
-	class SharedQueue: boost::noncopyable {
+	class SharedQueue {
 		std::mutex qlock;
 		std::queue<T> ops_queue;
 		std::condition_variable empty;
@@ -17,20 +17,6 @@ namespace info {
 		SharedQueue() {}
 		virtual ~SharedQueue() {}
 	public:
-		size_t size(void) {
-			std::lock_guard<std::mutex> guard(qlock);
-			return (this->ops_queue.size());
-		}
-		void clear(void) {
-			std::lock_guard<std::mutex> guard(qlock);
-			while (!this->ops_queue.empty()) {
-				this->ops_queue.pop();
-			}
-		}// clear
-		bool is_empty(void) {
-			std::lock_guard<std::mutex> guard(qlock);
-			return (this->ops_queue.empty())
-		}
 		void put(T op) {
 			std::lock_guard<std::mutex> guard(qlock);
 			ops_queue.push(op);
@@ -43,17 +29,6 @@ namespace info {
 			ops_queue.pop();
 			return op;
 		} // take
-		T try_take(bool &bOk) {
-			T op;
-			bRet = false;
-			std::unique_lock<std::mutex> lock(qlock);
-			if (!this->ops_queue.empty()) {
-				 op = ops_queue.front();
-				ops_queue.pop();
-				bOk = true;
-			}
-			return (op);
-		}// try_take
 	};
 	////////////////////////////////////
 	

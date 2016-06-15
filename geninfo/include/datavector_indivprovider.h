@@ -93,6 +93,7 @@ namespace info {
 				(this->m_varids)[i] = varIds[i];
 			}
 		}
+		virtual ~DataVectorIndivSource(){}
 	public:
 		bool recode(double vMax = 1000.0, double vMin = 0.0) {
 			if (vMax <= vMin) {
