@@ -222,7 +222,7 @@ DataMap & center(void) {
 	return (this->m_center);
 }
 virtual void notify(StageType s = StageType::current) {
-	this->post_terminate_process();
+	this->update_result();
 	ClusterizeResultPtr oRes = std::make_shared<ClusterizeResultType>(this->m_res);
 	ClusterizeResultType *p = oRes.get();
 	assert(p != nullptr);
@@ -359,7 +359,8 @@ virtual bool initialize_process(SourceType *pSource,
 virtual bool one_iteration(void) {
 	return (this->is_cancelled()) ? false : true;
 } // one_iteration
-virtual bool post_terminate_process(void) {
+void update_result(void) {
+	this->update_center();
 	this->get_indivs_map(this->m_res.indivs_map());
 	this->get_clusters_ids(this->m_res.classes_map());
 	double fintra, finter, ff;
@@ -367,6 +368,9 @@ virtual bool post_terminate_process(void) {
 	this->m_res.criteria(ff);
 	this->m_res.intra_inertia(fintra);
 	this->m_res.inter_inertia(finter);
+}//update_result
+virtual bool post_terminate_process(void) {
+	this->update_result();
 	return (this->is_cancelled()) ? false : true;
 } // post_terminate_process
 };

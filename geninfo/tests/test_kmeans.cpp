@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(testMortalKmeans) {
 	BOOST_CHECK(pBack != nullptr);
 	//
 	ClusterizeKMeansType oMat(pCancel, pBack, infologger);
-//	oMat.process(pProvider, 5, 10);
+	oMat.process(pProvider, 5, 10);
 } //testMortalKmeans
 
 BOOST_AUTO_TEST_SUITE_END();

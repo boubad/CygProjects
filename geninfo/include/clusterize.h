@@ -70,6 +70,7 @@ public:
 			if (!this->one_iteration()) {
 				break;
 			}
+			this->post_terminate_process();
 			this->notify(StageType::current);
 		} // while
 		this->notify(StageType::finished);
@@ -193,8 +194,7 @@ protected:
 				clusters.erase(it);
 			}
 		} // key
-		this->update_center();
-		return (ClustersCollectionType::post_terminate_process());
+		return (true);
 	} // post_terminate_process
 };
 // class ClusterizeKMeans<U>
