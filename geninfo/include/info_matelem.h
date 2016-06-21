@@ -49,8 +49,8 @@ private:
 public:
 	MatElem(DispositionType disp = DispositionType::invalid, pcancelflag pFlag =
 			nullptr, PBackgrounder pq = nullptr, MatElemFunctionType f =
-			[](MatElemResultPtr o) {}) :
-			BaseType(pFlag, pq, f), m_disp(disp), m_crit(0), m_pdist(nullptr) {
+			[](MatElemResultPtr o) {},bool bNotify = true) :
+			BaseType(pFlag, pq, f,bNotify), m_disp(disp), m_crit(0), m_pdist(nullptr) {
 	}
 	virtual ~MatElem() {
 	}
@@ -84,7 +84,9 @@ public:
 			return;
 		}
 		DISTANCETYPE oCrit(this->m_crit);
-		this->notify(StageType::started);
+		if (this->is_notify()) {
+			this->notify(StageType::started);
+		}
 		do {
 			if (!this->one_iteration(oCrit)) {
 				break;
@@ -92,9 +94,13 @@ public:
 			if (this->is_cancelled()) {
 				break;
 			}
-			this->notify(StageType::current);
+			if (this->is_notify()) {
+				this->notify(StageType::current);
+			}
 		} while (true);
-		this->notify(StageType::finished);
+		if (this->is_notify()) {
+			this->notify(StageType::finished);
+		}
 	} // arrange
 	void arrange(SourceType *pProvider) {
 		if (pProvider == nullptr) {

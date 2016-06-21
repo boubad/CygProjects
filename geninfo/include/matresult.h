@@ -145,8 +145,8 @@ public:
 	using BaseType = CancellableObject<std::shared_ptr<MatElemResult<IDTYPE, DISTANCETYPE, STRINGTYPE> > >;
 public:
 	MatElemObject(pcancelflag pFlag = nullptr, PBackgrounder pq = nullptr,
-			MatElemFunctionType f = [](MatElemResultPtr o) {}) :
-			BaseType(pFlag, pq, f) {
+			MatElemFunctionType f = [](MatElemResultPtr o) {},bool bNotify = true) :
+			BaseType(pFlag, pq, f,bNotify) {
 	}
 	virtual ~MatElemObject() {
 	}

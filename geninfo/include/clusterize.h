@@ -70,9 +70,9 @@ public:
 			if (!this->one_iteration()) {
 				break;
 			}
-			this->post_terminate_process();
 			this->notify(StageType::current);
 		} // while
+		this->check_clusters();
 		this->notify(StageType::finished);
 		return (this->m_niter);
 	} // compute
@@ -174,7 +174,7 @@ protected:
 		}
 		return (!done);
 	} // one_iteration
-	virtual bool post_terminate_process(void) {
+	void check_clusters(void) {
 		clusters_vector &clusters = this->clusters();
 		std::set<U> oSet;
 		for (auto &c : clusters) {
@@ -182,20 +182,16 @@ protected:
 				oSet.insert(c.id());
 			}
 		}
-		if (this->is_cancelled()) {
-			return (false);
-		}
 		for (auto &key : oSet) {
 			auto it = std::find_if(clusters.begin(), clusters.end(),
-					[key](IndivClusterType &c)->bool {
-						return (c.id() == key);
-					});
+				[key](IndivClusterType &c)->bool {
+				return (c.id() == key);
+			});
 			if (it != clusters.end()) {
 				clusters.erase(it);
 			}
 		} // key
-		return (true);
-	} // post_terminate_process
+	}
 };
 // class ClusterizeKMeans<U>
 /////////////////////////////////////////

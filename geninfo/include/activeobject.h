@@ -26,6 +26,10 @@ public:
 	DispatchQueue() {}
 	virtual ~DispatchQueue() {}
 public:
+	bool is_empty(void) {
+		std::lock_guard<std::mutex> guard(qlock);
+		return (this->ops_queue.empty());
+	}
 	void clear(void) {
 		std::lock_guard<std::mutex> guard(qlock);
 		while (!ops_queue.empty()) {
@@ -51,32 +55,44 @@ public:
 	using Operation = std::function<void()>;
 private:
 	std::atomic<bool> done;
-	DispatchQueue<Operation> dispatchQueue;
+	std::mutex qlock;
+	std::queue<Operation> ops_queue;
+	std::condition_variable empty;
 	std::thread runnable;
 private:
 	Active() : done(false) {
+		this->runnable = std::thread([this]() {
+			this->run();
+		});
 	} // Active
 	Active(const Active&) = delete;
 	Active& operator=(const Active&) = delete;
 	void run() {
 		while (!this->done.load()) {
-			(this->dispatchQueue.take())();
+			try {
+				std::unique_lock<std::mutex> lock(qlock);
+				empty.wait(lock, [this] {return !this->ops_queue.empty(); });
+				Operation op = ops_queue.front();
+				ops_queue.pop();
+				op();
+			}catch(...){}
 		} // while
 	} // run
 public:
 	~Active() {
 		// Schedule a No-Op runnable to flush the dispatch queue
 		this->done.store(true);
-		dispatchQueue.put([this]() {this->done.store(true);});
+		this->send([this]() {this->done.store(true);});
 		runnable.join();
 	} // run
 	void send(Operation msg_) {
-		this->dispatchQueue.put(msg_);
+		std::lock_guard<std::mutex> guard(qlock);
+		ops_queue.push(msg_);
+		empty.notify_all();
 	} // send
 	  // Factory: safe construction of object before thread start
 	static std::unique_ptr<Active> createActive(void) {
 		std::unique_ptr<Active> aPtr(new Active());
-		aPtr->runnable = std::thread(&Active::run, aPtr.get());
 		return aPtr;
 	}	 // create
 };

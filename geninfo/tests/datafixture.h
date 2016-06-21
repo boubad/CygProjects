@@ -18,7 +18,7 @@ namespace info {
 template<typename U, typename STRINGTYPE, typename DATATYPE>
 class InfoDataFixture {
 public:
-	using MatriceDataType = MatriceData<U,STRINGTYPE,DATATYPE>;
+	using MatriceDataType = MatriceData<U,STRINGTYPE>;
 	using SourceType = IIndivSource<U, STRINGTYPE>;
 	using DataVectorIndivSourceType = DataVectorIndivSource<U, STRINGTYPE>;
 	using strings_vector = std::vector<STRINGTYPE>;
@@ -35,9 +35,11 @@ private:
 		size_t nRows = 0, nCols = 0;
 		std::vector<DATATYPE> data;
 		strings_vector rowNames, colNames;
+		MatriceDataType *pRet = new MatriceDataType();
 		InfoTestData::get_data(name, nRows, nCols, data, rowNames, colNames);
-		MatriceDataType *pRet = new MatriceDataType(name, nRows, nCols, data,
+		std::future<bool> bf = pRet->initializeAsync(name, nRows, nCols, data,
 				rowNames, colNames);
+		bf.wait();
 		return (pRet);
 	} // init_data
 public:
