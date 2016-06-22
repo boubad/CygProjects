@@ -2,6 +2,8 @@
 #ifndef __INFO_DRAWCONTEXT_H__
 #define __INFO_DRAWCONTEXT_H__
 ////////////////////////////////
+#include <fstream>
+////////////////////////////////////
 #include "matresult.h"
 #include "matricedata.h"
 #include "info_matord.h"
@@ -120,6 +122,39 @@ protected:
 	FLOATTYPE m_fdummy;
 	STRINGTYPE m_dummy;
 	std::unique_ptr<DrawContextParams> m_oparam;
+public:
+	virtual void save(std::ostream &os, const std::string &stitle = std::string()) {
+		// do nothing here
+	}
+	void save(std::wostream &wos, const std::wstring &sTitle = std::wstring()) {
+		std::stringstream os;
+		this->save(os);
+		std::string s2 = os.str();
+		std::wstring sz = info_2ws(s2);
+		wos << sz;
+	}// save
+	virtual void save(const std::string &filename) {
+		std::ofstream os(filename.c_str());
+		this->save(os, filename);
+	} // save
+	virtual void save(const std::wstring &filename) {
+		std::wofstream os(info_2s(filename.c_str()));
+		this->save(os, filename);
+	} // sav
+	virtual void set_indivs_font(void) {
+	}//set_indivs_font
+	virtual void set_variables_font(void) {
+	}//set_indivs_font
+	virtual void set_variables_font_color(void) {
+	}//set_variables_font_color
+	virtual void set_indivs_summary_color(void) {
+	}// set_indivs_summary_color
+	virtual void set_variables_summary_color(void) {
+	}// set_variables_summary_color
+	virtual void set_histog_color(void) {
+	}// set_histog_color
+	virtual void set_plain_color(double f) {
+	}// set_plain_color
 public:
 	DrawContext(DrawContextParams *pParams = nullptr) :
 			m_params(pParams), m_fdummy(0) {

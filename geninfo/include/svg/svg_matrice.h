@@ -45,22 +45,22 @@ private:
 		pDoc->append_attribute("height").set_value("100%");
 	} // initialize
 public:
-	void save(std::ostream &os) {
+	virtual void save(std::ostream &os, const std::string & /*stitle = std::string()*/) {
 		xml_document *pDoc = this->m_doc.get();
 		assert(pDoc != nullptr);
 		pDoc->save(os);
 	} // save
-	void save(std::wostream &os) {
+	virtual void save(std::wostream &os, const std::wstring &  /*= std::wstring()*/) {
 		xml_document *pDoc = this->m_doc.get();
 		assert(pDoc != nullptr);
 		pDoc->save(os);
 	} // save
-	void save(const std::string &filename) {
+	virtual void save(const std::string &filename) {
 		xml_document *pDoc = this->m_doc.get();
 		assert(pDoc != nullptr);
 		pDoc->save_file(filename.c_str());
 	} // save
-	void save(const std::wstring &filename) {
+	virtual void save(const std::wstring &filename) {
 		xml_document *pDoc = this->m_doc.get();
 		assert(pDoc != nullptr);
 		pDoc->save_file(filename.c_str());
@@ -108,8 +108,7 @@ public:
 		assert(p0 != nullptr);
 		(p0->document_element()).append_attribute("viewBox").set_value(ss.c_str());
 	} // setViewBox
-	virtual void draw(PDrawItem pItem, coord_type x0 = 0,
-			coord_type y0 = 0) const {
+	virtual void draw(PDrawItem pItem, coord_type x0 = 0, coord_type y0 = 0)  {
 		if (pItem == nullptr) {
 			return;
 		}
