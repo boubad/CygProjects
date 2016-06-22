@@ -4,6 +4,7 @@
 ////////////////////////////////
 #include "matresult.h"
 #include "matricedata.h"
+#include "info_matord.h"
 #include "activeobject.h"
 /////////////////////////////////
 namespace info {
@@ -249,6 +250,12 @@ private:
 	size_t m_ncols;
 	items_vector *m_pitems;
 	function_type m_f;
+protected:
+	virtual void update_context(ContextType *pContext) {
+		DrawContextParams *pParams = pContext->draw_params();
+		assert(pParams != nullptr);
+		pParams->update(this->m_nrows, this->m_ncols);
+	}// update_context
 public:
 	DrawItemsView(DispositionType atype, size_t nRows, size_t nCols,
 			items_vector *pitems, function_type ff = [](MatElemResultPtr o) {}) :
@@ -276,12 +283,11 @@ public:
 	void notify(MatElemResultPtr o) {
 		(this->m_f)(o);
 	}
-	virtual void draw(ContextType *pContext, coord_type xpos = 0,
-			coord_type ypos = 0) {
+	virtual void draw(ContextType *pContext, coord_type xpos = 0, coord_type ypos = 0) {
 		assert(pContext != nullptr);
 		DrawContextParams *pParams = pContext->draw_params();
 		assert(pParams != nullptr);
-		pParams->update(this->m_nrows, this->m_ncols);
+		this->update_context(pContext);
 		const size_t nTotalRows = this->m_nrows + 2;
 		const size_t nTotalCols = this->m_ncols + 2;
 		items_vector &vv = (*this->m_pitems);
@@ -304,6 +310,32 @@ public:
 	}	// draw
 };
 // class DrawItemsView<STRINGTYPE, FLOATTYPE>
+///////////////////////////////////////////
+template<typename IDTYPE, typename DISTANCETYPE, typename STRINGTYPE,typename FLOATTYPE>
+	class CRTDrawItemsView :public DrawItemsView<IDTYPE,DISTANCETYPE,STRINGTYPE,FLOATTYPE> {
+	public:
+		using BaseType = DrawItemsView<IDTYPE, DISTANCETYPE, STRINGTYPE, FLOATTYPE>;
+		using MatElemResultType = MatElemResult<IDTYPE, DISTANCETYPE, STRINGTYPE>;
+		using MatElemResultPtr = std::shared_ptr<MatElemResultType>;
+		using function_type = std::function<void(MatElemResultPtr)>;
+		using ContextType = DrawContext<STRINGTYPE, FLOATTYPE>;
+		using DrawItemType = BaseDrawItem<STRINGTYPE, FLOATTYPE>;
+		using PDrawItemType = DrawItemType *;
+		using items_vector = std::vector<PDrawItemType>;
+	protected:
+		virtual void update_context(ContextType *pContext) {
+			DrawContextParams *pParams = pContext->draw_params();
+			assert(pParams != nullptr);
+			pParams->update(this->get_nb_rows(), this->get_nb_cols(),false);
+		}// update_context
+	public:
+		CRTDrawItemsView(DispositionType atype, size_t nRows, size_t nCols,
+			items_vector *pitems, function_type ff = [](MatElemResultPtr o) {}) : BaseType(atype,nRows,nCols,pitems,ff){
+		}
+		virtual ~CRTDrawItemsView() {
+		}
+};
+// class DrawItemsView<STRINGTYPE, FLOATTYPE>
 //////////////////////////////////////////
 template<typename IDTYPE, typename DISTANCETYPE, typename STRINGTYPE,
 		typename FLOATTYPE>
@@ -323,6 +355,7 @@ public:
 	using SourceType = DataVectorIndivSource<IDTYPE, STRINGTYPE>;
 	using ints_vector = std::vector<IDTYPE>;
 	using ints_doubles_map = std::map<IDTYPE, double>;
+	using function_type = std::function<void(MatElemResultPtr)>;
 private:
 	size_t m_nrows;
 	size_t m_ncols;
@@ -376,17 +409,16 @@ public:
 	SourceType *get_variable_provider(void) {
 		return (this->m_varsource.get());
 	}
+	
 	ViewType *add_view(DispositionType type) {
 		assert(this->m_nrows > 0);
 		assert(this->m_ncols);
 		ViewType *pRet = nullptr;
 		ViewTypePtr oRet;
 		if (type == DispositionType::indiv) {
-			oRet = std::make_shared<ViewType>(type, this->m_nrows,
-					this->m_ncols, &(this->m_indivitems));
+			oRet = this->create_view(type, this->m_nrows, this->m_ncols, &(this->m_indivitems));
 		} else if (type == DispositionType::variable) {
-			oRet = std::make_shared<ViewType>(type, this->m_ncols,
-					this->m_nrows, &(this->m_variableitems));
+			oRet = this->create_view(type, this->m_ncols, this->m_nrows, &(this->m_variableitems));
 		}
 		pRet = oRet.get();
 		if (pRet != nullptr) {
@@ -690,6 +722,11 @@ public:
 		}
 	}
 protected:
+	virtual std::shared_ptr<ViewType> create_view(DispositionType atype, size_t nRows, size_t nCols,
+		items_vector *pitems, function_type ff = [](MatElemResultPtr o) {})
+	{
+		return std::make_shared<ViewType>(atype, nRows, nCols, pitems, ff);
+	}
 	virtual PDrawItemType create_empty_item(void) {
 		return (new DrawItemType());
 	}			// create_tem

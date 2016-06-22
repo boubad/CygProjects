@@ -138,15 +138,15 @@ public:
 ////////////////////////////////////////////
 template<typename STRINGTYPE, typename FLOATTYPE>
 class DLibDrawContext: public DrawContext<STRINGTYPE, FLOATTYPE> {
-	using coord_type = long;
-	using dist_type = unsigned long;
+	using coord_type = DrawContextParams::coord_type;
+	using dist_type = DrawContextParams::dist_type;
 	using DrawItem = BaseDrawItem<STRINGTYPE, FLOATTYPE>;
 	using PDrawItem = DrawItem *;
 	using BaseType = DrawContext<STRINGTYPE, FLOATTYPE>;
 private:
 	const dlib::canvas &m_canvas;
 public:
-	DLibDrawContext(const dlib::canvas &m, const DrawContextParams *params) :
+	DLibDrawContext(const dlib::canvas &m, DrawContextParams *params) :
 			BaseType(params), m_canvas(m) {
 	}
 	virtual ~DLibDrawContext() {
@@ -244,6 +244,8 @@ class DLibDrawItems: public DrawItems<IDTYPE, DISTANCETYPE, STRINGTYPE,
 		FLOATTYPE> {
 public:
 	using BaseType = DrawItems<IDTYPE, DISTANCETYPE, STRINGTYPE, FLOATTYPE>;
+	using BaseViewType = DrawItemsView<IDTYPE, DISTANCETYPE, STRINGTYPE, FLOATTYPE>;
+	using ViewType = CRTDrawItemsView<IDTYPE, DISTANCETYPE, STRINGTYPE, FLOATTYPE>;
 private:
 	dlib::drawable_window &m_drawable;
 public:
@@ -253,6 +255,11 @@ public:
 	virtual ~DLibDrawItems() {
 	}
 protected:
+	virtual std::shared_ptr<BaseViewType> create_view(DispositionType atype, size_t nRows, size_t nCols,
+		items_vector *pitems, function_type ff = [](MatElemResultPtr o) {})
+	{
+		return std::make_shared<ViewType>(atype, nRows, nCols, pitems, ff);
+	}
 	virtual PDrawItemType create_empty_item(void) {
 		return (new DLibBaseDrawItem<STRINGTYPE, FLOATTYPE>(this->m_drawable));
 	}	// create_tem
@@ -292,8 +299,7 @@ class DLibMatriceModelData: public MatriceModelData<IDTYPE, DISTANCETYPE,
 private:
 	dlib::drawable_window &m_drawable;
 public:
-	DLibMatriceModelData(dlib::drawable_window& w, MatRunnerType *pRunner) :
-			BaseType(pRunner), m_drawable(w) {
+	DLibMatriceModelData(dlib::drawable_window& w) : m_drawable(w) {
 	}
 	virtual ~DLibMatriceModelData() {
 	}
@@ -357,11 +363,11 @@ protected:
 				{
 					p->m_params.width = ww;
 					p->m_params.height = hh - h0;
-					p->m_params.update(nRows,nCols,false);
+					//p->m_params.update(nRows,nCols,false);
 				}
 				dlib::rectangle r(0, h0, ww, hh);
 				dlib::fill_rect(c, r, dlib::rgb_pixel(255, 255, 255));
-				ContextType oContext(c, &m_params);
+				ContextType oContext(c, const_cast<DrawContextParams *>(&m_params));
 				this->m_pview->draw(&oContext, 0, h0);
 			}
 		}	// pview
