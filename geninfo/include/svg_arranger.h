@@ -111,9 +111,8 @@ private:
 		const doubles_vector &data = pData->data();
 		const doubles_vector &varSum = pData->variables_summary();
 		const doubles_vector &indSum = pData->indivs_summary();
-		DrawContextParams *pParams =
-				const_cast<DrawContextParams *>(oContext.draw_params());
-		pParams->update(nCols, nRows);
+		DrawContextParams *pParams = oContext.draw_params();
+		pParams->update(nRows,nCols);
 		coord_type x0 = 0, y0 = 0;
 		dist_type w = 0, h = 0, dx = 0, dy = 0;
 		oContext.get_origin(x0, y0);

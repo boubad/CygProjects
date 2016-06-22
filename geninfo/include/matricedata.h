@@ -27,11 +27,11 @@ namespace info {
 		using ints_doubles_map = std::map<U, double>;
 		using DataVectorIndivSourceType = DataVectorIndivSource<U, STRINGTYPE>;
 	public:
-		MatriceData() :m_ok(false), m_done(false), m_nrows(0), m_ncols(0) {
+		MatriceData() : m_done(false), m_nrows(0), m_ncols(0) {
 		}// MatriceData
 		template <typename T>
 		MatriceData(const STRINGTYPE sName, size_t nRows, size_t nCols, const std::vector<T> &data,
-			const strings_vector &rowNames, const strings_vector &colNames) : m_ok(false), m_done(false), m_nrows(0), m_ncols(0) {
+			const strings_vector &rowNames, const strings_vector &colNames) : m_done(false), m_nrows(0), m_ncols(0) {
 			this->m_future = this->initializeAsync(sName, nRows, nCols, data, rowNames, colNames);
 		}// MatriceData
 		virtual ~MatriceData() {}
@@ -43,48 +43,40 @@ namespace info {
 			});
 		}// initializeAsync
 	public:
+		bool is_done(void) {
+			return (this->m_done.load());
+		}
 		const STRINGTYPE &name(void) {
-			this->check();
 			return (this->m_name);
 		}
 		size_t rows_count(void)  {
-			this->check();
 			return (this->m_nrows);
 		}
 		size_t cols_count(void)  {
-			this->check();
 			return (this->m_ncols);
 		}
 		const doubles_vector &data(void)  {
-			this->check();
 			return (this->m_fdata);
 		}
 		const strings_vector & cols_names(void)  {
-			this->check();
 			return (this->m_colnames);
 		}
 		const strings_vector & rows_names(void)  {
-			this->check();
 			return (this->m_rownames);
 		}
 		const doubles_vector & variables_summary(void)  {
-			this->check();
 			return (this->m_fvarsum);
 		}
 		const doubles_vector & indivs_summary(void)  {
-			this->check();
 			return (this->m_findsum);
 		}
 		DataVectorIndivSourceType *indiv_provider(void)  {
-			this->check();
 			return (this->m_inds.get());
 		}
 		DataVectorIndivSourceType *variable_provider(void)  {
-			this->check();
 			return (this->m_vars.get());
 		}
 	private:
-		std::atomic<bool> m_ok;
 		std::atomic<bool> m_done;
 		size_t m_nrows;
 		size_t m_ncols;
@@ -108,7 +100,6 @@ namespace info {
 				(rowNames.size() < nRows) || (colNames.size() < nCols)) {
 				return (false);
 			}
-			this->m_ok.store(true);
 			this->m_name = sName;
 			this->m_nrows = nRows;
 			this->m_ncols = nCols;
@@ -208,7 +199,6 @@ namespace info {
 			return (true);
 		}// initialize
 		void clear(void) {
-			this->m_ok.store(false);
 			this->m_done.store(false);
 			this->m_nrows = 0;
 			this->m_ncols = 0;
@@ -220,14 +210,7 @@ namespace info {
 			this->m_varids.clear();
 			this->m_indids.clear();
 		}// clear
-		void check(void) {
-			if (!this->m_done.load()) {
-				if (this->m_ok.load()) {
-					this->m_future.wait();
-					this->m_done.store(true);
-				}
-			}// not done
-		}// check
+
 	};// class MatriceData<U,STRINGTYPE>
 	///////////////////////////////
 }// namespace info

@@ -10,8 +10,8 @@ namespace info {
 //////////////////////////////////////
 template<typename STRINGTYPE, typename FLOATTYPE>
 class SVGDrawContext: public DrawContext<STRINGTYPE, FLOATTYPE> {
-	using coord_type = long;
-	using dist_type = unsigned long;
+	using coord_type = DrawContextParams::coord_type;
+	using dist_type = DrawContextParams::dist_type;
 	using DrawItem = BaseDrawItem<STRINGTYPE, FLOATTYPE>;
 	using PDrawItem = DrawItem *;
 	using BaseType = DrawContext<STRINGTYPE, FLOATTYPE>;
@@ -23,8 +23,7 @@ class SVGDrawContext: public DrawContext<STRINGTYPE, FLOATTYPE> {
 private:
 	std::unique_ptr<xml_document> m_doc;
 public:
-	SVGDrawContext(const DrawContextParams *params = nullptr) :
-			BaseType(params) {
+	SVGDrawContext(DrawContextParams *params = nullptr) : BaseType(params) {
 		this->initialize();
 	}
 	virtual ~SVGDrawContext() {
