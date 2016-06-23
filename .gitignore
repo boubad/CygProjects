@@ -28,5 +28,9 @@
 *.app
 *.sqlite
 *.stackdump
+*.svg
+*.eps
+*.txt
+
 
 

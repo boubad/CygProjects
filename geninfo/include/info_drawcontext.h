@@ -39,6 +39,8 @@ public:
 	using coord_type = double;
 	using dist_type = double;
 	//
+	size_t nRows;
+	size_t nCols;
 	dist_type dmin;
 	double fangle;
 	int kfactor;
@@ -66,7 +68,7 @@ public:
 	InfoColor strokecolor;
 	//
 	DrawContextParams() :
-			dmin(16),fangle(285), kfactor(8), variableFontSize(15), indivFontSize(12), width(
+			nRows(0),nCols(0),dmin(16),fangle(285), kfactor(8), variableFontSize(15), indivFontSize(12), width(
 					595), height(841), drawType(MatriceDrawType::drawIndivs), bIndsNames(
 					true), bIndsSum(true), bVarsNames(true), bVarsSum(true), x0(
 					0), y0(0), deltax(0), dx(32), deltay(0), dy(32), upcolor(
@@ -74,6 +76,8 @@ public:
 					0, 0), textcolor(0), donecolor(127), strokecolor(0) {
 	}
 	void update(size_t nRows, size_t nCols,bool bUpdate = true) {
+		this->nRows = nRows;
+		this->nCols = nCols;
 		double fcol = (double) this->kfactor
 				/ ((this->kfactor + 1) * (nRows + 3));
 		this->dx = (dist_type) (fcol * this->width);
@@ -155,6 +159,10 @@ public:
 	}// set_histog_color
 	virtual void set_plain_color(double f) {
 	}// set_plain_color
+	virtual void set_separator(void) {
+	}
+	virtual void set_endline(void) {
+	}
 public:
 	DrawContext(DrawContextParams *pParams = nullptr) :
 			m_params(pParams), m_fdummy(0) {

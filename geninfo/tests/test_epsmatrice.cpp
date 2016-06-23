@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE(EPSFile) {
 	STRINGTYPE filename("test_mortal_data.eps");
 	//
 	ArrangerType oArrange(name);
-	std::future<bool> bFuture = oArrange.export_eps(filename, nRows, nCols,
+	std::future<bool> bFuture = oArrange.export_async(filename, nRows, nCols,
 			data, rowNames, colNames);
 	bool bRet = bFuture.get();
 	BOOST_CHECK(bRet);
@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(EPSStream) {
 	//
 	std::stringstream os;
 	ArrangerType oArrange(name);
-	std::future<bool> bFuture = oArrange.export_eps(os, nRows, nCols, data,
+	std::future<bool> bFuture = oArrange.export_async(os, nRows, nCols, data,
 			rowNames, colNames);
 	bool bRet = bFuture.get();
 	BOOST_CHECK(bRet);

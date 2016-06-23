@@ -175,9 +175,13 @@ namespace info {
 					size_t ii = rowindexes[i];
 					STRINGTYPE s = rowNames[ii];
 					BaseDrawItemType oItem(MatCellType::indCell, s);
+					if (i != 0) {
+						oContext.set_separator();
+					}
 					oContext.draw(&oItem, x, y);
 					x += deltax;
 				} // i
+				oContext.set_endline();
 				y += deltay;
 				x = startx + (2 * deltax);
 				oContext.set_indivs_summary_color();
@@ -187,7 +191,11 @@ namespace info {
 					BaseDrawItemType oItem(MatCellType::summaryIndCell, f);
 					oContext.draw(&oItem, x, y);
 					x += deltax;
+					if (i != 0) {
+						oContext.set_separator();
+					}
 				} // i
+				oContext.set_endline();
 				y += deltay;
 				oContext.set_variables_font();
 				for (size_t i = 0; i < nCols; ++i) {
@@ -197,6 +205,7 @@ namespace info {
 					STRINGTYPE s = colNames[ii];
 					BaseDrawItemType oItem(MatCellType::varCell, s);
 					oContext.draw(&oItem, x, y);
+					oContext.set_separator();
 					x += deltax;
 					double f = varSum[ii];
 					BaseDrawItemType oItem1(MatCellType::summaryVarCell, f);
@@ -210,10 +219,12 @@ namespace info {
 						size_t jj = rowindexes[j];
 						double f = data[jj * nCols + ii];
 						BaseDrawItemType oItem2(aType, f);
+						oContext.set_separator();
 						oContext.draw(&oItem2, x, y);
 						x += deltax;
 					} // j
 					y += deltay;
+					oContext.set_endline();
 				} // i
 			}// draw
 			void draw(ContextType &oContext, MatCellType aType) {
@@ -234,7 +245,7 @@ namespace info {
 				ContextType *pctx = ctx.get();
 				assert(pctx != nullptr);
 				this->draw(*pctx, aType);
-				pctx->save(os);
+				pctx->save(os,this->m_sigle);
 			} // draw
 			template<typename T>
 			bool perform_arrange(const STRINGTYPE &filename, const STRINGTYPE &name,

@@ -89,7 +89,8 @@ namespace info {
 			this->save(os, filename);
 		} // save
 		virtual void save(const std::wstring &filename) {
-			std::wofstream os(filename.c_str());
+			std::string s = info_2s(filename);
+			std::wofstream os(s.c_str());
 			this->save(os, filename);
 		} // save
 		virtual void set_indivs_font(void) {
@@ -127,9 +128,7 @@ namespace info {
 			os << (c.red / 255.0) << " " << (c.green / 255.0) << " " << (c.blue / 255.0) << " rg" << std::endl;
 		}// set_histog_color
 		virtual void set_plain_color(double f) {
-			const DrawContextParams *pParams = this->draw_params();
 			std::stringstream &os = *(this->m_os);
-			InfoColor c = pParams->downcolor;
 			os << f << " " << f << " " << f << " rg" << std::endl;
 		}// set_plain_color
 		virtual void draw(PDrawItem pItem, coord_type x0 = 0, coord_type y0 = 0) {
